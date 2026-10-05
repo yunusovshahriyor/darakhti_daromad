@@ -6,7 +6,6 @@ export interface AccountDef {
   name: string;
   icon: string;
   color: string;
-  saving?: boolean;
   archived?: boolean;
 }
 

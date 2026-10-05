@@ -293,23 +293,6 @@ export function ledger(s: State, id: AccountId): LedgerEntry[] {
   return out.sort((a, b) => b.date.localeCompare(a.date) || b.key.localeCompare(a.key));
 }
 
-/** Ин моҳ ба ҳисобҳои ҷамъшавӣ чӣ қадар омад (даромад + гузаронидан аз ҳисобҳои хароҷот). */
-export function savedThisMonth(s: State): number {
-  const month = today().slice(0, 7);
-  let v = 0;
-  for (const i of s.incomes) {
-    if (i.date.startsWith(month)) for (const id of SAVING_IDS) v += i.alloc[id] ?? 0;
-  }
-  for (const t of s.transfers) {
-    if (!t.date.startsWith(month)) continue;
-    const from = SAVING_IDS.includes(t.from);
-    const to = SAVING_IDS.includes(t.to);
-    if (to && !from) v += t.amount;
-    if (from && !to) v -= t.amount;
-  }
-  return v;
-}
-
 
 /** Номи давра барои сатри интихоб: «Октябр 2026», «5–11 Окт», «2026», «5 Окт 2026». */
 export function periodLabel(kind: PeriodKind, p: Period): string {
@@ -400,12 +383,12 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
 export const DEFAULT_ACCOUNTS: AccountDef[] = [
   { id: 'charity', name: 'Садақа', icon: '🤲', color: '#b7791f' },
   { id: 'parents', name: 'Волидон', icon: '👨‍👩‍👧', color: '#b24a6c' },
-  { id: 'future', name: 'Барои оянда', icon: '🌱', color: '#2f857b', saving: true },
+  { id: 'future', name: 'Барои оянда', icon: '🌱', color: '#2f857b' },
   { id: 'fun', name: 'Вақтхушӣ', icon: '🎉', color: '#7a5bb8' },
   { id: 'debt', name: 'Пардохти қарз', icon: '💳', color: '#b3453b' },
-  { id: 'capital', name: 'Сармоя', icon: '📈', color: '#1f6fa3', saving: true },
-  { id: 'bigDream', name: 'Орзуи калон', icon: '🏠', color: '#2f7d55', saving: true },
-  { id: 'smallDream', name: 'Орзуи хурд', icon: '✈️', color: '#2f8fb5', saving: true },
+  { id: 'capital', name: 'Сармоя', icon: '📈', color: '#1f6fa3' },
+  { id: 'bigDream', name: 'Орзуи калон', icon: '🏠', color: '#2f7d55' },
+  { id: 'smallDream', name: 'Орзуи хурд', icon: '✈️', color: '#2f8fb5' },
   { id: 'living', name: 'Хароҷоти зиндагӣ', icon: '🛒', color: '#46688f' },
 ];
 
@@ -581,7 +564,6 @@ export const ACCOUNTS: Record<AccountId, { name: string; icon: string }> = {};
 export const CARD_COLORS: Record<AccountId, string> = {};
 export const ACCOUNT_ORDER: AccountId[] = [];
 export const ALL_IDS: AccountId[] = [];
-export const SAVING_IDS: AccountId[] = [];
 export const ACCOUNT_TREE: AccountGroup[] = [];
 const GROUP_NOTES: Record<string, string> = {};
 const LEAF_INFO: Record<AccountId, { percent: number; parent: string }> = {};
@@ -593,7 +575,6 @@ export function syncCatalog(s: Pick<State, 'accounts' | 'tree'>) {
   }
   ACCOUNT_ORDER.length = 0;
   ALL_IDS.length = 0;
-  SAVING_IDS.length = 0;
   ACCOUNT_TREE.length = 0;
 
   for (const a of s.accounts) {
@@ -652,7 +633,6 @@ export function syncCatalog(s: Pick<State, 'accounts' | 'tree'>) {
   }
 
   for (const g of ACCOUNT_TREE) for (const id of leavesOf(g)) if (!ACCOUNT_ORDER.includes(id)) ACCOUNT_ORDER.push(id);
-  for (const a of s.accounts) if (!a.archived && a.saving) SAVING_IDS.push(a.id);
 }
 
 syncCatalog({ accounts: DEFAULT_ACCOUNTS, tree: defaultTree() });

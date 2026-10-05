@@ -60,7 +60,6 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
   const [name, setName] = useState(def?.name ?? group?.title ?? '');
   const [icon, setIcon] = useState(def?.icon ?? group?.icon ?? '💰');
   const [color, setColor] = useState(def?.color ?? '#46688f');
-  const [saving, setSaving] = useState(!!def?.saving);
   const [percent, setPercent] = useState(String(node ? Math.round(node.percent * 100) / 100 : 0));
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -91,7 +90,7 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
       ...s,
       tree,
       accounts: accountId
-        ? s.accounts.map(a => (a.id === accountId ? { ...a, name: name.trim(), icon, color, saving } : a))
+        ? s.accounts.map(a => (a.id === accountId ? { ...a, name: name.trim(), icon, color } : a))
         : s.accounts,
     }));
     onToast('Нигоҳ дошта шуд ✓');
@@ -150,18 +149,6 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
         )}
         <p className="note">Ҳиссаи воқеӣ: {fmt(Math.round(share * 100) / 100)}% аз ҳар даромад.</p>
 
-        {accountId && (
-          <label className="switch-row">
-            <span>
-              <b>Ҷамъшавӣ</b>
-              <small>Дар «Ин моҳ ҷамъ шуд» ҳисоб мешавад.</small>
-            </span>
-            <span className="switch">
-              <input type="checkbox" checked={saving} onChange={e => setSaving(e.target.checked)} />
-              <i />
-            </span>
-          </label>
-        )}
 
         {error && <div className="alert danger">{error}</div>}
         <button className="btn" type="submit">Нигоҳ доштан</button>
@@ -207,7 +194,6 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
   const [icon, setIcon] = useState('💰');
   const [color, setColor] = useState(COLORS[5]);
   const [percent, setPercent] = useState('5');
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const save = (e: FormEvent) => {
@@ -220,7 +206,7 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
     setState(s => ({
       ...s,
       tree,
-      accounts: [...s.accounts, { id, name: name.trim(), icon, color, saving }],
+      accounts: [...s.accounts, { id, name: name.trim(), icon, color }],
     }));
     onToast('Ҳисоби нав илова шуд ✓');
     onClose();
@@ -247,13 +233,6 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
             onChange={e => { setPercent(e.target.value); setError(''); }} />
         </Field>
         <p className="note">Ин фоиз аз боқимондаи гурӯҳ кам мешавад (охирин ҳисоби гурӯҳ — боқимонда).</p>
-        <label className="switch-row">
-          <span><b>Ҷамъшавӣ</b><small>Дар «Ин моҳ ҷамъ шуд» ҳисоб мешавад.</small></span>
-          <span className="switch">
-            <input type="checkbox" checked={saving} onChange={e => setSaving(e.target.checked)} />
-            <i />
-          </span>
-        </label>
         {error && <div className="alert danger">{error}</div>}
         <button className="btn" type="submit">Илова кардан</button>
       </form>

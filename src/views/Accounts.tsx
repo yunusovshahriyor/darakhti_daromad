@@ -1,8 +1,8 @@
 import { CSSProperties, useEffect, useState } from 'react';
 import { ChevronIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import {
-  ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, SAVING_IDS, balancesOf, fmt, groupNote, groupSum,
-  fundDreams, hasDebt, hiddenAccounts, leafHint, remaining, savedThisMonth,
+  ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, balancesOf, fmt, groupNote, groupSum,
+  fundDreams, hasDebt, hiddenAccounts, leafHint, remaining,
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
@@ -33,8 +33,6 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
 
   const bal = balancesOf(state);
   const total = Object.values(bal).reduce((s, v) => s + v, 0);
-  const savings = SAVING_IDS.reduce((s, id) => s + bal[id], 0);
-  const saved = savedThisMonth(state);
   const debt = hasDebt(state.debts);
   const hide = hiddenAccounts(state);
   const debtTotal = state.debts.reduce((sum, d) => sum + d.amount, 0);
@@ -42,10 +40,6 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
   const debtLeft = state.debts.reduce((sum, d) => sum + remaining(d), 0);
   const mask = (v: string) => (hidden ? '••••' : v);
 
-  const message =
-    state.incomes.length === 0 ? 'Аввалин даромадро илова кунед, барнома худаш ба ҳисобҳо тақсим мекунад 🌱'
-    : saved > 0 ? `Офарин! Ин моҳ ${mask(fmt(saved))} смн ба оянда ҷамъ кардед 💪`
-    : 'Ин моҳ ҳанӯз чизе ҷамъ нашудааст. Аз ҳисоби хароҷот ба «Сармоя» гузаронед 🎯';
 
   const card = (id: AccountId) => {
     // Барои «Пардохти қарз» мақсад — худи қарзҳо мебошанд
@@ -118,11 +112,6 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
           </button>
         </div>
         <div className="bh-total">{mask(fmt(total))} <small>смн</small></div>
-        <div className="bh-chips">
-          <div><small>Дар ҷамъшавӣ</small><b>{mask(fmt(savings))}</b></div>
-          <div><small>Ин моҳ ҷамъ шуд</small><b>{saved >= 0 ? '+' : ''}{mask(fmt(saved))}</b></div>
-        </div>
-        <p className="bh-msg">{message}</p>
       </section>
 
       <div className="groups">{ACCOUNT_TREE.map(g => group(g))}</div>
