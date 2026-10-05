@@ -58,8 +58,13 @@ button { cursor: pointer; }
 
 /* ---------- Қолаби барнома ---------- */
 .app {
-  height: 100dvh;
-  max-width: 520px;
+  /* position: fixed ба майдони воқеии намоён такя мекунад (100dvh дар барномаи насбшуда нодуруст мешавад) */
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: min(100%, 520px);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -67,7 +72,6 @@ button { cursor: pointer; }
     radial-gradient(70% 32% at 8% 10%, var(--blob-1), transparent 72%),
     radial-gradient(55% 28% at 100% 22%, var(--blob-2), transparent 70%),
     var(--bg);
-  position: relative;
   overflow: hidden;
 }
 
@@ -216,7 +220,7 @@ button { cursor: pointer; }
   animation: fade .2s ease;
 }
 .sheet {
-  width: 100%; max-width: 520px; max-height: 92dvh; overflow-y: auto;
+  width: 100%; max-width: 520px; max-height: 92%; overflow-y: auto;
   background: var(--surface); border-radius: 26px 26px 0 0;
   padding: 8px 18px calc(18px + env(safe-area-inset-bottom));
   animation: up .28s cubic-bezier(.2, .8, .2, 1);
@@ -635,7 +639,7 @@ input[type='date'] { min-height: 50px; }
 @keyframes ptr-spin { to { transform: rotate(360deg); } }
 
 /* ---------- Варақаи маълумот (ℹ️) ---------- */
-.info-btn { margin-left: auto; color: var(--primary); }
+.appbar .info-btn { margin-left: auto; margin-right: -8px; color: var(--primary); }
 .info { display: grid; gap: 14px; }
 .info-lead {
   display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px;
