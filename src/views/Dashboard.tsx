@@ -126,8 +126,8 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
 
       <section className="spent">
         <div className="scope-row">
-          <span className="spent-label">{scope ? `${ACCOUNTS[scope].icon} ${ACCOUNTS[scope].name}` : 'Ҳама'}</span>
-          <button className={scope ? 'filter-btn on' : 'filter-btn'} onClick={() => setScopeOpen(true)}
+          <span className="spent-label">{scope ? ACCOUNTS[scope].name : 'Ҳама'}</span>
+          <button className="filter-btn" onClick={() => setScopeOpen(true)}
             aria-label="Интихоби ҳисоб">
             <FilterIcon />
           </button>

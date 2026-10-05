@@ -754,13 +754,13 @@ input[type='date'] { min-height: 50px; }
 .income-row .line { position: absolute; left: 4px; right: 4px; bottom: 0; }
 
 /* ---------- «Ҳама» / ҳисоб ва тугмаи филтр ---------- */
-.scope-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; }
+.scope-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 30px; }
 .spent-label { font-size: .85rem !important; color: var(--muted); font-weight: 600; letter-spacing: .01em; }
 .filter-btn {
-  flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
-  background: var(--glass); display: grid; place-items: center; color: var(--text);
+  flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--glass); display: grid; place-items: center; color: var(--muted);
 }
-.filter-btn.on { background: var(--primary); border-color: transparent; color: #fff; }
+.filter-btn:active { background: color-mix(in srgb, var(--primary) 18%, transparent); }
 .scope-list { display: grid; gap: 2px; }
 .scope-list .group-title { margin: 12px 6px 4px; }
 .scope-list button {
