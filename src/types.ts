@@ -46,10 +46,20 @@ export interface Dream {
   target: number;
 }
 
+export interface Transfer {
+  id: number;
+  from: AccountId;
+  to: AccountId;
+  amount: number;
+  date: string;
+}
+
 export interface State {
   settings: Settings;
   incomes: Income[];
   expenses: Expense[];
   debts: Debt[];
   dreams: Dream[];
+  transfers: Transfer[];
+  goals: Partial<Record<AccountId, number>>;
 }

@@ -1,16 +1,19 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, ACCOUNT_ORDER, balances, fmt, today, uid } from '../model';
+import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, fmt, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import Field from './Field';
 
-export default function ExpenseForm({ state, setState, onDone }: Props & { onDone: (msg: string) => void }) {
-  const [account, setAccount] = useState<AccountId>('living');
+export default function ExpenseForm({ state, setState, onDone, initialAccount }: Props & {
+  onDone: (msg: string) => void;
+  initialAccount?: AccountId;
+}) {
+  const [account, setAccount] = useState<AccountId>(initialAccount ?? 'living');
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
 
-  const bal = balances(state.incomes, state.expenses);
+  const bal = balancesOf(state);
   const num = parseFloat(amount) || 0;
   const over = num > bal[account] + 0.005;
 

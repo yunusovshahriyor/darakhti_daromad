@@ -1,4 +1,4 @@
-import type { AccountId, Alloc, Debt, Expense, Income, Settings } from './types';
+import type { AccountId, Alloc, Debt, Expense, Income, Settings, State, Transfer } from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   charity: 2.5,
@@ -80,12 +80,18 @@ export function allocate(amount: number, s: Settings, debt: boolean): Alloc {
   };
 }
 
-export function balances(incomes: Income[], expenses: Expense[]): Alloc {
+export function balances(incomes: Income[], expenses: Expense[], transfers: Transfer[] = []): Alloc {
   const b = emptyAlloc();
   for (const i of incomes) for (const id of ACCOUNT_ORDER) b[id] += i.alloc[id] ?? 0;
   for (const e of expenses) b[e.account] -= e.amount;
+  for (const t of transfers) {
+    b[t.from] -= t.amount;
+    b[t.to] += t.amount;
+  }
   return b;
 }
+
+export const balancesOf = (s: State) => balances(s.incomes, s.expenses, s.transfers);
 
 export function spent(expenses: Expense[]): Alloc {
   const b = emptyAlloc();
@@ -200,3 +206,74 @@ export const ACCOUNT_COLORS: Record<AccountId, string> = {
   smallDream: '#7cc4e8',
   living: '#5b83ac',
 };
+
+
+// ---------- Ҳисобҳо мисли барномаи бонкӣ ----------
+
+export const SAVING_IDS: AccountId[] = ['capital', 'future', 'bigDream', 'smallDream'];
+export const SPEND_IDS: AccountId[] = ['living', 'fun', 'debt'];
+export const GIVE_IDS: AccountId[] = ['charity', 'parents'];
+
+export const ACCOUNT_SECTIONS: { title: string; ids: AccountId[] }[] = [
+  { title: 'Ҷамъшавӣ', ids: SAVING_IDS },
+  { title: 'Хароҷоти ҳаррӯза', ids: SPEND_IDS },
+  { title: 'Ҷудошуда', ids: GIVE_IDS },
+];
+
+/** Рангҳои корт (аз ранги диаграмма торик, то матни сафед хубтар хонда шавад). */
+export const CARD_COLORS: Record<AccountId, string> = {
+  charity: '#b7791f',
+  parents: '#b24a6c',
+  future: '#2f857b',
+  fun: '#7a5bb8',
+  debt: '#b3453b',
+  capital: '#1f6fa3',
+  bigDream: '#2f7d55',
+  smallDream: '#2f8fb5',
+  living: '#46688f',
+};
+
+/** Ҳиссаи ҳисоб аз ҳар 100 сомонии даромад (бо танзимоти ҳозира). */
+export const shareOfIncome = (id: AccountId, s: Settings, debt: boolean) =>
+  allocate(100, s, debt)[id];
+
+export interface LedgerEntry {
+  key: string;
+  date: string;
+  title: string;
+  amount: number;
+}
+
+/** Таърихи амалиёти як ҳисоб: даромад, хароҷот ва гузаронидан. */
+export function ledger(s: State, id: AccountId): LedgerEntry[] {
+  const out: LedgerEntry[] = [];
+  for (const i of s.incomes) {
+    const a = i.alloc[id] ?? 0;
+    if (a > 0) out.push({ key: `i${i.id}`, date: i.date, title: `Даромад: ${i.title}`, amount: a });
+  }
+  for (const e of s.expenses) {
+    if (e.account === id) out.push({ key: `e${e.id}`, date: e.date, title: e.title, amount: -e.amount });
+  }
+  for (const t of s.transfers) {
+    if (t.from === id) out.push({ key: `t${t.id}o`, date: t.date, title: `Ба «${ACCOUNTS[t.to].name}»`, amount: -t.amount });
+    if (t.to === id) out.push({ key: `t${t.id}i`, date: t.date, title: `Аз «${ACCOUNTS[t.from].name}»`, amount: t.amount });
+  }
+  return out.sort((a, b) => b.date.localeCompare(a.date) || b.key.localeCompare(a.key));
+}
+
+/** Ин моҳ ба ҳисобҳои ҷамъшавӣ чӣ қадар омад (даромад + гузаронидан аз ҳисобҳои хароҷот). */
+export function savedThisMonth(s: State): number {
+  const month = today().slice(0, 7);
+  let v = 0;
+  for (const i of s.incomes) {
+    if (i.date.startsWith(month)) for (const id of SAVING_IDS) v += i.alloc[id] ?? 0;
+  }
+  for (const t of s.transfers) {
+    if (!t.date.startsWith(month)) continue;
+    const from = SAVING_IDS.includes(t.from);
+    const to = SAVING_IDS.includes(t.to);
+    if (to && !from) v += t.amount;
+    if (from && !to) v -= t.amount;
+  }
+  return v;
+}

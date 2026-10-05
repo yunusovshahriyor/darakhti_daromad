@@ -10,6 +10,8 @@ export const emptyState = (): State => ({
   expenses: [],
   debts: [],
   dreams: [],
+  transfers: [],
+  goals: {},
 });
 
 export function loadState(): State {

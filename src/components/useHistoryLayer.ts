@@ -1,8 +1,29 @@
 import { useEffect, useRef } from 'react';
 
+interface Layer {
+  cb: () => void;
+  popped: boolean;
+}
+
+const stack: Layer[] = [];
+let skip = 0;
+
+// Як шунавандаи ягона: тугмаи «Бозгашт» танҳо қабати болоиро мебандад.
+window.addEventListener('popstate', () => {
+  if (skip > 0) {
+    skip--;
+    return;
+  }
+  const top = stack[stack.length - 1];
+  if (top) {
+    top.popped = true;
+    top.cb();
+  }
+});
+
 /**
- * Тугмаи «Бозгашт»-и телефон қабатро (варақа, зерсаҳифа) мебандад,
- * на тамоми барномаро.
+ * Қабат (варақа, зерсаҳифа, саҳифаи ҳисоб): тугмаи «Бозгашт»-и телефон
+ * онро мебандад, на тамоми барномаро. Қабатҳо метавонанд рӯи ҳам бошанд.
  */
 export function useHistoryLayer(active: boolean, onBack: () => void) {
   const cb = useRef(onBack);
@@ -10,12 +31,16 @@ export function useHistoryLayer(active: boolean, onBack: () => void) {
 
   useEffect(() => {
     if (!active) return;
+    const layer: Layer = { cb: () => cb.current(), popped: false };
+    stack.push(layer);
     history.pushState({ layer: true }, '');
-    const handler = () => cb.current();
-    window.addEventListener('popstate', handler);
     return () => {
-      window.removeEventListener('popstate', handler);
-      if (history.state?.layer) history.back();
+      const i = stack.indexOf(layer);
+      if (i >= 0) stack.splice(i, 1);
+      if (!layer.popped) {
+        skip++;
+        history.back();
+      }
     };
   }, [active]);
 }

@@ -4,7 +4,7 @@ import Fab from '../components/Fab';
 import Field from '../components/Field';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { balances, fmt, today, uid } from '../model';
+import { balancesOf, fmt, today, uid } from '../model';
 import type { Dream } from '../types';
 import type { Props } from './props';
 
@@ -14,7 +14,7 @@ export default function Dreams({ state, setState }: Props) {
   const [kind, setKind] = useState<Dream['kind']>('big');
   const [target, setTarget] = useState('');
 
-  const bal = balances(state.incomes, state.expenses);
+  const bal = balancesOf(state);
 
   const add = (e: FormEvent) => {
     e.preventDefault();

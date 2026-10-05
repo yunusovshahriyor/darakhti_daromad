@@ -50,3 +50,16 @@ export const EyeOffIcon = () => (
 export const PersonIcon = () => (
   <Svg><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></Svg>
 );
+
+export const WalletIcon = () => (
+  <Svg><path d="M3 7a3 3 0 0 1 3-3h12v4" /><path d="M3 7v10a3 3 0 0 0 3 3h13a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2H5a2 2 0 0 1-2-2" /><circle cx="16.5" cy="14" r="1.2" /></Svg>
+);
+export const SwapIcon = () => (
+  <Svg><polyline points="17 3 21 7 17 11" /><line x1="3" y1="7" x2="21" y2="7" /><polyline points="7 21 3 17 7 13" /><line x1="21" y1="17" x2="3" y2="17" /></Svg>
+);
+export const TargetIcon = () => (
+  <Svg><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.2" /></Svg>
+);
+export const MinusIcon = () => (
+  <Svg><line x1="5" y1="12" x2="19" y2="12" /></Svg>
+);

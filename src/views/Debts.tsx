@@ -4,7 +4,7 @@ import Fab from '../components/Fab';
 import Field from '../components/Field';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { ACCOUNTS, ACCOUNT_ORDER, balances, fmt, remaining, today, uid } from '../model';
+import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, fmt, remaining, today, uid } from '../model';
 import type { AccountId, Debt } from '../types';
 import type { Props } from './props';
 
@@ -16,7 +16,7 @@ export default function Debts({ state, setState }: Props) {
   const [payAmount, setPayAmount] = useState('');
   const [source, setSource] = useState<AccountId>('debt');
 
-  const bal = balances(state.incomes, state.expenses);
+  const bal = balancesOf(state);
 
   const add = (e: FormEvent) => {
     e.preventDefault();

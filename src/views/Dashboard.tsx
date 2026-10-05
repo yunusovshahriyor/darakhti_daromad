@@ -1,32 +1,25 @@
-import { useEffect, useState } from 'react';
+import { CSSProperties, useState } from 'react';
 import Donut from '../components/Donut';
 import { ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
 import {
-  ACCOUNTS, ACCOUNT_COLORS, ACCOUNT_ORDER, GROUPS, PERIOD_LABELS, balances, fmt, forecast,
+  ACCOUNTS, ACCOUNT_COLORS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
   inPeriod, monthlyIncome, periodAt, spent,
 } from '../model';
 import type { PeriodKind } from '../model';
+import type { AccountId } from '../types';
+import type { Privacy } from './Accounts';
+import type { HistoryFilter } from './History';
 import type { Props, Tab } from './props';
 
 const KINDS: PeriodKind[] = ['day', 'week', 'month', 'year'];
-const HIDE_KEY = 'darakhti:hide';
-
-const readHidden = () => {
-  try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; }
-};
-
-export default function Dashboard({ state, onNavigate, onProfile }: Props & {
-  onNavigate: (t: Tab) => void;
+export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, onProfile, onOpenAccount }: Props & Privacy & {
+  onNavigate: (t: Tab, filter?: HistoryFilter) => void;
   onProfile: () => void;
+  onOpenAccount: (id: AccountId) => void;
 }) {
-  const { incomes, expenses, settings } = state;
+  const { incomes, expenses } = state;
   const [kind, setKind] = useState<PeriodKind>('month');
   const [offset, setOffset] = useState(0);
-  const [hidden, setHidden] = useState(readHidden);
-
-  useEffect(() => {
-    try { localStorage.setItem(HIDE_KEY, hidden ? '1' : '0'); } catch { /* ignore */ }
-  }, [hidden]);
 
   const mask = (v: string) => (hidden ? '••••' : v);
 
@@ -54,16 +47,10 @@ export default function Dashboard({ state, onNavigate, onProfile }: Props & {
   const bigSize = spentNow >= 1e7 ? '2.6rem' : spentNow >= 1e5 ? '3.4rem' : '4.4rem';
   const pctSpent = incomeNow > 0 ? Math.min(100, (spentNow / incomeNow) * 100) : spentNow > 0 ? 100 : 0;
 
-  // ----- Тавозуни ҳисобҳо (ҳамаи вақт) -----
-  const bal = balances(incomes, expenses);
-  const outAll = spent(expenses);
+  // ----- Ҳисобҳо -----
+  const bal = balancesOf(state);
   const months = monthlyIncome(incomes);
   const max = Math.max(...months.map(m => m.total), 1);
-
-  const groupTitle = (title: string) =>
-    title === 'Ҳисоби ширкат' ? `${title} · ${settings.company}%`
-    : title === 'Ҳисоби шахсӣ' ? `${title} · ${100 - settings.company}%`
-    : title;
 
   return (
     <>
@@ -104,7 +91,7 @@ export default function Dashboard({ state, onNavigate, onProfile }: Props & {
           <div className="spent-num" style={{ fontSize: bigSize }}>
             {mask(fmt(spentNow))} <small>смн</small>
           </div>
-          <button className="round-btn" onClick={() => setHidden(h => !h)}
+          <button className="round-btn" onClick={onToggleHidden}
             aria-label={hidden ? 'Нишон додани маблағ' : 'Пинҳон кардани маблағ'}>
             {hidden ? <EyeOffIcon /> : <EyeIcon />}
           </button>
@@ -116,7 +103,7 @@ export default function Dashboard({ state, onNavigate, onProfile }: Props & {
         )}
       </section>
 
-      <button className="income-row" onClick={() => onNavigate('income')}>
+      <button className="income-row" onClick={() => onNavigate('history', 'income')}>
         <div className="grow">
           <small>Даромад дар давра</small>
           <b>{mask(fmt(incomeNow))} смн</b>
@@ -140,7 +127,7 @@ export default function Dashboard({ state, onNavigate, onProfile }: Props & {
       <section className="big-card">
         <div className="big-head">
           <h2>Аз рӯи ҳисобҳо</h2>
-          <button className="link-btn" onClick={() => onNavigate('expense')}>Муфассал</button>
+          <button className="link-btn" onClick={() => onNavigate('history', 'expense')}>Муфассал</button>
         </div>
         <Donut segs={segs} label={mask(fmt(spentNow))} sub="смн" />
         {segs.length === 0 ? (
@@ -159,30 +146,22 @@ export default function Dashboard({ state, onNavigate, onProfile }: Props & {
         )}
       </section>
 
-      {GROUPS.map(g => (
-        <section key={g.title}>
-          <h3 className="group-title">{groupTitle(g.title)}</h3>
-          <div className="cells">
-            {g.ids.map(id => {
-              const total = bal[id] + outAll[id];
-              const pct = total > 0 ? Math.min(100, (outAll[id] / total) * 100) : 0;
-              return (
-                <div className="cell" key={id}>
-                  <div className="ic">{ACCOUNTS[id].icon}</div>
-                  <div className="grow">
-                    <div className="r1">
-                      <b>{ACCOUNTS[id].name}</b>
-                      <b className={bal[id] < -0.005 ? 'neg' : ''}>{mask(fmt(bal[id]))}</b>
-                    </div>
-                    <div className="progress"><i style={{ width: `${pct}%` }} className={pct > 80 ? 'warn' : ''} /></div>
-                    <small>Харҷ: {mask(fmt(outAll[id]))} / {mask(fmt(total))}</small>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+      <section>
+        <h3 className="group-title">
+          <span>Ҳисобҳои ман</span>
+          <button className="link-btn sm" onClick={() => onNavigate('accounts')}>Ҳама</button>
+        </h3>
+        <div className="strip">
+          {ACCOUNT_ORDER.map(id => (
+            <button key={id} className="mini-acct" onClick={() => onOpenAccount(id)}
+              style={{ '--c': CARD_COLORS[id] } as CSSProperties}>
+              <span className="ma-ic">{ACCOUNTS[id].icon}</span>
+              <small>{ACCOUNTS[id].name}</small>
+              <b>{mask(fmt(bal[id]))}</b>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section>
         <h3 className="group-title">Афзоиши даромад · 6 моҳ</h3>
