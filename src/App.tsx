@@ -163,7 +163,9 @@ export default function App() {
 
   // Навсозӣ бо свайп аз боло ба поён (дар ҳолати скролли боло)
   const onTouchStart = (e: React.TouchEvent<HTMLElement>) => {
-    touch.current = e.currentTarget.scrollTop <= 0 && !refreshing
+    // Ҳаракатҳое, ки дар дохили варақа (sheet) сар мешаванд, ба навсозии саҳифа дахл надоранд
+    const inSheet = (e.target as Element).closest('.backdrop') !== null;
+    touch.current = !inSheet && e.currentTarget.scrollTop <= 0 && !refreshing
       ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
       : null;
   };

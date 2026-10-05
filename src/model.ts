@@ -445,7 +445,7 @@ const mondayOf = (d: Date) => addDays(d, -((d.getDay() + 6) % 7));
 /**
  * Рӯйхати давраҳо барои варақаи интихоб (навтарин боло):
  * дар боло танҳо ЯК давраи оянда (хира), баъд давраи ҷорӣ (ҷои дуюм), баъд гузаштаҳо.
- * Сол — 2000…; моҳ — моҳҳои соли anchorYear; ҳафта — ҳафтаҳои соли anchorYear;
+ * Сол — 2000…; моҳ — моҳҳои соли anchorYear; ҳафта — ҳафтаҳои моҳи anchorMonth;
  * рӯз — рӯзҳои моҳи anchorMonth. Барои соли/моҳи гузашта танҳо гузаштаҳо нишон дода мешаванд.
  */
 export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: number, now = new Date()): PickItem[] {
@@ -467,8 +467,8 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
   } else if (kind === 'week') {
     all = [];
     const nowMonday = utcDay(mondayOf(now));
-    const end = new Date(anchorYear, 11, 31);
-    for (let s = mondayOf(new Date(anchorYear, 0, 1)); s <= end; s = addDays(s, 7)) {
+    const end = new Date(anchorYear, anchorMonth + 1, 0);
+    for (let s = mondayOf(new Date(anchorYear, anchorMonth, 1)); s <= end; s = addDays(s, 7)) {
       const off = Math.round((utcDay(s) - nowMonday) / (7 * DAY_MS));
       all.push(make(off, periodLabel('week', periodAt('week', off, now))));
     }
@@ -484,7 +484,7 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
 
   const past = all.filter(i => !i.future);
   const inCurrent =
-    kind === 'year' || (kind === 'day' ? anchorYear === ny && anchorMonth === nm : anchorYear === ny);
+    kind === 'year' || (kind === 'month' ? anchorYear === ny : anchorYear === ny && anchorMonth === nm);
   if (!inCurrent) return past;
 
   // Танҳо як давраи оянда (хира) дар боло, то ҳозира дар ҷои дуюм бошад

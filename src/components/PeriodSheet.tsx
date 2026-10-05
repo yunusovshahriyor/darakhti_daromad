@@ -11,7 +11,7 @@ const MONTH_FULL = [
   'Июл', 'Август', 'Сентябр', 'Октябр', 'Ноябр', 'Декабр',
 ];
 
-/** Варақаи интихоби давра бо рӯйхати пурра: сол 2000…, 12 моҳ, ҳамаи ҳафтаҳо, ҳамаи рӯзҳо. */
+/** Варақаи интихоби давра: сол 2000…, 12 моҳи сол, ҳафтаҳои моҳ, рӯзҳои моҳ. */
 export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
   kind: PeriodKind;
   offset: number;
@@ -56,8 +56,10 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
     });
 
   const showStepper = k !== 'year';
-  const stepLabel = k === 'day' ? `${MONTH_FULL[anchor.m]} ${anchor.y}` : String(anchor.y);
-  const step = (d: number) => (k === 'day' ? stepMonth(d) : stepYear(d));
+  // Барои рӯз ва ҳафта — қадами моҳ; барои моҳ — қадами сол
+  const byMonth = k === 'day' || k === 'week';
+  const stepLabel = byMonth ? `${MONTH_FULL[anchor.m]} ${anchor.y}` : String(anchor.y);
+  const step = (d: number) => (byMonth ? stepMonth(d) : stepYear(d));
 
   return (
     <Sheet title="Давраи ҳисобот" onClose={onClose} detents>
@@ -69,7 +71,7 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
           <button className="pn-btn sm" onClick={() => step(-1)} aria-label="Қафо"><BackIcon /></button>
           <b>{stepLabel}</b>
           <button className="pn-btn sm flip" onClick={() => step(1)} aria-label="Пеш"
-            disabled={k === 'day' ? anchor.y * 12 + anchor.m >= maxTotal : anchor.y >= maxYear}>
+            disabled={byMonth ? anchor.y * 12 + anchor.m >= maxTotal : anchor.y >= maxYear}>
             <BackIcon />
           </button>
         </div>
