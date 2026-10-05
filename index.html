@@ -4,33 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Рӯйхати даромад</title>
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="container">
-    <h1>Рӯйхати даромад</h1>
-
-    <form id="form" class="card">
-      <input id="title" type="text" placeholder="Манбаи даромад (масалан, музд)" required>
-      <input id="amount" type="number" min="0" step="0.01" placeholder="Маблағ" required>
-      <input id="date" type="date" required>
-      <button type="submit">Илова кардан</button>
-    </form>
-
-    <section class="card total">
-      Ҷамъи даромад: <strong id="total">0</strong> сомонӣ
-    </section>
-
-    <section class="card">
-      <table>
-        <thead>
-          <tr><th>Сана</th><th>Манба</th><th class="num">Маблағ</th><th></th></tr>
-        </thead>
-        <tbody id="list"></tbody>
-      </table>
-      <p id="empty" class="empty">Ҳанӯз даромад илова нашудааст.</p>
-    </section>
-  </main>
-  <script src="script.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
