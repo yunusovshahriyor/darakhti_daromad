@@ -29,13 +29,17 @@ export default function PayDebtForm({ state, setState, debt, defaultSource = 'de
     const name = debt.title;
     setState(s => ({
       ...s,
-      debts: s.debts.map(x => (x.id === id ? { ...x, paid: x.paid + num } : x)),
+      debts: s.debts.map(x => {
+        if (x.id !== id) return x;
+        const paid = x.paid + num;
+        return paid >= x.amount - 0.005 ? { ...x, paid, paidAt: today() } : { ...x, paid };
+      }),
       expenses: [
         { id: uid(), account: source, title: `Қарз: ${name}`, amount: num, date: today(), debtId: id },
         ...s.expenses,
       ],
     }));
-    onDone(`${fmt(num)} смн пардохт шуд ✓`);
+    onDone(num >= left - 0.005 ? `«${name}» пурра пардохт шуд 🎉` : `${fmt(num)} смн пардохт шуд ✓`);
   };
 
   return (

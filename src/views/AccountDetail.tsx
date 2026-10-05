@@ -9,8 +9,8 @@ import PayDebtForm from '../components/PayDebtForm';
 import Sheet from '../components/Sheet';
 import TransferForm from '../components/TransferForm';
 import {
-  ACCOUNTS, CARD_COLORS, balancesOf, fmt, fundDreams, groupByMonth, hasDebt, ledger, monthTitle,
-  remaining, shareOfIncome, sortDebts, subtitleOf, today, uid,
+  ACCOUNTS, CARD_COLORS, balancesOf, boughtDreams, fmt, fundDreams, groupByMonth, hasDebt, ledger, monthTitle,
+  remaining, shareOfIncome, splitDebts, subtitleOf, today, uid,
 } from '../model';
 import type { AccountId, Debt, Dream } from '../types';
 import type { Privacy } from './Accounts';
@@ -50,16 +50,16 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const mask = (v: string) => (hidden ? '••••' : v);
 
   // ----- Навбат: қарзҳо барои пардохт ё орзуҳо барои харид (як мантиқ) -----
-  const debts = sortDebts(state.debts);
-  const unpaid = debts.filter(d => remaining(d) > 0.005);
+  const { open: unpaid, paid: paidDebts } = splitDebts(state.debts);
+  const boughtList = boughtDreams(state.dreams).filter(d => d.kind === kind);
   const dreamPlan = fundDreams(state.dreams.filter(d => d.kind === kind), bal);
 
   const rows: PlanRow[] = isDebtAccount
-    ? debts.map(d => {
+    ? unpaid.map((d, i) => {
         const left = remaining(d);
         return {
           key: d.id, title: d.title, priority: !!d.priority, total: d.amount, done: d.paid,
-          finished: left <= 0.005, ready: bal >= left - 0.005, rank: unpaid.indexOf(d) + 1,
+          finished: false, ready: bal >= left - 0.005, rank: i + 1,
           open: () => { setPayFor(d); setModal('pay'); },
         };
       })
@@ -236,7 +236,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
             </span>
           </h3>
           {rows.length === 0 ? (
-            <div className="empty small">{isDebtAccount ? 'Қарз нест.' : 'Орзу нест.'}</div>
+            <div className="empty small">{isDebtAccount ? 'Қарзи кушода нест.' : 'Орзуи кушода нест.'}</div>
           ) : (
             <CollapsibleCells>
               {rows.map(r => {
@@ -264,6 +264,46 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
               })}
             </CollapsibleCells>
           )}
+        </section>
+      )}
+
+      {isDebtAccount && paidDebts.length > 0 && (
+        <section>
+          <h3 className="group-title"><span>✅ Пардохтшудаҳо</span><span>{paidDebts.length}</span></h3>
+          <CollapsibleCells>
+            {paidDebts.map(d => (
+              <div className="cell" key={d.id}>
+                <div className="rank sm done">✓</div>
+                <div className="grow">
+                  <div className="r1">
+                    <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
+                    <b className="pos">{mask(fmt(d.amount))}</b>
+                  </div>
+                  <small>Пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
+                </div>
+              </div>
+            ))}
+          </CollapsibleCells>
+        </section>
+      )}
+
+      {isDreamAccount && boughtList.length > 0 && (
+        <section>
+          <h3 className="group-title"><span>✅ Харидшудаҳо</span><span>{boughtList.length}</span></h3>
+          <CollapsibleCells>
+            {boughtList.map(d => (
+              <div className="cell" key={d.id}>
+                <div className="rank sm done">✓</div>
+                <div className="grow">
+                  <div className="r1">
+                    <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
+                    <b className="pos">{mask(fmt(d.paidPrice ?? d.target))}</b>
+                  </div>
+                  <small>Харида шуд{d.boughtAt ? ` · ${d.boughtAt}` : ''}</small>
+                </div>
+              </div>
+            ))}
+          </CollapsibleCells>
         </section>
       )}
 

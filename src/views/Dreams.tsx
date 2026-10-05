@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import BuyDreamForm from '../components/BuyDreamForm';
+import CollapsibleCells from '../components/CollapsibleCells';
 import DreamForm from '../components/DreamForm';
 import Empty from '../components/Empty';
 import Fab from '../components/Fab';
 import { PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { balancesOf, fmt, fundDreams, uid } from '../model';
+import { balancesOf, boughtDreams, fmt, fundDreams, uid } from '../model';
 import type { AccountId, Dream } from '../types';
 import type { Props } from './props';
 
@@ -16,6 +17,7 @@ export default function Dreams({ state, setState }: Props) {
   const [buyFor, setBuyFor] = useState<Dream | null>(null);
 
   const bal = balancesOf(state);
+  const bought = boughtDreams(state.dreams);
 
   const add = (v: { title: string; target: number; kind: Dream['kind']; priority: boolean }) => {
     setState(s => ({ ...s, dreams: [...s.dreams, { id: uid(), ...v }] }));
@@ -72,11 +74,36 @@ export default function Dreams({ state, setState }: Props) {
   return (
     <>
       {state.dreams.length === 0 && <Empty icon="✨" text="Орзуҳои худро илова кунед: тугмаи +" />}
+      {state.dreams.length > 0 && boughtDreams(state.dreams).length === state.dreams.length && (
+        <Empty icon="🎉" text="Ҳамаи орзуҳо харида шуданд! Орзуи нав илова кунед." />
+      )}
       <p className="note order-note">
         Тартиб: аввал орзуҳои ⭐ афзалиятнок, баъд аз рӯи нарх аз арзон ба қимат. Барои харидан орзуро пахш кунед.
       </p>
       {section('big', '🏠 Орзуҳои калон', 'bigDream')}
       {section('small', '✈️ Орзуҳои хурд', 'smallDream')}
+
+      {bought.length > 0 && (
+        <section>
+          <h3 className="group-title"><span>✅ Харидшудаҳо</span><span>{bought.length}</span></h3>
+          <CollapsibleCells>
+            {bought.map(d => (
+              <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
+                <div className="cell">
+                  <div className="rank sm done">✓</div>
+                  <div className="grow">
+                    <div className="r1">
+                      <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
+                      <b className="pos">{fmt(d.paidPrice ?? d.target)}</b>
+                    </div>
+                    <small>{d.kind === 'big' ? '🏠 Калон' : '✈️ Хурд'} · харида шуд{d.boughtAt ? ` · ${d.boughtAt}` : ''}</small>
+                  </div>
+                </div>
+              </SwipeRow>
+            ))}
+          </CollapsibleCells>
+        </section>
+      )}
 
       <Fab onClick={() => setAdding(true)} label="Орзуи нав" />
 

@@ -62,6 +62,20 @@ export function sortDebts(debts: Debt[]): Debt[] {
   });
 }
 
+/** Қарзҳо ба кушода ва пардохтшуда ҷудо мешаванд; пардохтшудаҳо аз нав ба кӯҳна. */
+export function splitDebts(debts: Debt[]) {
+  const open = sortDebts(debts.filter(d => remaining(d) > 0.005));
+  const paid = debts
+    .filter(d => remaining(d) <= 0.005)
+    .sort((a, b) => (b.paidAt ?? '').localeCompare(a.paidAt ?? '') || b.id - a.id);
+  return { open, paid };
+}
+
+/** Орзуҳо: фаъол (ҳанӯз харида нашудааст) ва харидашуда (аз нав ба кӯҳна). */
+export const activeDreams = (dreams: Dream[]) => dreams.filter(d => !d.boughtAt);
+export const boughtDreams = (dreams: Dream[]) =>
+  dreams.filter(d => d.boughtAt).sort((a, b) => (b.boughtAt ?? '').localeCompare(a.boughtAt ?? '') || b.id - a.id);
+
 /** Тартиби харидани орзуҳо: ҳамон қоида — аввал афзалиятнок, баъд арзонтарин. */
 export function sortDreams(dreams: Dream[]): Dream[] {
   return [...dreams].sort((a, b) => {
@@ -82,7 +96,7 @@ export interface FundedDream {
 /** Маблағи ҷамъшуда (тавозуни ҳисоб) ба орзуҳо аз навбат тақсим мешавад. */
 export function fundDreams(dreams: Dream[], pool: number): FundedDream[] {
   let left = Math.max(0, pool);
-  return sortDreams(dreams).map((dream, i) => {
+  return sortDreams(activeDreams(dreams)).map((dream, i) => {
     const funded = Math.min(dream.target, left);
     left -= funded;
     return { dream, funded, ready: funded >= dream.target - 0.005, rank: i + 1 };

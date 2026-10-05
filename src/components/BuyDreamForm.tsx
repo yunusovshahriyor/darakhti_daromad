@@ -28,9 +28,9 @@ export default function BuyDreamForm({ state, setState, dream, defaultSource, on
     const name = dream.title;
     setState(s => ({
       ...s,
-      dreams: s.dreams.filter(d => d.id !== id),
+      dreams: s.dreams.map(d => (d.id === id ? { ...d, boughtAt: today(), paidPrice: num } : d)),
       expenses: [
-        { id: uid(), account: source, title: `Орзу: ${name}`, amount: num, date: today() },
+        { id: uid(), account: source, title: `Орзу: ${name}`, amount: num, date: today(), dreamId: id },
         ...s.expenses,
       ],
     }));

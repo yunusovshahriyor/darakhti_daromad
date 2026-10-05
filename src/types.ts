@@ -30,6 +30,7 @@ export interface Expense {
   amount: number;
   date: string;
   debtId?: number;
+  dreamId?: number;
 }
 
 export interface Debt {
@@ -39,6 +40,8 @@ export interface Debt {
   paid: number;
   /** Қарзи афзалиятнок: аввал пардохт мешавад. */
   priority?: boolean;
+  /** Санаи пардохти пурра. */
+  paidAt?: string;
 }
 
 export interface Dream {
@@ -48,6 +51,9 @@ export interface Dream {
   target: number;
   /** Орзуи афзалиятнок: аввал харида мешавад. */
   priority?: boolean;
+  /** Санаи харид ва нархи воқеӣ: орзуи харидашуда аз рӯйхат намеравад. */
+  boughtAt?: string;
+  paidPrice?: number;
 }
 
 export interface Transfer {

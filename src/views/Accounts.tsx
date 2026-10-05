@@ -52,7 +52,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
     const isDebt = id === 'debt' && debt;
     // Барои ҳисобҳои орзу мақсад — худи орзуҳо (ҷамъи нархи онҳо)
     const dreamKind = id === 'bigDream' ? 'big' : id === 'smallDream' ? 'small' : null;
-    const dreamList = dreamKind ? state.dreams.filter(d => d.kind === dreamKind) : [];
+    const dreamList = dreamKind ? state.dreams.filter(d => d.kind === dreamKind && !d.boughtAt) : [];
     const isDream = dreamList.length > 0;
     const dreamTotal = dreamList.reduce((sum, d) => sum + d.target, 0);
     const dreamReady = isDream ? fundDreams(dreamList, bal[id]).filter(f => f.ready).length : 0;

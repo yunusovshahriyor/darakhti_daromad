@@ -45,8 +45,19 @@ export default function History({ state, setState, filter, onFilter }: Props & {
         ...s,
         expenses: s.expenses.filter(x => x.id !== id),
         debts: e?.debtId
-          ? s.debts.map(d => (d.id === e.debtId ? { ...d, paid: Math.max(0, d.paid - e.amount) } : d))
+          ? s.debts.map(d => {
+              if (d.id !== e.debtId) return d;
+              const { paidAt: _drop, ...rest } = d;
+              return { ...rest, paid: Math.max(0, d.paid - e.amount) };
+            })
           : s.debts,
+        dreams: e?.dreamId
+          ? s.dreams.map(d => {
+              if (d.id !== e.dreamId) return d;
+              const { boughtAt: _a, paidPrice: _b, ...rest } = d;
+              return rest;
+            })
+          : s.dreams,
       };
     });
 
