@@ -63,9 +63,6 @@ export default function Debts({ state, setState }: Props) {
               <div className="empty small">🎉 Ҳамаи қарзҳо пардохт шудаанд!</div>
             ) : (
               <>
-                <p className="note order-note">
-                  Тартиб: аввал қарзҳои ⭐ афзалиятнок, баъд аз рӯи миқдор аз хурд ба калон.
-                </p>
                 <div className="cells">
                   {open.map((d, i) => {
                     const left = remaining(d);

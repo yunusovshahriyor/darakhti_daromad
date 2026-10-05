@@ -71,3 +71,7 @@ export const PencilIcon = () => (
 export const RefreshIcon = () => (
   <Svg size={22}><path d="M21 12a9 9 0 1 1-2.6-6.4" /><polyline points="21 3 21 9 15 9" /></Svg>
 );
+
+export const InfoIcon = () => (
+  <Svg size={22}><circle cx="12" cy="12" r="9" /><line x1="12" y1="11" x2="12" y2="16.5" /><circle cx="12" cy="7.8" r=".6" fill="currentColor" /></Svg>
+);

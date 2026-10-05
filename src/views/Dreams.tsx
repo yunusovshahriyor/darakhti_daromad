@@ -114,9 +114,6 @@ export default function Dreams({ state, setState }: Props) {
 
   return (
     <>
-      <p className="note order-note">
-        Тартиб: аввал орзуҳои ⭐ афзалиятнок, баъд аз рӯи нарх аз арзон ба қимат. Барои харидан орзуро пахш кунед.
-      </p>
       {block('big', '🏠 Орзуҳои калон', 'bigDream')}
       {block('small', '✈️ Орзуҳои хурд', 'smallDream')}
 

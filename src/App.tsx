@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
+import InfoSheet from './components/InfoSheet';
 import {
-  BackIcon, GridIcon, ListIcon, MoreIcon, PlusIcon, RefreshIcon, WalletIcon,
+  BackIcon, GridIcon, InfoIcon, ListIcon, MoreIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, balancesOf } from './model';
@@ -79,6 +80,7 @@ export default function App() {
   const reuseSub = useRef(layerOnBoot && nav0.sub !== null);
   const reuseAcct = useRef(layerOnBoot && nav0.acct !== null);
   const [adding, setAdding] = useState(false);
+  const [info, setInfo] = useState(false);
   const [toast, setToast] = useState('');
   const [hidden, setHidden] = useState(readHidden);
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
@@ -173,6 +175,7 @@ export default function App() {
     }
   };
 
+  const infoKind = !acct && (sub === 'debts' || sub === 'dreams') ? sub : null;
   const home = tab === 'home' && !sub && !acct;
   const title = acct ? ACCOUNTS[acct].name : sub ? SUB_TITLES[sub] : TITLES[tab];
   const props = { state, setState };
@@ -218,6 +221,11 @@ export default function App() {
             </button>
           )}
           <h1>{title}</h1>
+          {infoKind && (
+            <button className="icon-btn info-btn" onClick={() => setInfo(true)} aria-label="Маълумот">
+              <InfoIcon />
+            </button>
+          )}
         </header>
       )}
 
@@ -242,6 +250,8 @@ export default function App() {
         </button>
         {RIGHT.map(tabButton)}
       </nav>
+
+      {info && infoKind && <InfoSheet kind={infoKind} onClose={() => setInfo(false)} />}
 
       {adding && (
         <AddSheet {...props} onClose={() => setAdding(false)} onDone={setToast} />
