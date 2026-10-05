@@ -1,8 +1,7 @@
 import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
 import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
-import SegTabs from '../components/SegTabs';
-import Sheet from '../components/Sheet';
+import PeriodSheet from '../components/PeriodSheet';
 import {
   ACCOUNTS, ACCOUNT_COLORS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
   hiddenAccounts, inPeriod, monthlyIncome, periodAt, periodLabel, spent,
@@ -20,7 +19,7 @@ const PERIOD_KEY = 'darakhti:period';
 function readPeriod(): { kind: PeriodKind; offset: number } {
   try {
     const r = JSON.parse(localStorage.getItem(PERIOD_KEY) ?? 'null') as { kind?: PeriodKind; offset?: number } | null;
-    if (r && r.kind && KINDS.includes(r.kind) && Number.isInteger(r.offset) && r.offset! >= -120 && r.offset! <= 24) {
+    if (r && r.kind && KINDS.includes(r.kind) && Number.isInteger(r.offset) && Math.abs(r.offset!) <= 20000) {
       return { kind: r.kind, offset: r.offset! };
     }
   } catch { /* ignore */ }
@@ -46,7 +45,6 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
   // ----- Давраи интихобшуда -----
   const period = periodAt(kind, offset);
   const prevPeriod = periodAt(kind, offset - 1);
-  const pickList = [1, 0, -1, -2, -3, -4, -5, -6].map(o => ({ off: o, label: periodLabel(kind, periodAt(kind, o)) }));
 
   const inRange = <T extends { date: string }>(items: T[], p = period) => items.filter(i => inPeriod(i.date, p));
   const periodExpenses = inRange(expenses);
@@ -194,21 +192,8 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
       </section>
 
       {picker && (
-        <Sheet title="Давраи ҳисобот" onClose={() => setPicker(false)}>
-          <SegTabs value={kind}
-            onChange={id => { setKind(id as PeriodKind); setOffset(0); }}
-            tabs={KINDS.map(k => ({ id: k, label: PERIOD_LABELS[k].name }))} />
-          <div className="period-list">
-            {pickList.map(it => (
-              <button key={it.off} className={it.off === offset ? 'on' : ''}
-                onClick={() => { setOffset(it.off); setPicker(false); }}>
-                <span>{it.label}</span>
-                {it.off === 0 && <em>Ҳозир</em>}
-                {it.off > 0 && <em className="soon">Оянда</em>}
-              </button>
-            ))}
-          </div>
-        </Sheet>
+        <PeriodSheet kind={kind} offset={offset} onClose={() => setPicker(false)}
+          onSelect={(k, off) => { setKind(k); setOffset(off); setPicker(false); }} />
       )}
     </>
   );

@@ -713,3 +713,9 @@ input[type='date'] { min-height: 50px; }
 .spent-num small { font-size: 1.1rem; font-weight: 700; color: var(--muted); letter-spacing: 0; }
 .round-btn { width: 46px; height: 46px; }
 .income-row { margin-top: 8px; padding: 14px 4px 18px; }
+
+/* ---------- Қадам барои сол / моҳ дар варақаи интихоби давра ---------- */
+.anchor-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 6px 2px; }
+.anchor-nav b { font-size: 1.02rem; }
+.pn-btn.sm { width: 36px; height: 36px; }
+.period-list button { min-height: 46px; }

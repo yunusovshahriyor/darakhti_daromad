@@ -425,3 +425,59 @@ export function periodLabel(kind: PeriodKind, p: Period): string {
     ? `${d1}–${d2} ${MONTHS[m1 - 1]} ${y1}`
     : `${d1} ${MONTHS[m1 - 1]} – ${d2} ${MONTHS[m2 - 1]}`;
 }
+
+// ---------- Рӯйхати пурраи давраҳо барои варақаи интихоб ----------
+
+export const MIN_YEAR = 2000;
+
+export interface PickItem {
+  off: number;
+  start: string;
+  label: string;
+  now: boolean;
+  future: boolean;
+}
+
+const utcDay = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+const DAY_MS = 86400000;
+const mondayOf = (d: Date) => addDays(d, -((d.getDay() + 6) % 7));
+
+/**
+ * Рӯйхати давраҳо: сол — 2000…соли оянда; моҳ — 12 моҳи соли anchorYear;
+ * ҳафта — ҳамаи ҳафтаҳои соли anchorYear; рӯз — ҳамаи рӯзҳои моҳи anchorMonth.
+ */
+export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: number, now = new Date()): PickItem[] {
+  const ny = now.getFullYear();
+  const nm = now.getMonth();
+  const today = iso(now);
+  const make = (off: number, label: string): PickItem => {
+    const p = periodAt(kind, off, now);
+    return { off, start: p.start, label, now: off === 0, future: p.start > today };
+  };
+
+  if (kind === 'year') {
+    const out: PickItem[] = [];
+    for (let y = ny + 1; y >= MIN_YEAR; y--) out.push(make(y - ny, String(y)));
+    return out;
+  }
+  if (kind === 'month') {
+    return Array.from({ length: 12 }, (_, m) =>
+      make((anchorYear - ny) * 12 + (m - nm), `${MONTH_NAMES[m]} ${anchorYear}`));
+  }
+  if (kind === 'week') {
+    const out: PickItem[] = [];
+    const nowMonday = utcDay(mondayOf(now));
+    const end = new Date(anchorYear, 11, 31);
+    for (let s = mondayOf(new Date(anchorYear, 0, 1)); s <= end; s = addDays(s, 7)) {
+      const off = Math.round((utcDay(s) - nowMonday) / (7 * DAY_MS));
+      out.push(make(off, periodLabel('week', periodAt('week', off, now))));
+    }
+    return out;
+  }
+  const days = new Date(anchorYear, anchorMonth + 1, 0).getDate();
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(anchorYear, anchorMonth, i + 1);
+    const off = Math.round((utcDay(d) - utcDay(now)) / DAY_MS);
+    return make(off, `${i + 1} ${MONTHS[anchorMonth]} · ${WEEKDAYS[d.getDay()]}`);
+  });
+}
