@@ -5,7 +5,7 @@ import {
   BackIcon, GridIcon, InfoIcon, ListIcon, MoreIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
-import { ACCOUNTS, ACCOUNT_ORDER, balancesOf } from './model';
+import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, syncCatalog } from './model';
 import { loadState, saveState } from './storage';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
@@ -77,6 +77,7 @@ const readHidden = () => {
 
 export default function App() {
   const [state, setState] = useState(loadState);
+  syncCatalog(state);
   const [nav0] = useState(readNav);
   const [tab, setTab] = useState<Tab>(nav0.tab);
   const [sub, setSub] = useState<Sub | null>(nav0.sub);
@@ -115,7 +116,7 @@ export default function App() {
     const prev = prevBal.current;
     prevBal.current = bal;
     if (!prev) return;
-    for (const id of ACCOUNT_ORDER) {
+    for (const id of ALL_IDS) {
       const goal = state.goals[id];
       if (goal && prev[id] < goal && bal[id] >= goal) {
         setToast(`🎉 «${ACCOUNTS[id].name}» ба мақсад расид!`);
@@ -210,7 +211,7 @@ export default function App() {
     }
     if (sub === 'dreams') return <Dreams {...props} />;
     if (sub === 'debts') return <Debts {...props} />;
-    if (sub === 'settings') return <SettingsView {...props} />;
+    if (sub === 'settings') return <SettingsView {...props} onToast={setToast} />;
     if (tab === 'home') {
       return (
         <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => setSub('settings')}

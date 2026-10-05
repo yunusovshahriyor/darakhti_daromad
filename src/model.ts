@@ -1,37 +1,4 @@
-import type { AccountId, Alloc, Debt, Dream, Expense, Income, Settings, State, Transfer } from './types';
-
-export const DEFAULT_SETTINGS: Settings = {
-  charity: 2.5,
-  parents: 10,
-  future: 10,
-  fun: 10,
-  company: 55,
-  capital: 80,
-  bigDream: 50,
-};
-
-export const ACCOUNT_ORDER: AccountId[] = [
-  'charity', 'parents', 'future', 'fun', 'debt',
-  'capital', 'bigDream', 'smallDream', 'living',
-];
-
-export const ACCOUNTS: Record<AccountId, { name: string; icon: string }> = {
-  charity: { name: 'Садақа', icon: '🤲' },
-  parents: { name: 'Волидон', icon: '👨‍👩‍👧' },
-  future: { name: 'Барои оянда', icon: '🌱' },
-  fun: { name: 'Вақтхушӣ', icon: '🎉' },
-  debt: { name: 'Пардохти қарз', icon: '💳' },
-  capital: { name: 'Сармоя', icon: '📈' },
-  bigDream: { name: 'Орзуи калон', icon: '🏠' },
-  smallDream: { name: 'Орзуи хурд', icon: '✈️' },
-  living: { name: 'Хароҷоти зиндагӣ', icon: '🛒' },
-};
-
-export const GROUPS: { title: string; ids: AccountId[] }[] = [
-  { title: 'Аз даромади умумӣ', ids: ['charity', 'parents', 'future', 'fun', 'debt'] },
-  { title: 'Ҳисоби ширкат', ids: ['capital', 'bigDream', 'smallDream'] },
-  { title: 'Ҳисоби шахсӣ', ids: ['living'] },
-];
+import type { AccountDef, AccountId, Alloc, Debt, DistNode, Dream, Expense, Income, Settings, State, Transfer } from './types';
 
 export const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
 
@@ -41,7 +8,7 @@ export const fmt = (n: number) =>
   n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
 
 export const emptyAlloc = (): Alloc =>
-  Object.fromEntries(ACCOUNT_ORDER.map(id => [id, 0])) as Alloc;
+  Object.fromEntries(ALL_IDS.map(id => [id, 0])) as Alloc;
 
 export const remaining = (d: Debt) => Math.max(0, d.amount - d.paid);
 
@@ -106,45 +73,32 @@ export function fundDreams(dreams: Dream[], pool: number): FundedDream[] {
 export const hasDebt = (debts: Debt[]) => debts.some(d => remaining(d) > 0.005);
 
 /**
- * Тақсими даромад:
- * 1. Аз даромади умумӣ: садақа, волидон, оянда, вақтхушӣ (агар қарз бошад — ба пардохти қарз).
- * 2. Бақия — даромади моҳона (100%): ширкат / шахсӣ.
- * 3. Ширкат: сармоя / орзу; орзу: калон / хурд.
+ * Тақсими даромад аз рӯи дарахт: ҳар гурӯҳ маблағро байни фарзандонаш аз рӯи фоиз тақсим мекунад.
+ * Агар қарз бошад, ҳиссаи «Вақтхушӣ» ба «Пардохти қарз» меравад.
  */
-export function allocate(amount: number, s: Settings, debt: boolean): Alloc {
-  const p = (x: number) => (amount * x) / 100;
-  const charity = p(s.charity);
-  const parents = p(s.parents);
-  const future = p(s.future);
-  const funShare = p(s.fun);
-
-  const monthly = Math.max(0, amount - charity - parents - future - funShare);
-  const company = (monthly * s.company) / 100;
-  const living = monthly - company;
-  const capital = (company * s.capital) / 100;
-  const dream = company - capital;
-  const bigDream = (dream * s.bigDream) / 100;
-
-  return {
-    charity,
-    parents,
-    future,
-    fun: debt ? 0 : funShare,
-    debt: debt ? funShare : 0,
-    capital,
-    bigDream,
-    smallDream: dream - bigDream,
-    living,
+export function allocate(amount: number, tree: DistNode, debt: boolean): Alloc {
+  const out = emptyAlloc();
+  const walk = (n: DistNode, value: number) => {
+    if (n.type === 'account') {
+      const target = debt && n.accountId === 'fun' ? 'debt' : n.accountId;
+      out[target] = (out[target] ?? 0) + value;
+      return;
+    }
+    const sum = n.children.reduce((t, c) => t + c.percent, 0);
+    if (sum <= 0) return;
+    for (const c of n.children) walk(c, (value * c.percent) / sum);
   };
+  walk(tree, amount);
+  return out;
 }
 
 export function balances(incomes: Income[], expenses: Expense[], transfers: Transfer[] = []): Alloc {
   const b = emptyAlloc();
-  for (const i of incomes) for (const id of ACCOUNT_ORDER) b[id] += i.alloc[id] ?? 0;
-  for (const e of expenses) b[e.account] -= e.amount;
+  for (const i of incomes) for (const [id, v] of Object.entries(i.alloc)) b[id] = (b[id] ?? 0) + v;
+  for (const e of expenses) b[e.account] = (b[e.account] ?? 0) - e.amount;
   for (const t of transfers) {
-    b[t.from] -= t.amount;
-    b[t.to] += t.amount;
+    b[t.from] = (b[t.from] ?? 0) - t.amount;
+    b[t.to] = (b[t.to] ?? 0) + t.amount;
   }
   return b;
 }
@@ -160,7 +114,7 @@ export const hiddenAccounts = (s: State): AccountId[] =>
 
 export function spent(expenses: Expense[]): Alloc {
   const b = emptyAlloc();
-  for (const e of expenses) b[e.account] += e.amount;
+  for (const e of expenses) b[e.account] = (b[e.account] ?? 0) + e.amount;
   return b;
 }
 
@@ -260,24 +214,7 @@ export const PERIOD_LABELS: Record<PeriodKind, { name: string; prev: string; for
   year: { name: 'Сол', prev: 'соли гузашта', forecast: 'Пешгӯӣ барои сол' },
 };
 
-export const ACCOUNT_COLORS: Record<AccountId, string> = {
-  charity: '#e0a43a',
-  parents: '#d7728f',
-  future: '#4fa89d',
-  fun: '#9b7bd4',
-  debt: '#d9594c',
-  capital: '#2f7fb5',
-  bigDream: '#3f9b6b',
-  smallDream: '#7cc4e8',
-  living: '#5b83ac',
-};
-
-
 // ---------- Ҳисобҳо мисли барномаи бонкӣ ----------
-
-export const SAVING_IDS: AccountId[] = ['capital', 'future', 'bigDream', 'smallDream'];
-export const SPEND_IDS: AccountId[] = ['living', 'fun', 'debt'];
-export const GIVE_IDS: AccountId[] = ['charity', 'parents'];
 
 export interface AccountGroup {
   key: string;
@@ -285,19 +222,6 @@ export interface AccountGroup {
   icon: string;
   items: (AccountId | AccountGroup)[];
 }
-
-/** Дарахти ҳисобҳо мувофиқи схема: умумӣ → ширкат (сармоя, орзу → калон/хурд) → шахсӣ. */
-export const ACCOUNT_TREE: AccountGroup[] = [
-  { key: 'general', title: 'Аз даромади умумӣ', icon: '🧾', items: ['charity', 'parents', 'future', 'fun', 'debt'] },
-  {
-    key: 'company', title: 'Ҳисоби ширкат', icon: '🏢',
-    items: [
-      'capital',
-      { key: 'dream', title: 'Орзу', icon: '✨', items: ['bigDream', 'smallDream'] },
-    ],
-  },
-  { key: 'personal', title: 'Ҳисоби шахсӣ', icon: '👤', items: ['living'] },
-];
 
 export const leavesOf = (g: AccountGroup): AccountId[] =>
   g.items.flatMap(i => (typeof i === 'string' ? [i] : leavesOf(i)));
@@ -315,62 +239,35 @@ export function pathOf(id: AccountId, groups: AccountGroup[] = ACCOUNT_TREE): st
   return [];
 }
 
-/** Тавзеҳи гурӯҳ: чанд фоиз аз кадом база. */
-export function groupNote(key: string, s: Settings): string {
-  const n = (v: number) => fmt(Math.round(v * 100) / 100);
-  switch (key) {
-    case 'general': return `${n(s.charity + s.parents + s.future + s.fun)}% аз даромади умумӣ`;
-    case 'company': return `${n(s.company)}% аз даромади моҳона`;
-    case 'personal': return `${n(100 - s.company)}% аз даромади моҳона`;
-    case 'dream': return `${n(100 - s.capital)}% аз ҳисоби ширкат`;
-    default: return '';
-  }
-}
+/** Тавзеҳи гурӯҳ: чанд фоиз аз кадом база (аз дарахт ҳисоб мешавад). */
+export const groupNote = (key: string): string => GROUP_NOTES[key] ?? '';
 
 /**
  * Зерном: аз куҷо ва чанд фоиз. Агар тавзеҳ худи гурӯҳро аллакай дарбар гирад,
- * номи гурӯҳ такрор намешавад («10% аз даромади умумӣ»), вагарна роҳ илова мешавад
- * («Ҳисоби шахсӣ · 45% аз даромади моҳона»).
+ * номи гурӯҳ такрор намешавад («10% аз даромади умумӣ»), вагарна роҳ илова мешавад.
  */
-export function subtitleOf(id: AccountId, s: Settings, debt: boolean): string {
-  const hint = leafHint(id, s, debt);
+export function subtitleOf(id: AccountId, debt: boolean): string {
+  const hint = leafHint(id, debt);
   const path = pathOf(id);
   if (path.length && hint.toLowerCase().includes(path[path.length - 1].toLowerCase())) path.pop();
   return [...path, hint].join(' · ');
 }
 
-/** Тавзеҳи ҳисоб нисбат ба гурӯҳи худаш. */
-export function leafHint(id: AccountId, s: Settings, debt: boolean): string {
+/** Тавзеҳи ҳисоб нисбат ба гурӯҳи худаш: «80% аз ҳисоби ширкат». */
+export function leafHint(id: AccountId, debt: boolean): string {
+  const info = LEAF_INFO[id];
   const n = (v: number) => fmt(Math.round(v * 100) / 100);
-  switch (id) {
-    case 'charity': return `${n(s.charity)}% аз даромади умумӣ`;
-    case 'parents': return `${n(s.parents)}% аз даромади умумӣ`;
-    case 'future': return `${n(s.future)}% аз даромади умумӣ`;
-    case 'fun': return debt ? 'Ҳангоми қарз пур намешавад' : `${n(s.fun)}% аз даромади умумӣ`;
-    case 'debt': return debt ? `${n(s.fun)}% аз даромади умумӣ` : 'Ҳангоми қарз пур мешавад';
-    case 'capital': return `${n(s.capital)}% аз ҳисоби ширкат`;
-    case 'bigDream': return `${n(s.bigDream)}% аз орзу`;
-    case 'smallDream': return `${n(100 - s.bigDream)}% аз орзу`;
-    case 'living': return `${n(100 - s.company)}% аз даромади моҳона`;
+  if (id === 'fun' && debt) return 'Ҳангоми қарз пур намешавад';
+  if (id === 'debt') {
+    const f = LEAF_INFO.fun;
+    return debt && f ? `${n(f.percent)}% аз ${f.parent}` : 'Ҳангоми қарз пур мешавад';
   }
+  return info ? `${n(info.percent)}% аз ${info.parent}` : 'Бе фоизи худкор';
 }
 
-/** Рангҳои корт (аз ранги диаграмма торик, то матни сафед хубтар хонда шавад). */
-export const CARD_COLORS: Record<AccountId, string> = {
-  charity: '#b7791f',
-  parents: '#b24a6c',
-  future: '#2f857b',
-  fun: '#7a5bb8',
-  debt: '#b3453b',
-  capital: '#1f6fa3',
-  bigDream: '#2f7d55',
-  smallDream: '#2f8fb5',
-  living: '#46688f',
-};
-
-/** Ҳиссаи ҳисоб аз ҳар 100 сомонии даромад (бо танзимоти ҳозира). */
-export const shareOfIncome = (id: AccountId, s: Settings, debt: boolean) =>
-  allocate(100, s, debt)[id];
+/** Ҳиссаи ҳисоб аз ҳар 100 сомонии даромад (бо дарахти ҳозира). */
+export const shareOfIncome = (id: AccountId, tree: DistNode, debt: boolean) =>
+  allocate(100, tree, debt)[id] ?? 0;
 
 export interface LedgerEntry {
   key: string;
@@ -496,3 +393,266 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
     : periodLabel(kind, next);
   return [make(1, nextLabel), ...past];
 }
+
+// ======================= Ҳисобҳо ва дарахти тақсим =======================
+
+/** Ҳисобҳои пешфарз. */
+export const DEFAULT_ACCOUNTS: AccountDef[] = [
+  { id: 'charity', name: 'Садақа', icon: '🤲', color: '#b7791f' },
+  { id: 'parents', name: 'Волидон', icon: '👨‍👩‍👧', color: '#b24a6c' },
+  { id: 'future', name: 'Барои оянда', icon: '🌱', color: '#2f857b', saving: true },
+  { id: 'fun', name: 'Вақтхушӣ', icon: '🎉', color: '#7a5bb8' },
+  { id: 'debt', name: 'Пардохти қарз', icon: '💳', color: '#b3453b' },
+  { id: 'capital', name: 'Сармоя', icon: '📈', color: '#1f6fa3', saving: true },
+  { id: 'bigDream', name: 'Орзуи калон', icon: '🏠', color: '#2f7d55', saving: true },
+  { id: 'smallDream', name: 'Орзуи хурд', icon: '✈️', color: '#2f8fb5', saving: true },
+  { id: 'living', name: 'Хароҷоти зиндагӣ', icon: '🛒', color: '#46688f' },
+];
+
+/** Ҳисобҳое, ки бо хусусиятҳои барнома пайваст аст ва нест намешаванд (таҳрир мешаванд). */
+export const PROTECTED_IDS: AccountId[] = ['debt', 'bigDream', 'smallDream', 'fun'];
+
+const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
+const round4 = (v: number) => Math.round(v * 10000) / 10000;
+
+/** Фоизи охирини ҳар гурӯҳ — боқимонда: ҷамъ ҳамеша 100% мешавад. */
+export function normalizeTree(root: DistNode): DistNode {
+  const t = clone(root);
+  const walk = (n: DistNode) => {
+    if (n.type !== 'group' || n.children.length === 0) return;
+    const last = n.children.length - 1;
+    let sum = 0;
+    for (let i = 0; i < last; i++) sum += n.children[i].percent;
+    n.children[last].percent = round4(100 - sum);
+    n.children.forEach(walk);
+  };
+  walk(t);
+  return t;
+}
+
+/** Хато, агар ҷамъи фоизҳо дар ягон гурӯҳ аз 100% зиёд шавад. */
+export function treeError(root: DistNode): string | null {
+  let err: string | null = null;
+  const walk = (n: DistNode) => {
+    if (n.type !== 'group' || err) return;
+    const last = n.children[n.children.length - 1];
+    if (last && last.percent < -0.0001) err = `Ҷамъи фоизҳо дар «${n.title}» аз 100% зиёд мешавад.`;
+    n.children.forEach(walk);
+  };
+  walk(root);
+  return err;
+}
+
+export function findNode(root: DistNode, id: string): { node: DistNode; parent: DistNode | null } | null {
+  const walk = (n: DistNode, parent: DistNode | null): { node: DistNode; parent: DistNode | null } | null => {
+    if (n.id === id) return { node: n, parent };
+    if (n.type === 'group') {
+      for (const c of n.children) {
+        const r = walk(c, n);
+        if (r) return r;
+      }
+    }
+    return null;
+  };
+  return walk(root, null);
+}
+
+export function findAccountNode(root: DistNode, accountId: AccountId) {
+  const walk = (n: DistNode, parent: DistNode | null): { node: DistNode; parent: DistNode | null } | null => {
+    if (n.type === 'account' && n.accountId === accountId) return { node: n, parent };
+    if (n.type === 'group') {
+      for (const c of n.children) {
+        const r = walk(c, n);
+        if (r) return r;
+      }
+    }
+    return null;
+  };
+  return walk(root, null);
+}
+
+/** Охирин фарзанди гурӯҳ — боқимонда аст ва фоизи он худкор ҳисоб мешавад. */
+export const isRemainderNode = (root: DistNode, id: string) => {
+  const f = findNode(root, id);
+  if (!f?.parent || f.parent.type !== 'group') return false;
+  return f.parent.children[f.parent.children.length - 1].id === id;
+};
+
+export function setNodePercent(root: DistNode, id: string, percent: number): DistNode {
+  const t = clone(root);
+  const f = findNode(t, id);
+  if (f) f.node.percent = percent;
+  return normalizeTree(t);
+}
+
+export function patchGroup(root: DistNode, id: string, patch: { title?: string; icon?: string }): DistNode {
+  const t = clone(root);
+  const f = findNode(t, id);
+  if (f && f.node.type === 'group') {
+    if (patch.title !== undefined) f.node.title = patch.title;
+    if (patch.icon !== undefined) f.node.icon = patch.icon;
+  }
+  return t;
+}
+
+/** Ҳисоби нав пеш аз боқимонда (охирин) илова мешавад. */
+export function addAccountNode(root: DistNode, parentId: string, accountId: AccountId, percent: number): DistNode {
+  const t = clone(root);
+  const f = findNode(t, parentId);
+  if (f && f.node.type === 'group') {
+    const node: DistNode = { id: `n_${accountId}`, type: 'account', accountId, percent };
+    const at = Math.max(0, f.node.children.length - 1);
+    f.node.children.splice(at, 0, node);
+  }
+  return normalizeTree(t);
+}
+
+export function removeAccountNode(root: DistNode, accountId: AccountId): DistNode {
+  const t = clone(root);
+  const f = findAccountNode(t, accountId);
+  if (f?.parent && f.parent.type === 'group') {
+    f.parent.children = f.parent.children.filter(c => c.id !== f.node.id);
+  }
+  return normalizeTree(t);
+}
+
+/** Ҳиссаи воқеии гиреҳ аз ҳар 100 сомони даромад. */
+export function effectiveShareNode(root: DistNode, id: string): number {
+  let result = 0;
+  const walk = (n: DistNode, share: number): boolean => {
+    if (n.id === id) { result = share; return true; }
+    if (n.type === 'group') {
+      for (const c of n.children) if (walk(c, (share * c.percent) / 100)) return true;
+    }
+    return false;
+  };
+  walk(root, 100);
+  return result;
+}
+
+/** Рӯйхати гурӯҳҳо барои интихоби «волид» ҳангоми иловаи ҳисоб. */
+export function groupOptions(root: DistNode): { id: string; label: string }[] {
+  const out: { id: string; label: string }[] = [];
+  const walk = (n: DistNode, trail: string[]) => {
+    if (n.type !== 'group') return;
+    const t = [...trail, n.title];
+    out.push({ id: n.id, label: t.join(' › ') });
+    n.children.forEach(c => walk(c, t));
+  };
+  walk(root, []);
+  return out;
+}
+
+/** Дарахти пешфарз (аз фоизҳои версияи кӯҳна, агар бошанд). */
+export function defaultTree(s: Settings = DEFAULT_SETTINGS): DistNode {
+  const acct = (id: AccountId, percent: number): DistNode => ({ id: `n_${id}`, type: 'account', accountId: id, percent });
+  const grp = (id: string, title: string, icon: string, percent: number, children: DistNode[]): DistNode =>
+    ({ id, type: 'group', title, icon, percent, children });
+  return normalizeTree(
+    grp('root', 'Даромади умумӣ', '🧾', 100, [
+      acct('charity', s.charity),
+      acct('parents', s.parents),
+      acct('future', s.future),
+      acct('fun', s.fun),
+      grp('monthly', 'Даромади моҳона', '🗓️', 0, [
+        grp('company', 'Ҳисоби ширкат', '🏢', s.company, [
+          acct('capital', s.capital),
+          grp('dream', 'Орзу', '✨', 0, [acct('bigDream', s.bigDream), acct('smallDream', 0)]),
+        ]),
+        grp('personal', 'Ҳисоби шахсӣ', '👤', 0, [acct('living', 100)]),
+      ]),
+    ]),
+  );
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  charity: 2.5,
+  parents: 10,
+  future: 10,
+  fun: 10,
+  company: 55,
+  capital: 80,
+  bigDream: 50,
+};
+
+// ----- Рӯйхатҳои зинда (аз ҳолати барнома пур мешаванд) -----
+
+export const ACCOUNTS: Record<AccountId, { name: string; icon: string }> = {};
+export const CARD_COLORS: Record<AccountId, string> = {};
+export const ACCOUNT_ORDER: AccountId[] = [];
+export const ALL_IDS: AccountId[] = [];
+export const SAVING_IDS: AccountId[] = [];
+export const ACCOUNT_TREE: AccountGroup[] = [];
+const GROUP_NOTES: Record<string, string> = {};
+const LEAF_INFO: Record<AccountId, { percent: number; parent: string }> = {};
+
+/** Рӯйхатҳои зиндаро аз ҳолати ҷорӣ нав мекунад (дар болои render-и барнома даъват мешавад). */
+export function syncCatalog(s: Pick<State, 'accounts' | 'tree'>) {
+  for (const o of [ACCOUNTS, CARD_COLORS, GROUP_NOTES, LEAF_INFO] as Record<string, unknown>[]) {
+    for (const k of Object.keys(o)) delete o[k];
+  }
+  ACCOUNT_ORDER.length = 0;
+  ALL_IDS.length = 0;
+  SAVING_IDS.length = 0;
+  ACCOUNT_TREE.length = 0;
+
+  for (const a of s.accounts) {
+    ACCOUNTS[a.id] = { name: a.name, icon: a.icon };
+    CARD_COLORS[a.id] = a.color;
+    ALL_IDS.push(a.id);
+  }
+  const active = (id: AccountId) => s.accounts.some(a => a.id === id && !a.archived);
+  const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
+
+  const convert = (g: Extract<DistNode, { type: 'group' }>): AccountGroup => ({
+    key: g.id,
+    title: g.title,
+    icon: g.icon,
+    items: g.children.flatMap((c): (AccountId | AccountGroup)[] =>
+      c.type === 'account' ? (active(c.accountId) ? [c.accountId] : []) : [convert(c)]),
+  });
+
+  const noteWalk = (g: Extract<DistNode, { type: 'group' }>, parentTitle: string) => {
+    GROUP_NOTES[g.id] = `${n2(g.percent)}% аз ${parentTitle}`;
+    for (const c of g.children) {
+      if (c.type === 'group') noteWalk(c, g.title.toLowerCase());
+      else LEAF_INFO[c.accountId] = { percent: c.percent, parent: g.title.toLowerCase() };
+    }
+  };
+
+  const root = s.tree;
+  if (root.type === 'group') {
+    const general: AccountGroup['items'] = [];
+    const groups: AccountGroup[] = [];
+    let generalSum = 0;
+    for (const c of root.children) {
+      if (c.type === 'account') {
+        generalSum += c.percent;
+        LEAF_INFO[c.accountId] = { percent: c.percent, parent: root.title.toLowerCase() };
+        if (active(c.accountId)) general.push(c.accountId);
+      } else if (c.id === 'monthly') {
+        GROUP_NOTES[c.id] = `${n2(c.percent)}% аз ${root.title.toLowerCase()}`;
+        for (const g of c.children) {
+          if (g.type === 'group') {
+            noteWalk(g, c.title.toLowerCase());
+            groups.push(convert(g));
+          } else {
+            LEAF_INFO[g.accountId] = { percent: g.percent, parent: c.title.toLowerCase() };
+            if (active(g.accountId)) general.push(g.accountId);
+          }
+        }
+      } else {
+        noteWalk(c, root.title.toLowerCase());
+        groups.push(convert(c));
+      }
+    }
+    if (active('debt') && !general.includes('debt')) general.push('debt');
+    GROUP_NOTES.general = `${n2(generalSum)}% аз ${root.title.toLowerCase()}`;
+    ACCOUNT_TREE.push({ key: 'general', title: 'Аз даромади умумӣ', icon: '🧾', items: general }, ...groups);
+  }
+
+  for (const g of ACCOUNT_TREE) for (const id of leavesOf(g)) if (!ACCOUNT_ORDER.includes(id)) ACCOUNT_ORDER.push(id);
+  for (const a of s.accounts) if (!a.archived && a.saving) SAVING_IDS.push(a.id);
+}
+
+syncCatalog({ accounts: DEFAULT_ACCOUNTS, tree: defaultTree() });

@@ -81,7 +81,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const goal = state.goals[id];
   const goalPct = goal ? Math.max(0, Math.min(100, (bal / goal) * 100)) : 0;
   const reached = !!goal && bal >= goal;
-  const share = shareOfIncome(id, state.settings, debt);
+  const share = shareOfIncome(id, state.tree, debt);
 
   const entries = ledger(state, id);
   const month = today().slice(0, 7);
@@ -132,7 +132,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
           <span className="ah-ic">{ACCOUNTS[id].icon}</span>
           <span className="ah-name">
             {ACCOUNTS[id].name}
-            <small>{subtitleOf(id, state.settings, debt)}</small>
+            <small>{subtitleOf(id, debt)}</small>
           </span>
           <button className="round-btn glass sm" onClick={onToggleHidden}
             aria-label={hidden ? 'Нишон додан' : 'Пинҳон кардан'}>

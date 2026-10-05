@@ -1,68 +1,96 @@
-import { DEFAULT_SETTINGS } from '../model';
+import { useState } from 'react';
+import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
+import { ChevronIcon, PlusIcon } from '../components/Icons';
+import { ACCOUNTS, CARD_COLORS, effectiveShareNode, fmt, isRemainderNode } from '../model';
 import { emptyState } from '../storage';
-import type { Settings } from '../types';
+import type { DistNode } from '../types';
 import type { Props } from './props';
 
-const FIELDS: { key: keyof Settings; label: string; hint: string }[] = [
-  { key: 'charity', label: 'Садақа', hint: 'аз даромади умумӣ' },
-  { key: 'parents', label: 'Волидон', hint: 'аз даромади умумӣ' },
-  { key: 'future', label: 'Барои оянда', hint: 'аз даромади умумӣ' },
-  { key: 'fun', label: 'Вақтхушӣ', hint: 'аз даромади умумӣ (бо қарз — ба пардохти қарз)' },
-  { key: 'company', label: 'Ҳисоби ширкат', hint: 'аз даромади моҳона; бақия — шахсӣ' },
-  { key: 'capital', label: 'Сармоя', hint: 'аз ҳисоби ширкат; бақия — орзу' },
-  { key: 'bigDream', label: 'Орзуи калон', hint: 'аз орзу; бақия — орзуи хурд' },
-];
-
-export default function SettingsView({ state, setState }: Props) {
-  const s = state.settings;
-  const offTop = s.charity + s.parents + s.future + s.fun;
-
-  const set = (key: keyof Settings, v: string) => {
-    const n = Math.min(100, Math.max(0, parseFloat(v) || 0));
-    setState(st => ({ ...st, settings: { ...st.settings, [key]: n } }));
-  };
-
-  const reset = () => setState(st => ({ ...st, settings: { ...DEFAULT_SETTINGS } }));
+export default function SettingsView({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
+  const [editId, setEditId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const root = state.tree;
 
   const wipe = () => {
-    if (window.confirm('Ҳамаи маълумот (даромад, хароҷот, қарз, орзуҳо) нест мешавад. Идома медиҳед?')) {
+    if (window.confirm('Ҳамаи маълумот (даромад, хароҷот, қарз, орзуҳо, ҳисобҳо) нест мешавад. Идома медиҳед?')) {
       setState(emptyState());
     }
   };
 
+  const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
+
+  const row = (node: DistNode, depth: number): React.ReactNode => {
+    const remainder = isRemainderNode(root, node.id);
+    const share = effectiveShareNode(root, node.id);
+    if (node.type === 'account') {
+      const def = state.accounts.find(a => a.id === node.accountId);
+      if (!def || def.archived) return null;
+      return (
+        <button key={node.id} className="cell tap tree-row" style={{ paddingLeft: 14 + depth * 16 }}
+          onClick={() => setEditId(node.id)}>
+          <span className="tr-ic" style={{ background: CARD_COLORS[node.accountId] }}>{ACCOUNTS[node.accountId]?.icon}</span>
+          <span className="grow">
+            <b>{def.name}</b>
+            <small>{n2(share)}% аз ҳар даромад</small>
+          </span>
+          <span className="tr-pct">{n2(node.percent)}%{remainder && <em>боқимонда</em>}</span>
+          <ChevronIcon />
+        </button>
+      );
+    }
+    const rows = node.children.map(c => row(c, depth + 1));
+    const isRoot = node.id === 'root';
+    return (
+      <div key={node.id}>
+        {!isRoot && (
+          <button className="cell tap tree-row group" style={{ paddingLeft: 14 + depth * 16 }}
+            onClick={() => setEditId(node.id)}>
+            <span className="tr-ic soft">{node.icon}</span>
+            <span className="grow">
+              <b>{node.title}</b>
+              <small>{n2(share)}% аз ҳар даромад</small>
+            </span>
+            <span className="tr-pct">{n2(node.percent)}%{remainder && <em>боқимонда</em>}</span>
+            <ChevronIcon />
+          </button>
+        )}
+        {rows}
+      </div>
+    );
+  };
+
   return (
     <>
-      <h3 className="group-title">Фоизҳо</h3>
-      <div className="cells">
-        {FIELDS.map(f => (
-          <label className="cell setting" key={f.key}>
-            <div className="grow">
-              <b>{f.label}</b>
-              <small>{f.hint}</small>
-            </div>
-            <input type="number" inputMode="decimal" min="0" max="100" step="0.5" value={s[f.key]}
-              onChange={e => set(f.key, e.target.value)} />
-            <span className="pct">%</span>
-          </label>
-        ))}
+      <h3 className="group-title"><span>Ҳисобҳо ва фоизҳо</span></h3>
+      <div className="cells tree">
+        {row(root, -1)}
+        <div className="cell tree-row static" style={{ paddingLeft: 14 }}>
+          <span className="tr-ic" style={{ background: CARD_COLORS.debt }}>{ACCOUNTS.debt?.icon}</span>
+          <span className="grow">
+            <b>{ACCOUNTS.debt?.name}</b>
+            <small>Ҳангоми қарз фоизи «Вақтхушӣ» ба ин ҳисоб меравад</small>
+          </span>
+        </div>
       </div>
+      <p className="note">
+        Фоиз нисбат ба гурӯҳи волид аст. Охирин ҳисоби ҳар гурӯҳ — боқимонда: фоизи он худкор ҳисоб мешавад, то ҷамъ 100% бошад.
+        Тағйирот танҳо ба даромадҳои нав таъсир мекунад.
+      </p>
+      <button className="btn" onClick={() => setAdding(true)}><PlusIcon /> Ҳисоби нав</button>
 
-      <div className="preview">
-        <div className="row"><span>Ҷудо мешавад аз даромади умумӣ</span><b>{offTop}%</b></div>
-        <div className="row"><span>Даромади моҳона (100%)</span><b>{Math.max(0, 100 - offTop)}% аз умумӣ</b></div>
-        <div className="row"><span>Ҳисоби шахсӣ</span><b>{100 - s.company}% аз моҳона</b></div>
-        <div className="row"><span>Орзу</span><b>{100 - s.capital}% аз ширкат</b></div>
-      </div>
-      {offTop > 100 && <div className="alert danger">⚠️ Ҷамъи фоизҳо аз 100% зиёд аст.</div>}
-      <p className="note">Тағйирот танҳо ба даромадҳои нав таъсир мекунад.</p>
-
-      <button className="btn secondary" onClick={reset}>Барқарор кардани фоизҳои пешфарз</button>
-
-      <h3 className="group-title">Маълумот</h3>
+      <h3 className="group-title"><span>Маълумот</span></h3>
       <div className="cells">
         <div className="cell"><div className="grow muted">Маълумот танҳо дар ин дастгоҳ нигоҳ дошта мешавад.</div></div>
       </div>
       <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
+
+      {editId && (
+        <EditNodeSheet state={state} setState={setState} nodeId={editId}
+          onClose={() => setEditId(null)} onToast={onToast} />
+      )}
+      {adding && (
+        <AddAccountSheet state={state} setState={setState} onClose={() => setAdding(false)} onToast={onToast} />
+      )}
     </>
   );
 }

@@ -74,7 +74,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
             <small>{isDebt ? `${Math.floor(pct)}% қарз пардохт шуд · боқӣ ${mask(fmt(debtLeft))}` : isDream ? `${dreamList.length} орзу${dreamReady ? ` · ${dreamReady} тайёр ✓` : ''} · ${Math.floor(pct)}%` : pct >= 100 ? '🎉 Мақсад расид' : `${Math.floor(pct)}% аз ${mask(fmt(goal ?? 0))}`}</small>
           </span>
         ) : (
-          <small className="ac-hint">{leafHint(id, state.settings, debt)}</small>
+          <small className="ac-hint">{leafHint(id, debt)}</small>
         )}
       </button>
     );
@@ -90,7 +90,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
           <span className="grp-ic">{g.icon}</span>
           <span className="grp-t">
             <b>{g.title}</b>
-            <small>{groupNote(g.key, state.settings)}</small>
+            <small>{groupNote(g.key)}</small>
           </span>
           <span className="grp-sum">
             <b>{mask(fmt(groupSum(g, bal)))}</b>

@@ -1,11 +1,12 @@
-import { DEFAULT_SETTINGS, allocate } from './model';
+import { DEFAULT_ACCOUNTS, DEFAULT_SETTINGS, allocate, defaultTree, syncCatalog } from './model';
 import type { Income, State } from './types';
 
 const KEY = 'darakhti:v2';
 const OLD_KEY = 'incomes';
 
 export const emptyState = (): State => ({
-  settings: { ...DEFAULT_SETTINGS },
+  accounts: DEFAULT_ACCOUNTS.map(a => ({ ...a })),
+  tree: defaultTree(),
   incomes: [],
   expenses: [],
   debts: [],
@@ -15,16 +16,28 @@ export const emptyState = (): State => ({
 });
 
 export function loadState(): State {
+  const state = readState();
+  syncCatalog(state);
+  return state;
+}
+
+function readState(): State {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const s = JSON.parse(raw) as Partial<State>;
-      return { ...emptyState(), ...s, settings: { ...DEFAULT_SETTINGS, ...s.settings } };
+      const s = JSON.parse(raw) as Partial<State> & { settings?: typeof DEFAULT_SETTINGS };
+      const base = emptyState();
+      // Версияи кӯҳна: ҳисобҳо ва дарахт бо фоизҳои сабтшуда сохта мешаванд
+      const tree = s.tree ?? defaultTree({ ...DEFAULT_SETTINGS, ...(s.settings ?? {}) });
+      const accounts = s.accounts ?? base.accounts;
+      const { settings: _legacy, ...rest } = s;
+      return { ...base, ...rest, accounts, tree };
     }
     // Гузариш аз версияи кӯҳна (рӯйхати оддии даромад)
     const old = JSON.parse(localStorage.getItem(OLD_KEY) ?? '[]') as Omit<Income, 'alloc'>[];
     const state = emptyState();
-    state.incomes = old.map(i => ({ ...i, alloc: allocate(i.amount, state.settings, false) }));
+    syncCatalog(state);
+    state.incomes = old.map(i => ({ ...i, alloc: allocate(i.amount, state.tree, false) }));
     return state;
   } catch {
     return emptyState();

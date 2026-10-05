@@ -10,14 +10,14 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
 
   const debt = hasDebt(state.debts);
   const num = parseFloat(amount) || 0;
-  const preview = allocate(num, state.settings, debt);
+  const preview = allocate(num, state.tree, debt);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (num <= 0) return;
     const income = {
       id: uid(), title: title.trim(), amount: num, date,
-      alloc: allocate(num, state.settings, debt),
+      alloc: allocate(num, state.tree, debt),
     };
     setState(s => ({
       ...s,

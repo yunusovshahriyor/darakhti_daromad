@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Empty from '../components/Empty';
 import SwipeRow from '../components/SwipeRow';
-import { ACCOUNTS, ACCOUNT_ORDER, fmt, groupByMonth, monthTitle } from '../model';
+import { ACCOUNTS, ALL_IDS, fmt, groupByMonth, monthTitle } from '../model';
 import type { Props } from './props';
 
 export type HistoryFilter = 'all' | 'income' | 'expense' | 'transfer';
@@ -73,7 +73,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
               <small>{x.date} · Даромад</small>
               {expanded === it.id && (
                 <div className="breakdown">
-                  {ACCOUNT_ORDER.filter(id => x.alloc[id] > 0).map(id => (
+                  {ALL_IDS.filter(id => x.alloc[id] > 0).map(id => (
                     <div className="row" key={id}>
                       <span>{ACCOUNTS[id].icon} {ACCOUNTS[id].name}</span>
                       <span>{fmt(x.alloc[id])}</span>

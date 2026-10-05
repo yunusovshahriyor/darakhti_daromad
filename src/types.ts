@@ -1,10 +1,23 @@
-export type AccountId =
-  | 'charity' | 'parents' | 'future' | 'fun' | 'debt'
-  | 'capital' | 'bigDream' | 'smallDream' | 'living';
+export type AccountId = string;
+
+/** Таърифи ҳисоб: ном, нишона, ранг. Ҳисоби нестшуда archived мешавад ва дар таърих мемонад. */
+export interface AccountDef {
+  id: AccountId;
+  name: string;
+  icon: string;
+  color: string;
+  saving?: boolean;
+  archived?: boolean;
+}
+
+/** Дарахти тақсим: фоиз нисбат ба волид; фоизи охирини гурӯҳ — боқимонда (то 100%). */
+export type DistNode =
+  | { id: string; type: 'group'; title: string; icon: string; percent: number; children: DistNode[] }
+  | { id: string; type: 'account'; accountId: AccountId; percent: number };
 
 export type Alloc = Record<AccountId, number>;
 
-/** Ҳамаи фоизҳо. charity/parents/future/fun — аз даромади умумӣ; боқӣ — аз даромади моҳона. */
+/** Фоизҳои версияи кӯҳна (танҳо барои гузариш ба дарахти нав). */
 export interface Settings {
   charity: number;
   parents: number;
@@ -65,7 +78,8 @@ export interface Transfer {
 }
 
 export interface State {
-  settings: Settings;
+  accounts: AccountDef[];
+  tree: DistNode;
   incomes: Income[];
   expenses: Expense[];
   debts: Debt[];

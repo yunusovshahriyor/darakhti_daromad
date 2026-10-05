@@ -4,7 +4,7 @@ import AccountScopeSheet from '../components/AccountScopeSheet';
 import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, FilterIcon, PersonIcon } from '../components/Icons';
 import PeriodSheet from '../components/PeriodSheet';
 import {
-  ACCOUNTS, ACCOUNT_COLORS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
+  ACCOUNTS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
   hiddenAccounts, inPeriod, monthlyIncome, periodAt, periodLabel, spent,
 } from '../model';
 import type { PeriodKind } from '../model';
@@ -84,7 +84,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
   const byAccount = spent(periodExpenses);
   const segs = ACCOUNT_ORDER
     .filter(id => byAccount[id] > 0)
-    .map(id => ({ id, value: byAccount[id], color: ACCOUNT_COLORS[id] }))
+    .map(id => ({ id, value: byAccount[id], color: CARD_COLORS[id] }))
     .sort((a, b) => b.value - a.value);
   const top = segs[0];
 
