@@ -1,10 +1,11 @@
 import { FormEvent, useState } from 'react';
+import AccountSelect from '../components/AccountSelect';
 import Empty from '../components/Empty';
 import Fab from '../components/Fab';
 import Field from '../components/Field';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, fmt, remaining, today, uid } from '../model';
+import { balancesOf, fmt, remaining, today, uid } from '../model';
 import type { AccountId, Debt } from '../types';
 import type { Props } from './props';
 
@@ -99,11 +100,7 @@ export default function Debts({ state, setState }: Props) {
           <form onSubmit={pay}>
             <p className="muted">Бақия: {fmt(remaining(payFor))} сомонӣ</p>
             <Field label="Аз кадом ҳисоб">
-              <select value={source} onChange={e => setSource(e.target.value as AccountId)}>
-                {ACCOUNT_ORDER.map(id => (
-                  <option key={id} value={id}>{ACCOUNTS[id].icon} {ACCOUNTS[id].name} — {fmt(bal[id])}</option>
-                ))}
-              </select>
+              <AccountSelect value={source} onChange={setSource} bal={bal} />
             </Field>
             <Field label="Маблағи пардохт">
               <input type="number" inputMode="decimal" min="0" step="0.01" value={payAmount}

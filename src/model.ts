@@ -214,11 +214,69 @@ export const SAVING_IDS: AccountId[] = ['capital', 'future', 'bigDream', 'smallD
 export const SPEND_IDS: AccountId[] = ['living', 'fun', 'debt'];
 export const GIVE_IDS: AccountId[] = ['charity', 'parents'];
 
-export const ACCOUNT_SECTIONS: { title: string; ids: AccountId[] }[] = [
-  { title: 'Ҷамъшавӣ', ids: SAVING_IDS },
-  { title: 'Хароҷоти ҳаррӯза', ids: SPEND_IDS },
-  { title: 'Ҷудошуда', ids: GIVE_IDS },
+export interface AccountGroup {
+  key: string;
+  title: string;
+  icon: string;
+  items: (AccountId | AccountGroup)[];
+}
+
+/** Дарахти ҳисобҳо мувофиқи схема: умумӣ → ширкат (сармоя, орзу → калон/хурд) → шахсӣ. */
+export const ACCOUNT_TREE: AccountGroup[] = [
+  { key: 'general', title: 'Аз даромади умумӣ', icon: '🧾', items: ['charity', 'parents', 'future', 'fun', 'debt'] },
+  {
+    key: 'company', title: 'Ҳисоби ширкат', icon: '🏢',
+    items: [
+      'capital',
+      { key: 'dream', title: 'Орзу', icon: '✨', items: ['bigDream', 'smallDream'] },
+    ],
+  },
+  { key: 'personal', title: 'Ҳисоби шахсӣ', icon: '👤', items: ['living'] },
 ];
+
+export const leavesOf = (g: AccountGroup): AccountId[] =>
+  g.items.flatMap(i => (typeof i === 'string' ? [i] : leavesOf(i)));
+
+export const groupSum = (g: AccountGroup, bal: Alloc) =>
+  leavesOf(g).reduce((s, id) => s + bal[id], 0);
+
+/** Роҳи ҳисоб дар дарахт, масалан: Ҳисоби ширкат › Орзу. */
+export function pathOf(id: AccountId, groups: AccountGroup[] = ACCOUNT_TREE): string[] {
+  for (const g of groups) {
+    if (g.items.includes(id)) return [g.title];
+    const sub = pathOf(id, g.items.filter((i): i is AccountGroup => typeof i !== 'string'));
+    if (sub.length) return [g.title, ...sub];
+  }
+  return [];
+}
+
+/** Тавзеҳи гурӯҳ: чанд фоиз аз кадом база. */
+export function groupNote(key: string, s: Settings): string {
+  const n = (v: number) => fmt(Math.round(v * 100) / 100);
+  switch (key) {
+    case 'general': return `${n(s.charity + s.parents + s.future + s.fun)}% аз даромади умумӣ`;
+    case 'company': return `${n(s.company)}% аз даромади моҳона`;
+    case 'personal': return `${n(100 - s.company)}% аз даромади моҳона`;
+    case 'dream': return `${n(100 - s.capital)}% аз ҳисоби ширкат`;
+    default: return '';
+  }
+}
+
+/** Тавзеҳи ҳисоб нисбат ба гурӯҳи худаш. */
+export function leafHint(id: AccountId, s: Settings, debt: boolean): string {
+  const n = (v: number) => fmt(Math.round(v * 100) / 100);
+  switch (id) {
+    case 'charity': return `${n(s.charity)}% аз даромади умумӣ`;
+    case 'parents': return `${n(s.parents)}% аз даромади умумӣ`;
+    case 'future': return `${n(s.future)}% аз даромади умумӣ`;
+    case 'fun': return debt ? 'Ҳангоми қарз пур намешавад' : `${n(s.fun)}% аз даромади умумӣ`;
+    case 'debt': return debt ? `${n(s.fun)}% аз даромади умумӣ` : 'Ҳангоми қарз пур мешавад';
+    case 'capital': return `${n(s.capital)}% аз ҳисоби ширкат`;
+    case 'bigDream': return `${n(s.bigDream)}% аз орзу`;
+    case 'smallDream': return `${n(100 - s.bigDream)}% аз орзу`;
+    case 'living': return `${n(100 - s.company)}% аз даромади моҳона`;
+  }
+}
 
 /** Рангҳои корт (аз ранги диаграмма торик, то матни сафед хубтар хонда шавад). */
 export const CARD_COLORS: Record<AccountId, string> = {

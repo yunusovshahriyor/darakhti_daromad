@@ -1,7 +1,8 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, fmt, today, uid } from '../model';
+import { ACCOUNTS, balancesOf, fmt, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
+import AccountSelect from './AccountSelect';
 import Field from './Field';
 
 export default function ExpenseForm({ state, setState, onDone, initialAccount }: Props & {
@@ -34,13 +35,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
   return (
     <form onSubmit={onSubmit}>
       <Field label="Аз кадом ҳисоб">
-        <select value={account} onChange={e => setAccount(e.target.value as AccountId)}>
-          {ACCOUNT_ORDER.map(id => (
-            <option key={id} value={id}>
-              {ACCOUNTS[id].icon} {ACCOUNTS[id].name} — {fmt(bal[id])}
-            </option>
-          ))}
-        </select>
+        <AccountSelect value={account} onChange={setAccount} bal={bal} />
       </Field>
       <Field label="Барои чӣ">
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, хӯрок" required />

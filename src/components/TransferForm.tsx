@@ -1,7 +1,8 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, fmt, today, uid } from '../model';
+import { ACCOUNTS, balancesOf, fmt, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
+import AccountSelect from './AccountSelect';
 import Field from './Field';
 
 interface Extra {
@@ -33,21 +34,13 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
     onDone(`${fmt(num)} смн гузаронида шуд ✓`);
   };
 
-  const option = (id: AccountId) => (
-    <option key={id} value={id}>{ACCOUNTS[id].icon} {ACCOUNTS[id].name} — {fmt(bal[id])}</option>
-  );
-
   return (
     <form onSubmit={onSubmit}>
       <Field label="Аз ҳисоби">
-        <select value={from} onChange={e => setFrom(e.target.value as AccountId)}>
-          {ACCOUNT_ORDER.map(option)}
-        </select>
+        <AccountSelect value={from} onChange={setFrom} bal={bal} />
       </Field>
       <Field label="Ба ҳисоби">
-        <select value={to} onChange={e => setTo(e.target.value as AccountId)}>
-          {ACCOUNT_ORDER.map(option)}
-        </select>
+        <AccountSelect value={to} onChange={setTo} bal={bal} />
       </Field>
       <Field label="Маблағ (сомонӣ)">
         <input type="number" inputMode="decimal" min="0" step="0.01" value={amount}
