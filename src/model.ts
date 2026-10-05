@@ -262,6 +262,18 @@ export function groupNote(key: string, s: Settings): string {
   }
 }
 
+/**
+ * Зерном: аз куҷо ва чанд фоиз. Агар тавзеҳ худи гурӯҳро аллакай дарбар гирад,
+ * номи гурӯҳ такрор намешавад («10% аз даромади умумӣ»), вагарна роҳ илова мешавад
+ * («Ҳисоби шахсӣ · 45% аз даромади моҳона»).
+ */
+export function subtitleOf(id: AccountId, s: Settings, debt: boolean): string {
+  const hint = leafHint(id, s, debt);
+  const path = pathOf(id);
+  if (path.length && hint.toLowerCase().includes(path[path.length - 1].toLowerCase())) path.pop();
+  return [...path, hint].join(' · ');
+}
+
 /** Тавзеҳи ҳисоб нисбат ба гурӯҳи худаш. */
 export function leafHint(id: AccountId, s: Settings, debt: boolean): string {
   const n = (v: number) => fmt(Math.round(v * 100) / 100);

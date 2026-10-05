@@ -6,7 +6,7 @@ import Sheet from '../components/Sheet';
 import TransferForm from '../components/TransferForm';
 import {
   ACCOUNTS, CARD_COLORS, balancesOf, fmt, groupByMonth, hasDebt, ledger, monthTitle,
-  pathOf, shareOfIncome, today,
+  shareOfIncome, subtitleOf, today,
 } from '../model';
 import type { AccountId } from '../types';
 import type { Privacy } from './Accounts';
@@ -45,7 +45,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
           <span className="ah-ic">{ACCOUNTS[id].icon}</span>
           <span className="ah-name">
             {ACCOUNTS[id].name}
-            <small>{pathOf(id).join(' › ')}</small>
+            <small>{subtitleOf(id, state.settings, hasDebt(state.debts))}</small>
           </span>
           <button className="round-btn glass sm" onClick={onToggleHidden}
             aria-label={hidden ? 'Нишон додан' : 'Пинҳон кардан'}>
@@ -67,9 +67,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
               ))}
             </div>
           </div>
-        ) : (
-          <button className="ah-setgoal" onClick={() => setModal('goal')}>🎯 Мақсад гузоред</button>
-        )}
+        ) : null}
       </section>
 
       <div className="actions">
