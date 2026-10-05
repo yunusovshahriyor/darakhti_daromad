@@ -137,7 +137,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
             <span style={{ fontSize: bigSize }} className={balanceNow < 0 ? 'neg' : ''}>{mask(balText)}</span>
             <small>смн</small>
           </div>
-          <button className="round-btn" onClick={onToggleHidden}
+          <button className="round-btn mini" onClick={onToggleHidden}
             aria-label={hidden ? 'Нишон додани маблағ' : 'Пинҳон кардани маблағ'}>
             {hidden ? <EyeOffIcon /> : <EyeIcon />}
           </button>

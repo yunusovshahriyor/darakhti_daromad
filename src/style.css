@@ -771,3 +771,7 @@ input[type='date'] { min-height: 50px; }
 .scope-list .sl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scope-list b { font-size: .95rem; }
 .scope-list svg { color: var(--primary); flex: none; }
+
+/* Тугмаи чашм дар саҳифаи асосӣ: ҳамон андозаи тугмаи филтр */
+.round-btn.mini { width: 30px; height: 30px; color: var(--muted); }
+.round-btn.mini svg { width: 15px; height: 15px; }
