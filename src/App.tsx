@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
 import {
-  BackIcon, GridIcon, ListIcon, MoreIcon, PlusIcon, WalletIcon,
+  BackIcon, GridIcon, ListIcon, MoreIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, balancesOf } from './model';
@@ -29,6 +29,33 @@ const RIGHT: { id: Tab; label: string; icon: ReactNode }[] = [
 const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисобҳо', history: 'Таърих', more: 'Бештар' };
 const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
 const HIDE_KEY = 'darakhti:hide';
+const NAV_KEY = 'darakhti:nav';
+
+const TAB_IDS: Tab[] = ['home', 'accounts', 'history', 'more'];
+const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings'];
+const FILTER_IDS: HistoryFilter[] = ['all', 'income', 'expense', 'transfer'];
+
+interface Nav {
+  tab: Tab;
+  sub: Sub | null;
+  acct: AccountId | null;
+  filter: HistoryFilter;
+}
+
+/** Ҷойгиршавӣ (таб, саҳифа, ҳисоб) пас аз навсозии саҳифа аз нав барқарор мешавад. */
+function readNav(): Nav {
+  const nav: Nav = { tab: 'home', sub: null, acct: null, filter: 'all' };
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(NAV_KEY) ?? 'null') as Partial<Nav> | null;
+    if (raw) {
+      if (raw.tab && TAB_IDS.includes(raw.tab)) nav.tab = raw.tab;
+      if (raw.sub && SUB_IDS.includes(raw.sub)) nav.sub = raw.sub;
+      if (raw.acct && ACCOUNT_ORDER.includes(raw.acct)) nav.acct = raw.acct;
+      if (raw.filter && FILTER_IDS.includes(raw.filter)) nav.filter = raw.filter;
+    }
+  } catch { /* ignore */ }
+  return nav;
+}
 
 interface InstallEvent extends Event {
   prompt: () => Promise<void>;
@@ -40,10 +67,17 @@ const readHidden = () => {
 
 export default function App() {
   const [state, setState] = useState(loadState);
-  const [tab, setTab] = useState<Tab>('home');
-  const [sub, setSub] = useState<Sub | null>(null);
-  const [acct, setAcct] = useState<AccountId | null>(null);
-  const [filter, setFilter] = useState<HistoryFilter>('all');
+  const [nav0] = useState(readNav);
+  const [tab, setTab] = useState<Tab>(nav0.tab);
+  const [sub, setSub] = useState<Sub | null>(nav0.sub);
+  const [acct, setAcct] = useState<AccountId | null>(nav0.acct);
+  const [filter, setFilter] = useState<HistoryFilter>(nav0.filter);
+  const [pull, setPull] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const layerOnBoot = typeof history !== 'undefined' && history.state?.layer === true;
+  const reuseSub = useRef(layerOnBoot && nav0.sub !== null);
+  const reuseAcct = useRef(layerOnBoot && nav0.acct !== null);
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState('');
   const [hidden, setHidden] = useState(readHidden);
@@ -51,6 +85,10 @@ export default function App() {
   const prevBal = useRef<Alloc | null>(null);
 
   useEffect(() => saveState(state), [state]);
+
+  useEffect(() => {
+    try { sessionStorage.setItem(NAV_KEY, JSON.stringify({ tab, sub, acct, filter })); } catch { /* ignore */ }
+  }, [tab, sub, acct, filter]);
 
   useEffect(() => {
     try { localStorage.setItem(HIDE_KEY, hidden ? '1' : '0'); } catch { /* ignore */ }
@@ -87,8 +125,8 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  useHistoryLayer(sub !== null, () => setSub(null));
-  useHistoryLayer(acct !== null, () => setAcct(null));
+  useHistoryLayer(sub !== null, () => setSub(null), reuseSub);
+  useHistoryLayer(acct !== null, () => setAcct(null), reuseAcct);
 
   const standalone =
     window.matchMedia('(display-mode: standalone)').matches ||
@@ -106,6 +144,33 @@ export default function App() {
   const openAccount = (id: AccountId) => {
     setSub(null);
     setAcct(id);
+  };
+
+  // Навсозӣ бо свайп аз боло ба поён (дар ҳолати скролли боло)
+  const onTouchStart = (e: React.TouchEvent<HTMLElement>) => {
+    touch.current = e.currentTarget.scrollTop <= 0 && !refreshing
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      : null;
+  };
+  const onTouchMove = (e: React.TouchEvent<HTMLElement>) => {
+    const t = touch.current;
+    if (!t) return;
+    const dy = e.touches[0].clientY - t.y;
+    const dx = e.touches[0].clientX - t.x;
+    if (dy > 0 && dy > Math.abs(dx) && e.currentTarget.scrollTop <= 0) setPull(Math.min(84, dy * 0.55));
+    else if (dy <= 0) setPull(0);
+  };
+  const onTouchEnd = () => {
+    if (!touch.current) return;
+    touch.current = null;
+    if (pull >= 52) {
+      setRefreshing(true);
+      setPull(56);
+      navigator.vibrate?.(10);
+      setTimeout(() => window.location.reload(), 450);
+    } else {
+      setPull(0);
+    }
   };
 
   const home = tab === 'home' && !sub && !acct;
@@ -156,7 +221,14 @@ export default function App() {
         </header>
       )}
 
-      <main className={home ? 'screen home' : 'screen'} key={`${acct ?? ''}${sub ?? ''}${tab}`}>
+      <div className={refreshing ? 'ptr spin' : 'ptr'}
+        style={{ transform: `translate(-50%, ${pull - 48}px)`, opacity: Math.min(1, pull / 40) }}>
+        <RefreshIcon />
+      </div>
+
+      <main className={home ? 'screen home' : 'screen'} key={`${acct ?? ''}${sub ?? ''}${tab}`}
+        style={{ transform: pull ? `translateY(${pull}px)` : undefined, transition: touch.current ? 'none' : 'transform .2s' }}
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}>
         {content()}
       </main>
 

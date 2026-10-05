@@ -25,7 +25,7 @@ window.addEventListener('popstate', () => {
  * Қабат (варақа, зерсаҳифа, саҳифаи ҳисоб): тугмаи «Бозгашт»-и телефон
  * онро мебандад, на тамоми барномаро. Қабатҳо метавонанд рӯи ҳам бошанд.
  */
-export function useHistoryLayer(active: boolean, onBack: () => void) {
+export function useHistoryLayer(active: boolean, onBack: () => void, reuse?: { current: boolean }) {
   const cb = useRef(onBack);
   cb.current = onBack;
 
@@ -33,7 +33,9 @@ export function useHistoryLayer(active: boolean, onBack: () => void) {
     if (!active) return;
     const layer: Layer = { cb: () => cb.current(), popped: false };
     stack.push(layer);
-    history.pushState({ layer: true }, '');
+    // Пас аз навсозии саҳифа ҳамон сабти таърих аллакай қабат аст: дубора илова намекунем.
+    if (reuse?.current) reuse.current = false;
+    else history.pushState({ layer: true }, '');
     return () => {
       const i = stack.indexOf(layer);
       if (i >= 0) stack.splice(i, 1);

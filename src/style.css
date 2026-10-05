@@ -623,3 +623,13 @@ input[type='date'] { min-height: 50px; }
 }
 .seg-tabs button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); }
 .seg-tabs button.on em { background: var(--primary); color: #fff; }
+
+/* ---------- Навсозӣ бо свайп (pull to refresh) ---------- */
+.ptr {
+  position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 8px); z-index: 30;
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); color: var(--primary); box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  pointer-events: none; opacity: 0;
+}
+.ptr.spin svg { animation: ptr-spin .8s linear infinite; }
+@keyframes ptr-spin { to { transform: rotate(360deg); } }
