@@ -2,7 +2,7 @@ import { CSSProperties, useEffect, useState } from 'react';
 import { ChevronIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import {
   ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, SAVING_IDS, balancesOf, fmt, groupNote, groupSum,
-  hasDebt, hiddenAccounts, leafHint, remaining, savedThisMonth,
+  fundDreams, hasDebt, hiddenAccounts, leafHint, remaining, savedThisMonth,
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
@@ -50,10 +50,18 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
   const card = (id: AccountId) => {
     // Барои «Пардохти қарз» мақсад — худи қарзҳо мебошанд
     const isDebt = id === 'debt' && debt;
-    const goal = isDebt ? debtTotal : state.goals[id];
+    // Барои ҳисобҳои орзу мақсад — худи орзуҳо (ҷамъи нархи онҳо)
+    const dreamKind = id === 'bigDream' ? 'big' : id === 'smallDream' ? 'small' : null;
+    const dreamList = dreamKind ? state.dreams.filter(d => d.kind === dreamKind) : [];
+    const isDream = dreamList.length > 0;
+    const dreamTotal = dreamList.reduce((sum, d) => sum + d.target, 0);
+    const dreamReady = isDream ? fundDreams(dreamList, bal[id]).filter(f => f.ready).length : 0;
+    const goal = isDebt ? debtTotal : isDream ? dreamTotal : dreamKind ? undefined : state.goals[id];
     const pct = isDebt
       ? (debtTotal > 0 ? (debtPaid / debtTotal) * 100 : 0)
-      : goal ? Math.max(0, Math.min(100, (bal[id] / goal) * 100)) : 0;
+      : isDream
+        ? Math.max(0, Math.min(100, (bal[id] / dreamTotal) * 100))
+        : goal ? Math.max(0, Math.min(100, (bal[id] / goal) * 100)) : 0;
     return (
       <button key={id} className="acct-card" onClick={() => onOpenAccount(id)}
         style={{ '--c': CARD_COLORS[id] } as CSSProperties}>
@@ -63,7 +71,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
         {goal ? (
           <span className="ac-goal">
             <span className="bar"><i style={{ width: `${pct}%` }} /></span>
-            <small>{isDebt ? `${Math.floor(pct)}% қарз пардохт шуд · боқӣ ${mask(fmt(debtLeft))}` : pct >= 100 ? '🎉 Мақсад расид' : `${Math.floor(pct)}% аз ${mask(fmt(goal ?? 0))}`}</small>
+            <small>{isDebt ? `${Math.floor(pct)}% қарз пардохт шуд · боқӣ ${mask(fmt(debtLeft))}` : isDream ? `${dreamList.length} орзу${dreamReady ? ` · ${dreamReady} тайёр ✓` : ''} · ${Math.floor(pct)}%` : pct >= 100 ? '🎉 Мақсад расид' : `${Math.floor(pct)}% аз ${mask(fmt(goal ?? 0))}`}</small>
           </span>
         ) : (
           <small className="ac-hint">{leafHint(id, state.settings, debt)}</small>

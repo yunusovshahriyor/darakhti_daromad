@@ -123,7 +123,7 @@ export default function App() {
   const content = () => {
     if (acct) {
       return <AccountDetail {...props} {...privacy} id={acct} onToast={setToast}
-        onOpenDebts={() => { setAcct(null); setSub('debts'); }} />;
+        onManage={page => { setAcct(null); setSub(page); }} />;
     }
     if (sub === 'dreams') return <Dreams {...props} />;
     if (sub === 'debts') return <Debts {...props} />;

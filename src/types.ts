@@ -46,6 +46,8 @@ export interface Dream {
   title: string;
   kind: 'big' | 'small';
   target: number;
+  /** Орзуи афзалиятнок: аввал харида мешавад. */
+  priority?: boolean;
 }
 
 export interface Transfer {
@@ -56,8 +58,6 @@ export interface Transfer {
   date: string;
 }
 
-export type DebtOrder = 'big' | 'small';
-
 export interface State {
   settings: Settings;
   incomes: Income[];
@@ -66,6 +66,4 @@ export interface State {
   dreams: Dream[];
   transfers: Transfer[];
   goals: Partial<Record<AccountId, number>>;
-  /** Тартиби қарзҳо дар як гурӯҳ: аз калон ба хурд ё баръакс. */
-  debtOrder: DebtOrder;
 }

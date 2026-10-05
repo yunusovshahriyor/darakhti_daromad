@@ -1,44 +1,81 @@
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, ReactNode, useState } from 'react';
+import BuyDreamForm from '../components/BuyDreamForm';
+import CollapsibleCells from '../components/CollapsibleCells';
+import DreamForm from '../components/DreamForm';
 import ExpenseForm from '../components/ExpenseForm';
 import GoalForm from '../components/GoalForm';
-import { EyeIcon, EyeOffIcon, MinusIcon, SwapIcon, TargetIcon } from '../components/Icons';
+import { EyeIcon, EyeOffIcon, MinusIcon, PlusIcon, SwapIcon, TargetIcon } from '../components/Icons';
 import PayDebtForm from '../components/PayDebtForm';
 import Sheet from '../components/Sheet';
 import TransferForm from '../components/TransferForm';
 import {
-  ACCOUNTS, CARD_COLORS, DEBT_ORDER_LABEL, balancesOf, fmt, groupByMonth, hasDebt, ledger, monthTitle,
-  remaining, shareOfIncome, sortDebts, subtitleOf, today,
+  ACCOUNTS, CARD_COLORS, balancesOf, fmt, fundDreams, groupByMonth, hasDebt, ledger, monthTitle,
+  remaining, shareOfIncome, sortDebts, subtitleOf, today, uid,
 } from '../model';
-import type { AccountId, Debt } from '../types';
+import type { AccountId, Debt, Dream } from '../types';
 import type { Privacy } from './Accounts';
 import type { Props } from './props';
 
-type Modal = 'transfer' | 'expense' | 'goal' | 'pay' | null;
+type Modal = 'transfer' | 'expense' | 'goal' | 'pay' | 'buy' | 'addDream' | null;
 
 const MILESTONES = [25, 50, 75, 100];
 
-export default function AccountDetail({ state, setState, id, hidden, onToggleHidden, onToast, onOpenDebts }: Props & Privacy & {
+/** Як сатр дар рӯйхати «Навбат»: қарз барои пардохт ё орзу барои харид. */
+interface PlanRow {
+  key: number;
+  title: string;
+  priority: boolean;
+  total: number;
+  done: number;
+  finished: boolean;
+  ready: boolean;
+  rank: number;
+  open: () => void;
+}
+
+export default function AccountDetail({ state, setState, id, hidden, onToggleHidden, onToast, onManage }: Props & Privacy & {
   id: AccountId;
   onToast: (msg: string) => void;
-  onOpenDebts: () => void;
+  onManage: (page: 'debts' | 'dreams') => void;
 }) {
   const [modal, setModal] = useState<Modal>(null);
   const [payFor, setPayFor] = useState<Debt | null>(null);
+  const [buyFor, setBuyFor] = useState<Dream | null>(null);
 
   const isDebtAccount = id === 'debt';
+  const isDreamAccount = id === 'bigDream' || id === 'smallDream';
+  const kind: Dream['kind'] = id === 'bigDream' ? 'big' : 'small';
   const bal = balancesOf(state)[id];
   const debt = hasDebt(state.debts);
   const mask = (v: string) => (hidden ? '••••' : v);
 
-  // Мақсади ҳисоб: барои «Пардохти қарз» — қарзи аввалин, барои дигарон — мақсади худи корбар
-  const debts = sortDebts(state.debts, state.debtOrder);
+  // ----- Навбат: қарзҳо барои пардохт ё орзуҳо барои харид (як мантиқ) -----
+  const debts = sortDebts(state.debts);
   const unpaid = debts.filter(d => remaining(d) > 0.005);
-  const first = unpaid[0];
+  const dreamPlan = fundDreams(state.dreams.filter(d => d.kind === kind), bal);
+
+  const rows: PlanRow[] = isDebtAccount
+    ? debts.map(d => {
+        const left = remaining(d);
+        return {
+          key: d.id, title: d.title, priority: !!d.priority, total: d.amount, done: d.paid,
+          finished: left <= 0.005, ready: bal >= left - 0.005, rank: unpaid.indexOf(d) + 1,
+          open: () => { setPayFor(d); setModal('pay'); },
+        };
+      })
+    : isDreamAccount
+      ? dreamPlan.map(f => ({
+          key: f.dream.id, title: f.dream.title, priority: !!f.dream.priority, total: f.dream.target,
+          done: f.funded, finished: false, ready: f.ready, rank: f.rank,
+          open: () => { setBuyFor(f.dream); setModal('buy'); },
+        }))
+      : [];
+  const first = rows.find(r => !r.finished);
+  const firstPct = first ? Math.min(100, (first.done / first.total) * 100) : 0;
+
   const goal = state.goals[id];
   const goalPct = goal ? Math.max(0, Math.min(100, (bal / goal) * 100)) : 0;
   const reached = !!goal && bal >= goal;
-  const firstPct = first ? Math.min(100, (first.paid / first.amount) * 100) : 0;
-
   const share = shareOfIncome(id, state.settings, debt);
 
   const entries = ledger(state, id);
@@ -49,17 +86,25 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const inShare = monthIn + monthOut > 0 ? (monthIn / (monthIn + monthOut)) * 100 : 0;
   const groups = groupByMonth(entries);
 
-  const toggleOrder = () =>
-    setState(s => ({ ...s, debtOrder: s.debtOrder === 'big' ? 'small' : 'big' }));
-
   const done = (msg: string) => {
     onToast(msg);
     setModal(null);
     setPayFor(null);
+    setBuyFor(null);
+  };
+  const close = () => {
+    setModal(null);
+    setPayFor(null);
+    setBuyFor(null);
   };
   const common = { state, setState };
 
-  const bar = (pct: number, left: string, right: string) => (
+  const addDream = (v: { title: string; target: number; kind: Dream['kind']; priority: boolean }) => {
+    setState(s => ({ ...s, dreams: [...s.dreams, { id: uid(), ...v }] }));
+    done('Орзу илова шуд ✨');
+  };
+
+  const bar = (pct: number, left: string, right: string): ReactNode => (
     <>
       <div className="bar"><i style={{ width: `${pct}%` }} /></div>
       <div className="row"><span>{left}</span><span>{right}</span></div>
@@ -70,6 +115,10 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
       </div>
     </>
   );
+
+  const planLabels = isDebtAccount
+    ? { next: 'Аввал пардохт кунед', ready: '✓ Тавозуни ҳисоб барои пардохти пурра кифоя аст', title: 'Навбати қарзҳо', page: 'debts' as const }
+    : { next: 'Аввал харида шавад', ready: '✓ Маблағ барои харид кифоя аст', title: 'Навбати харид', page: 'dreams' as const };
 
   return (
     <>
@@ -87,24 +136,26 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
         </div>
         <div className="ah-bal">{mask(fmt(bal))} <small>смн</small></div>
 
-        {isDebtAccount ? (
+        {isDebtAccount || isDreamAccount ? (
           first ? (
             <div className="ah-goal">
               <div className="ah-sub">
-                <span>Аввал пардохт кунед</span>
+                <span>{planLabels.next}</span>
                 <b>{first.priority ? '⭐ ' : ''}{first.title}</b>
               </div>
               {bar(
                 firstPct,
-                `${Math.floor(firstPct)}% аз ${mask(fmt(first.amount))}`,
-                `Боқӣ ${mask(fmt(remaining(first)))}`,
+                `${Math.floor(firstPct)}% аз ${mask(fmt(first.total))}`,
+                `Боқӣ ${mask(fmt(Math.max(0, first.total - first.done)))}`,
               )}
-              {bal >= remaining(first) - 0.005 && (
-                <div className="ah-ready">✓ Тавозуни ҳисоб барои пардохти пурра кифоя аст</div>
-              )}
+              {first.ready && <div className="ah-ready">{planLabels.ready}</div>}
             </div>
           ) : (
-            <div className="ah-ready">🎉 Ҳамаи қарзҳо пардохт шуданд. Боқимондаро ба ҳисоби дигар гузаронед.</div>
+            <div className="ah-ready">
+              {isDebtAccount
+                ? '🎉 Ҳамаи қарзҳо пардохт шуданд. Боқимондаро ба ҳисоби дигар гузаронед.'
+                : '✨ Ҳанӯз орзу нест. Орзуи нав илова кунед, ва маблағ барои он ҷамъ мешавад.'}
+            </div>
           )
         ) : goal ? (
           <div className="ah-goal">
@@ -121,11 +172,22 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
         <button onClick={() => setModal('transfer')}>
           <span className="act-ic"><SwapIcon /></span>Гузаронидан
         </button>
-        {isDebtAccount ? (
-          <button disabled={!first} onClick={() => { if (first) { setPayFor(first); setModal('pay'); } }}>
+        {isDebtAccount && (
+          <button disabled={!first} onClick={() => first?.open()}>
             <span className="act-ic"><MinusIcon /></span>Пардохт
           </button>
-        ) : (
+        )}
+        {isDreamAccount && (
+          <>
+            <button disabled={!first} onClick={() => first?.open()}>
+              <span className="act-ic"><MinusIcon /></span>Харид
+            </button>
+            <button onClick={() => setModal('addDream')}>
+              <span className="act-ic"><PlusIcon /></span>Орзуи нав
+            </button>
+          </>
+        )}
+        {!isDebtAccount && !isDreamAccount && (
           <>
             <button onClick={() => setModal('expense')}>
               <span className="act-ic"><MinusIcon /></span>Харҷ
@@ -165,42 +227,42 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
         </p>
       </section>
 
-      {isDebtAccount && (
+      {(isDebtAccount || isDreamAccount) && (
         <section>
           <h3 className="group-title">
-            <span>Навбати қарзҳо</span>
+            <span>{planLabels.title}</span>
             <span className="gt-actions">
-              <button className="link-btn sm" onClick={toggleOrder}>{DEBT_ORDER_LABEL[state.debtOrder]}</button>
-              <button className="link-btn sm" onClick={onOpenDebts}>Идора</button>
+              <button className="link-btn sm" onClick={() => onManage(planLabels.page)}>Идора</button>
             </span>
           </h3>
-          {debts.length === 0 ? (
-            <div className="empty small">Қарз нест.</div>
+          {rows.length === 0 ? (
+            <div className="empty small">{isDebtAccount ? 'Қарз нест.' : 'Орзу нест.'}</div>
           ) : (
-            <div className="cells compact">
-              {debts.map(d => {
-                const left = remaining(d);
-                const paidOff = left <= 0.005;
-                const rank = unpaid.indexOf(d) + 1;
-                const pct = Math.min(100, (d.paid / d.amount) * 100);
+            <CollapsibleCells>
+              {rows.map(r => {
+                const pct = Math.min(100, (r.done / r.total) * 100);
+                const left = Math.max(0, r.total - r.done);
                 return (
-                  <div key={d.id} className={paidOff ? 'cell' : 'cell tap'}
-                    onClick={() => { if (!paidOff) { setPayFor(d); setModal('pay'); } }}>
-                    <div className={paidOff ? 'rank sm done' : rank === 1 ? 'rank sm first' : 'rank sm'}>{paidOff ? '✓' : rank}</div>
+                  <div key={r.key} className={r.finished ? 'cell' : 'cell tap'} onClick={() => !r.finished && r.open()}>
+                    <div className={r.finished ? 'rank sm done' : r.rank === 1 ? 'rank sm first' : 'rank sm'}>
+                      {r.finished ? '✓' : r.rank}
+                    </div>
                     <div className="grow">
                       <div className="r1">
-                        <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                        <b className={paidOff ? 'pos' : 'neg'}>{paidOff ? 'Пардохт шуд' : mask(fmt(left))}</b>
+                        <b>{r.priority ? '⭐ ' : ''}{r.title}</b>
+                        {isDebtAccount
+                          ? <b className={r.finished ? 'pos' : 'neg'}>{r.finished ? 'Пардохт шуд' : mask(fmt(left))}</b>
+                          : <b className={r.ready ? 'pos' : ''}>{r.ready ? 'Тайёр ✓' : mask(fmt(r.total))}</b>}
                       </div>
                       <div className="mini-line">
                         <span className="progress thin"><i style={{ width: `${pct}%` }} /></span>
-                        <small>аз {mask(fmt(d.amount))}</small>
+                        <small>{isDebtAccount ? 'аз' : `${mask(fmt(r.done))} аз`} {mask(fmt(r.total))}</small>
                       </div>
                     </div>
                   </div>
                 );
               })}
-            </div>
+            </CollapsibleCells>
           )}
         </section>
       )}
@@ -227,23 +289,33 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
       ))}
 
       {modal === 'transfer' && (
-        <Sheet title="Гузаронидан" onClose={() => setModal(null)}>
+        <Sheet title="Гузаронидан" onClose={close}>
           <TransferForm {...common} from={id} onDone={done} />
         </Sheet>
       )}
       {modal === 'expense' && (
-        <Sheet title="Хароҷот" onClose={() => setModal(null)}>
+        <Sheet title="Хароҷот" onClose={close}>
           <ExpenseForm {...common} initialAccount={id} onDone={done} />
         </Sheet>
       )}
       {modal === 'goal' && (
-        <Sheet title="Мақсад" onClose={() => setModal(null)}>
+        <Sheet title="Мақсад" onClose={close}>
           <GoalForm {...common} id={id} onDone={done} />
         </Sheet>
       )}
       {modal === 'pay' && payFor && (
-        <Sheet title={`Пардохт: ${payFor.title}`} onClose={() => { setModal(null); setPayFor(null); }}>
+        <Sheet title={`Пардохт: ${payFor.title}`} onClose={close}>
           <PayDebtForm {...common} debt={payFor} defaultSource="debt" onDone={done} />
+        </Sheet>
+      )}
+      {modal === 'buy' && buyFor && (
+        <Sheet title={`Харид: ${buyFor.title}`} onClose={close}>
+          <BuyDreamForm {...common} dream={buyFor} defaultSource={id} onDone={done} />
+        </Sheet>
+      )}
+      {modal === 'addDream' && (
+        <Sheet title="Орзуи нав" onClose={close}>
+          <DreamForm initialKind={kind} onSubmit={addDream} submitLabel="Илова кардан" />
         </Sheet>
       )}
     </>

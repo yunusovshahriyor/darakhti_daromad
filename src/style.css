@@ -521,8 +521,6 @@ input[type='date'] { min-height: 50px; }
 .next-debt small { opacity: .85; }
 .next-debt b { font-size: 1.25rem; letter-spacing: -.01em; }
 .next-debt span { font-size: .85rem; opacity: .92; }
-.order-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 6px 8px; }
-.order-row .note { margin: 0; flex: 1; }
 .rank {
   flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
   font-weight: 700; font-size: .9rem; color: var(--primary);
@@ -595,3 +593,14 @@ input[type='date'] { min-height: 50px; }
 .mini-line small { white-space: nowrap; font-size: .7rem; }
 .cells.compact .grow { gap: 0; }
 .gt-actions .link-btn { white-space: nowrap; }
+.order-note { margin: 0 6px 10px; }
+
+/* тугмаи «Ҳамаро нишон додан / Пӯшидан» */
+.more-row {
+  width: 100%; border: 0; border-top: 1px solid var(--border); background: var(--surface);
+  color: var(--primary); font-weight: 700; font-size: .88rem; padding: 12px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.more-row:active { background: var(--bg); }
+.more-row .chev { display: inline-block; font-size: 1.2rem; line-height: 1; transition: transform .2s; }
+.more-row .chev.up { transform: rotate(180deg); }

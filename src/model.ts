@@ -1,4 +1,4 @@
-import type { AccountId, Alloc, Debt, DebtOrder, Expense, Income, Settings, State, Transfer } from './types';
+import type { AccountId, Alloc, Debt, Dream, Expense, Income, Settings, State, Transfer } from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   charity: 2.5,
@@ -47,11 +47,10 @@ export const remaining = (d: Debt) => Math.max(0, d.amount - d.paid);
 
 /**
  * Тартиби пардохти қарзҳо: аввал қарзҳои афзалиятнок, баъд боқимонда;
- * дар ҳар гурӯҳ аз рӯи бақия: 'big' — калон боло (1000 пеш аз 780), 'small' — хурд боло.
+ * дар ҳар гурӯҳ аз рӯи бақия аз хурд ба калон (қарзи хурд аввал).
  * Қарзҳои пурра пардохтшуда дар охир.
  */
-export function sortDebts(debts: Debt[], order: DebtOrder = 'big'): Debt[] {
-  const dir = order === 'big' ? -1 : 1;
+export function sortDebts(debts: Debt[]): Debt[] {
   return [...debts].sort((a, b) => {
     const pa = remaining(a) > 0.005 ? 0 : 1;
     const pb = remaining(b) > 0.005 ? 0 : 1;
@@ -59,7 +58,34 @@ export function sortDebts(debts: Debt[], order: DebtOrder = 'big'): Debt[] {
     const fa = a.priority ? 0 : 1;
     const fb = b.priority ? 0 : 1;
     if (fa !== fb) return fa - fb;
-    return dir * (remaining(a) - remaining(b)) || a.id - b.id;
+    return remaining(a) - remaining(b) || a.id - b.id;
+  });
+}
+
+/** Тартиби харидани орзуҳо: ҳамон қоида — аввал афзалиятнок, баъд арзонтарин. */
+export function sortDreams(dreams: Dream[]): Dream[] {
+  return [...dreams].sort((a, b) => {
+    const fa = a.priority ? 0 : 1;
+    const fb = b.priority ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    return a.target - b.target || a.id - b.id;
+  });
+}
+
+export interface FundedDream {
+  dream: Dream;
+  funded: number;
+  ready: boolean;
+  rank: number;
+}
+
+/** Маблағи ҷамъшуда (тавозуни ҳисоб) ба орзуҳо аз навбат тақсим мешавад. */
+export function fundDreams(dreams: Dream[], pool: number): FundedDream[] {
+  let left = Math.max(0, pool);
+  return sortDreams(dreams).map((dream, i) => {
+    const funded = Math.min(dream.target, left);
+    left -= funded;
+    return { dream, funded, ready: funded >= dream.target - 0.005, rank: i + 1 };
   });
 }
 
@@ -373,7 +399,3 @@ export function savedThisMonth(s: State): number {
   return v;
 }
 
-export const DEBT_ORDER_LABEL: Record<DebtOrder, string> = {
-  big: 'Калон аввал ↓',
-  small: 'Хурд аввал ↑',
-};
