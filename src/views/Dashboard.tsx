@@ -20,7 +20,7 @@ function readPeriod(): { kind: PeriodKind; offset: number } {
   try {
     const r = JSON.parse(localStorage.getItem(PERIOD_KEY) ?? 'null') as { kind?: PeriodKind; offset?: number } | null;
     if (r && r.kind && KINDS.includes(r.kind) && Number.isInteger(r.offset) && Math.abs(r.offset!) <= 20000) {
-      return { kind: r.kind, offset: r.offset! };
+      return { kind: r.kind, offset: Math.min(0, r.offset!) };
     }
   } catch { /* ignore */ }
   return { kind: 'month', offset: 0 };
@@ -92,7 +92,8 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         {offset !== 0 && (
           <button className="pn-now" onClick={() => setOffset(0)}>Ҳозир</button>
         )}
-        <button className="pn-btn flip" onClick={() => setOffset(o => o + 1)} aria-label="Давраи оянда">
+        <button className="pn-btn flip" disabled={offset >= 0} onClick={() => setOffset(o => Math.min(0, o + 1))}
+          aria-label="Давраи оянда">
           <BackIcon />
         </button>
       </div>

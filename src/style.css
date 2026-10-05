@@ -719,3 +719,5 @@ input[type='date'] { min-height: 50px; }
 .anchor-nav b { font-size: 1.02rem; }
 .pn-btn.sm { width: 36px; height: 36px; }
 .period-list button { min-height: 46px; }
+.period-list button:disabled { opacity: .42; cursor: default; }
+.pn-btn:disabled { opacity: .35; }

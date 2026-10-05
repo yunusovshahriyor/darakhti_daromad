@@ -36,7 +36,7 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
           onChange={e => setAmount(e.target.value)} placeholder="0.00" required />
       </Field>
       <Field label="Сана">
-        <input type="date" value={date} onChange={e => setDate(e.target.value)} required />
+        <input type="date" value={date} max={today()} onChange={e => setDate(e.target.value)} required />
       </Field>
 
       {num > 0 && (

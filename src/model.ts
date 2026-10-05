@@ -443,7 +443,7 @@ const DAY_MS = 86400000;
 const mondayOf = (d: Date) => addDays(d, -((d.getDay() + 6) % 7));
 
 /**
- * Рӯйхати давраҳо: сол — 2000…соли оянда; моҳ — 12 моҳи соли anchorYear;
+ * Рӯйхати давраҳо (боло — оянда, баъд ҳозира, баъд гузашта): сол — 2000…соли оянда; моҳ — 12 моҳи соли anchorYear;
  * ҳафта — ҳамаи ҳафтаҳои соли anchorYear; рӯз — ҳамаи рӯзҳои моҳи anchorMonth.
  */
 export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: number, now = new Date()): PickItem[] {
@@ -462,7 +462,7 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
   }
   if (kind === 'month') {
     return Array.from({ length: 12 }, (_, m) =>
-      make((anchorYear - ny) * 12 + (m - nm), `${MONTH_NAMES[m]} ${anchorYear}`));
+      make((anchorYear - ny) * 12 + (m - nm), `${MONTH_NAMES[m]} ${anchorYear}`)).reverse();
   }
   if (kind === 'week') {
     const out: PickItem[] = [];
@@ -472,12 +472,12 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
       const off = Math.round((utcDay(s) - nowMonday) / (7 * DAY_MS));
       out.push(make(off, periodLabel('week', periodAt('week', off, now))));
     }
-    return out;
+    return out.reverse();
   }
   const days = new Date(anchorYear, anchorMonth + 1, 0).getDate();
   return Array.from({ length: days }, (_, i) => {
     const d = new Date(anchorYear, anchorMonth, i + 1);
     const off = Math.round((utcDay(d) - utcDay(now)) / DAY_MS);
     return make(off, `${i + 1} ${MONTHS[anchorMonth]} · ${WEEKDAYS[d.getDay()]}`);
-  });
+  }).reverse();
 }

@@ -26,7 +26,9 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
   });
   const selRef = useRef<HTMLButtonElement | null>(null);
 
-  const maxYear = new Date().getFullYear() + 1;
+  const today = new Date();
+  const maxYear = today.getFullYear();
+  const maxTotal = today.getFullYear() * 12 + today.getMonth();
   const items = pickItems(k, anchor.y, anchor.m);
 
   // Ба ҷойи интихобшуда гузаштан (дар дохили варақа, на дар тамоми саҳифа)
@@ -49,7 +51,7 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
     setAnchor(a => {
       const total = a.y * 12 + a.m + d;
       const y = Math.floor(total / 12);
-      if (y < MIN_YEAR || y > maxYear) return a;
+      if (y < MIN_YEAR || total > maxTotal) return a;
       return { y, m: total - y * 12 };
     });
 
@@ -66,7 +68,10 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
         <div className="anchor-nav">
           <button className="pn-btn sm" onClick={() => step(-1)} aria-label="Қафо"><BackIcon /></button>
           <b>{stepLabel}</b>
-          <button className="pn-btn sm flip" onClick={() => step(1)} aria-label="Пеш"><BackIcon /></button>
+          <button className="pn-btn sm flip" onClick={() => step(1)} aria-label="Пеш"
+            disabled={k === 'day' ? anchor.y * 12 + anchor.m >= maxTotal : anchor.y >= maxYear}>
+            <BackIcon />
+          </button>
         </div>
       )}
 
@@ -75,7 +80,7 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
           const on = k === kind && it.start === sel.start;
           return (
             <button key={it.start} ref={on ? selRef : undefined} className={on ? 'on' : ''}
-              onClick={() => onSelect(k, it.off)}>
+              disabled={it.future} onClick={() => onSelect(k, it.off)}>
               <span>{it.label}</span>
               {it.now && <em>Ҳозир</em>}
               {!it.now && it.future && <em className="soon">Оянда</em>}
