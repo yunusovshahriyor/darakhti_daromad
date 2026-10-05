@@ -1,6 +1,7 @@
 import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
-import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
+import AccountScopeSheet from '../components/AccountScopeSheet';
+import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, FilterIcon, PersonIcon } from '../components/Icons';
 import PeriodSheet from '../components/PeriodSheet';
 import {
   ACCOUNTS, ACCOUNT_COLORS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
@@ -14,6 +15,14 @@ import type { Props, Tab } from './props';
 
 const KINDS: PeriodKind[] = ['day', 'week', 'month', 'year'];
 const PERIOD_KEY = 'darakhti:period';
+const SCOPE_KEY = 'darakhti:scope';
+
+const readScope = (): AccountId | null => {
+  try {
+    const v = localStorage.getItem(SCOPE_KEY) as AccountId | null;
+    return v && ACCOUNT_ORDER.includes(v) ? v : null;
+  } catch { return null; }
+};
 
 /** Давраи интихобшуда танҳо бо амали корбар иваз мешавад, на бо навсозии саҳифа. */
 function readPeriod(): { kind: PeriodKind; offset: number } {
@@ -39,6 +48,15 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
     try { localStorage.setItem(PERIOD_KEY, JSON.stringify({ kind, offset })); } catch { /* ignore */ }
   }, [kind, offset]);
   const [picker, setPicker] = useState(false);
+  const [scope, setScope] = useState<AccountId | null>(readScope);
+  const [scopeOpen, setScopeOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (scope) localStorage.setItem(SCOPE_KEY, scope);
+      else localStorage.removeItem(SCOPE_KEY);
+    } catch { /* ignore */ }
+  }, [scope]);
 
   const mask = (v: string) => (hidden ? '••••' : v);
 
@@ -47,15 +65,19 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
   const prevPeriod = periodAt(kind, offset - 1);
 
   const inRange = <T extends { date: string }>(items: T[], p = period) => items.filter(i => inPeriod(i.date, p));
-  const periodExpenses = inRange(expenses);
+  // Филтри ҳисоб: «Ҳама» ё як ҳисоб
+  const scopedExpenses = scope ? expenses.filter(e => e.account === scope) : expenses;
+  const incomeOf = (i: { amount: number; alloc: Record<AccountId, number> }) => (scope ? i.alloc[scope] ?? 0 : i.amount);
+  const periodExpenses = inRange(scopedExpenses);
   const spentNow = periodExpenses.reduce((s, e) => s + e.amount, 0);
-  const spentPrev = inRange(expenses, prevPeriod).reduce((s, e) => s + e.amount, 0);
-  const incomeNow = inRange(incomes).reduce((s, i) => s + i.amount, 0);
-  const left = incomeNow - spentNow;
-  // Боқимондаи ҳамаи ҳисобҳо то охири давраи интихобшуда (барои давраи ҷорӣ — ҳозира)
+  const spentPrev = inRange(scopedExpenses, prevPeriod).reduce((s, e) => s + e.amount, 0);
+  const incomeNow = inRange(incomes).reduce((s, i) => s + incomeOf(i), 0);
+  // Боқимонда то охири давраи интихобшуда (барои давраи ҷорӣ — ҳозира)
+  const transfersIn = state.transfers.filter(t => scope && t.date <= period.end);
   const balanceNow =
-    incomes.filter(i => i.date <= period.end).reduce((sum, i) => sum + i.amount, 0) -
-    expenses.filter(e => e.date <= period.end).reduce((sum, e) => sum + e.amount, 0);
+    incomes.filter(i => i.date <= period.end).reduce((sum, i) => sum + incomeOf(i), 0) -
+    scopedExpenses.filter(e => e.date <= period.end).reduce((sum, e) => sum + e.amount, 0) +
+    transfersIn.reduce((sum, t) => sum + (t.to === scope ? t.amount : 0) - (t.from === scope ? t.amount : 0), 0);
   const change = spentPrev > 0 ? ((spentNow - spentPrev) / spentPrev) * 100 : null;
   const proj = forecast(spentNow, period, kind);
 
@@ -103,7 +125,13 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
       </div>
 
       <section className="spent">
-        <span className="spent-label">{offset === 0 ? 'Боқимонда дар ҳамаи ҳисобҳо' : 'Боқимонда то охири давра'}</span>
+        <div className="scope-row">
+          <span className="spent-label">{scope ? `${ACCOUNTS[scope].icon} ${ACCOUNTS[scope].name}` : 'Ҳама'}</span>
+          <button className={scope ? 'filter-btn on' : 'filter-btn'} onClick={() => setScopeOpen(true)}
+            aria-label="Интихоби ҳисоб">
+            <FilterIcon />
+          </button>
+        </div>
         <div className="spent-row">
           <div className="spent-num">
             <span style={{ fontSize: bigSize }} className={balanceNow < 0 ? 'neg' : ''}>{mask(balText)}</span>
@@ -134,7 +162,6 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
           <div className="grow">
             <small>Даромад дар давра</small>
             <b>{mask(fmt(incomeNow))} смн</b>
-            <small className={left < 0 ? 'neg' : ''}>Бақия {mask(fmt(left))} смн</small>
           </div>
           <ChevronIcon />
         </button>
@@ -206,6 +233,11 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
           </div>
         </div>
       </section>
+
+      {scopeOpen && (
+        <AccountScopeSheet state={state} value={scope} mask={mask}
+          onSelect={id => { setScope(id); setScopeOpen(false); }} onClose={() => setScopeOpen(false)} />
+      )}
 
       {picker && (
         <PeriodSheet kind={kind} offset={offset} onClose={() => setPicker(false)}

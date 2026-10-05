@@ -79,3 +79,10 @@ export const InfoIcon = () => (
 export const ChevronDownIcon = () => (
   <Svg size={16}><polyline points="6 9 12 15 18 9" /></Svg>
 );
+
+export const FilterIcon = () => (
+  <Svg size={20}><polygon points="22 3 2 3 10 12.5 10 19 14 21 14 12.5 22 3" /></Svg>
+);
+export const CheckIcon = () => (
+  <Svg size={18}><polyline points="20 6 9 17 4 12" /></Svg>
+);

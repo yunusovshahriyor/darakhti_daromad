@@ -752,3 +752,22 @@ input[type='date'] { min-height: 50px; }
 .trend-sm.good { color: var(--primary); }
 .trend-sm.bad { color: var(--danger); }
 .income-row .line { position: absolute; left: 4px; right: 4px; bottom: 0; }
+
+/* ---------- «Ҳама» / ҳисоб ва тугмаи филтр ---------- */
+.scope-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; }
+.spent-label { font-size: .85rem !important; color: var(--muted); font-weight: 600; letter-spacing: .01em; }
+.filter-btn {
+  flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--glass); display: grid; place-items: center; color: var(--text);
+}
+.filter-btn.on { background: var(--primary); border-color: transparent; color: #fff; }
+.scope-list { display: grid; gap: 2px; }
+.scope-list .group-title { margin: 12px 6px 4px; }
+.scope-list button {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 0; border-radius: 14px;
+  background: none; color: var(--text); font-size: 1rem; text-align: left;
+}
+.scope-list button.on { background: color-mix(in srgb, var(--primary) 16%, transparent); font-weight: 700; }
+.scope-list .sl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scope-list b { font-size: .95rem; }
+.scope-list svg { color: var(--primary); flex: none; }
