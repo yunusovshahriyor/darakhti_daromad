@@ -1,5 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { BackIcon, ExpenseIcon, HomeIcon, IncomeIcon, MoreIcon, StarIcon } from './components/Icons';
+import AddSheet from './components/AddSheet';
+import {
+  BackIcon, ExpenseIcon, GridIcon, IncomeIcon, ListIcon, MoreIcon, PlusIcon,
+} from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { loadState, saveState } from './storage';
 import Dashboard from './views/Dashboard';
@@ -8,19 +11,20 @@ import Dreams from './views/Dreams';
 import Expenses from './views/Expenses';
 import Incomes from './views/Incomes';
 import More, { Sub } from './views/More';
+import type { Tab } from './views/props';
 import SettingsView from './views/SettingsView';
 
-type Tab = 'home' | 'income' | 'expense' | 'dreams' | 'more';
-
-const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
-  { id: 'home', label: 'Асосӣ', icon: <HomeIcon /> },
+const LEFT: { id: Tab; label: string; icon: ReactNode }[] = [
+  { id: 'home', label: 'Асосӣ', icon: <GridIcon /> },
   { id: 'income', label: 'Даромад', icon: <IncomeIcon /> },
-  { id: 'expense', label: 'Хароҷот', icon: <ExpenseIcon /> },
-  { id: 'dreams', label: 'Орзуҳо', icon: <StarIcon /> },
+];
+const RIGHT: { id: Tab; label: string; icon: ReactNode }[] = [
+  { id: 'expense', label: 'Хароҷот', icon: <ListIcon /> },
   { id: 'more', label: 'Бештар', icon: <MoreIcon /> },
 ];
 
-const SUB_TITLES: Record<Sub, string> = { debts: 'Қарзҳо', settings: 'Танзимот' };
+const TITLES: Record<Tab, string> = { home: 'Асосӣ', income: 'Даромад', expense: 'Хароҷот', more: 'Бештар' };
+const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
 
 interface InstallEvent extends Event {
   prompt: () => Promise<void>;
@@ -30,6 +34,8 @@ export default function App() {
   const [state, setState] = useState(loadState);
   const [tab, setTab] = useState<Tab>('home');
   const [sub, setSub] = useState<Sub | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [toast, setToast] = useState('');
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
 
   useEffect(() => saveState(state), [state]);
@@ -42,6 +48,12 @@ export default function App() {
     window.addEventListener('beforeinstallprompt', h);
     return () => window.removeEventListener('beforeinstallprompt', h);
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(''), 2000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useHistoryLayer(sub !== null, () => setSub(null));
 
@@ -56,40 +68,56 @@ export default function App() {
     setTab(t);
   };
 
-  const title = sub ? SUB_TITLES[sub] : TABS.find(t => t.id === tab)!.label;
+  const home = tab === 'home' && !sub;
+  const title = sub ? SUB_TITLES[sub] : TITLES[tab];
   const props = { state, setState };
+
+  const tabButton = (t: { id: Tab; label: string; icon: ReactNode }) => (
+    <button key={t.id} className={t.id === tab ? 'tab active' : 'tab'} onClick={() => go(t.id)}>
+      {t.icon}
+      <span>{t.label}</span>
+    </button>
+  );
 
   return (
     <div className="app">
-      <header className="appbar">
-        {sub && (
-          <button className="icon-btn" onClick={() => setSub(null)} aria-label="Бозгашт"><BackIcon /></button>
-        )}
-        <h1>{title}</h1>
-      </header>
+      {!home && (
+        <header className="appbar">
+          {sub && (
+            <button className="icon-btn" onClick={() => setSub(null)} aria-label="Бозгашт"><BackIcon /></button>
+          )}
+          <h1>{title}</h1>
+        </header>
+      )}
 
-      <main className="screen" key={sub ?? tab}>
-        {!sub && tab === 'home' && <Dashboard {...props} />}
+      <main className={home ? 'screen home' : 'screen'} key={sub ?? tab}>
+        {home && <Dashboard {...props} onNavigate={go} onProfile={() => setSub('settings')} />}
         {!sub && tab === 'income' && <Incomes {...props} />}
         {!sub && tab === 'expense' && <Expenses {...props} />}
-        {!sub && tab === 'dreams' && <Dreams {...props} />}
         {!sub && tab === 'more' && (
           <More {...props} open={setSub} standalone={standalone} ios={ios}
             canInstall={installEvent !== null}
             install={() => installEvent?.prompt().then(() => setInstallEvent(null))} />
         )}
+        {sub === 'dreams' && <Dreams {...props} />}
         {sub === 'debts' && <Debts {...props} />}
         {sub === 'settings' && <SettingsView {...props} />}
       </main>
 
+      {toast && <div className="toast">{toast}</div>}
+
       <nav className="tabbar">
-        {TABS.map(t => (
-          <button key={t.id} className={t.id === tab ? 'tab active' : 'tab'} onClick={() => go(t.id)}>
-            {t.icon}
-            <span>{t.label}</span>
-          </button>
-        ))}
+        {LEFT.map(tabButton)}
+        <button className="tab add" onClick={() => setAdding(true)} aria-label="Илова кардан">
+          <span className="add-circle"><PlusIcon /></span>
+          <span>Илова</span>
+        </button>
+        {RIGHT.map(tabButton)}
       </nav>
+
+      {adding && (
+        <AddSheet {...props} onClose={() => setAdding(false)} onDone={setToast} />
+      )}
     </div>
   );
 }

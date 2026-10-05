@@ -128,3 +128,75 @@ export function groupByMonth<T extends { date: string }>(items: T[]) {
   }
   return groups;
 }
+
+// ---------- Давраҳо (рӯз / ҳафта / моҳ / сол) ----------
+
+export type PeriodKind = 'day' | 'week' | 'month' | 'year';
+
+export interface Period {
+  start: string;
+  end: string;
+  top: string;
+  big: string;
+  bottom: string;
+}
+
+const WEEKDAYS = ['Яқш', 'Душ', 'Сеш', 'Чор', 'Пан', 'Ҷум', 'Шан'];
+const iso = (d: Date) => d.toLocaleDateString('sv-SE');
+const addDays = (d: Date, n: number) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+};
+
+export function periodAt(kind: PeriodKind, offset: number, now = new Date()): Period {
+  const cur = offset === 0;
+  if (kind === 'day') {
+    const d = addDays(now, offset);
+    return { start: iso(d), end: iso(d), top: MONTHS[d.getMonth()], big: String(d.getDate()), bottom: cur ? 'Ҳозир' : WEEKDAYS[d.getDay()] };
+  }
+  if (kind === 'week') {
+    const base = addDays(now, offset * 7);
+    const s = addDays(base, -((base.getDay() + 6) % 7));
+    const e = addDays(s, 6);
+    return { start: iso(s), end: iso(e), top: MONTHS[s.getMonth()], big: `${s.getDate()}–${e.getDate()}`, bottom: cur ? 'Ҳозир' : 'Ҳафта' };
+  }
+  if (kind === 'month') {
+    const s = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    const e = new Date(s.getFullYear(), s.getMonth() + 1, 0);
+    return { start: iso(s), end: iso(e), top: String(s.getFullYear()), big: MONTHS[s.getMonth()], bottom: cur ? 'Ҳозир' : 'Моҳ' };
+  }
+  const y = now.getFullYear() + offset;
+  return { start: `${y}-01-01`, end: `${y}-12-31`, top: 'Сол', big: String(y), bottom: cur ? 'Ҳозир' : ' ' };
+}
+
+export const inPeriod = (date: string, p: Period) => date >= p.start && date <= p.end;
+
+/** Пешгӯии хароҷот то охири давра аз рӯи суръати ҳозира. */
+export function forecast(spentSoFar: number, p: Period, kind: PeriodKind, now = new Date()) {
+  const today = iso(now);
+  if (today < p.start) return 0;
+  if (today > p.end || kind === 'day') return spentSoFar;
+  const days = (a: string, b: string) =>
+    Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000) + 1;
+  return (spentSoFar / days(p.start, today)) * days(p.start, p.end);
+}
+
+export const PERIOD_LABELS: Record<PeriodKind, { name: string; prev: string; forecast: string }> = {
+  day: { name: 'Рӯз', prev: 'рӯзи гузашта', forecast: 'Пешгӯӣ барои рӯз' },
+  week: { name: 'Ҳафта', prev: 'ҳафтаи гузашта', forecast: 'Пешгӯӣ барои ҳафта' },
+  month: { name: 'Моҳ', prev: 'моҳи гузашта', forecast: 'Пешгӯӣ барои моҳ' },
+  year: { name: 'Сол', prev: 'соли гузашта', forecast: 'Пешгӯӣ барои сол' },
+};
+
+export const ACCOUNT_COLORS: Record<AccountId, string> = {
+  charity: '#e0a43a',
+  parents: '#d7728f',
+  future: '#4fa89d',
+  fun: '#9b7bd4',
+  debt: '#d9594c',
+  capital: '#2f7fb5',
+  bigDream: '#3f9b6b',
+  smallDream: '#7cc4e8',
+  living: '#5b83ac',
+};

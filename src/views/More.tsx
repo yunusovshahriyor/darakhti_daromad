@@ -2,7 +2,7 @@ import { ChevronIcon } from '../components/Icons';
 import { fmt, hasDebt, remaining } from '../model';
 import type { Props } from './props';
 
-export type Sub = 'debts' | 'settings';
+export type Sub = 'dreams' | 'debts' | 'settings';
 
 interface MoreProps extends Props {
   open: (s: Sub) => void;
@@ -18,6 +18,14 @@ export default function More({ state, open, canInstall, install, standalone, ios
   return (
     <>
       <div className="cells">
+        <button className="cell tap link" onClick={() => open('dreams')}>
+          <div className="ic">✨</div>
+          <div className="grow">
+            <b>Орзуҳо</b>
+            <small>{state.dreams.length ? `${state.dreams.length} орзу` : 'Ҳадафҳои худро илова кунед'}</small>
+          </div>
+          <ChevronIcon />
+        </button>
         <button className="cell tap link" onClick={() => open('debts')}>
           <div className="ic">💳</div>
           <div className="grow">
