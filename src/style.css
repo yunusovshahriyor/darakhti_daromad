@@ -37,6 +37,8 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body, #root { height: 100%; }
+/* Навсозии стандартии браузер манъ аст: навсозиро худи барнома мекунад */
+html { overscroll-behavior: none; }
 
 body {
   margin: 0;
@@ -221,7 +223,7 @@ button { cursor: pointer; }
 }
 .sheet {
   width: 100%; max-width: 520px; max-height: 92%; overflow-y: auto;
-  background: var(--surface); border-radius: 26px 26px 0 0;
+  background: var(--surface); border-radius: 26px 26px 0 0; overscroll-behavior: contain;
   padding: 8px 18px calc(18px + env(safe-area-inset-bottom));
   animation: up .28s cubic-bezier(.2, .8, .2, 1);
 }
@@ -721,3 +723,16 @@ input[type='date'] { min-height: 50px; }
 .period-list button { min-height: 46px; }
 .period-list button:disabled { opacity: .42; cursor: default; }
 .pn-btn:disabled { opacity: .35; }
+
+/* ---------- Варақа бо ду ҳолат: нимкушода ↔ пурра ---------- */
+.sheet.detent {
+  display: flex; flex-direction: column; overflow: hidden; height: 56%; max-height: 92%;
+  padding-bottom: 0; transition: height .28s cubic-bezier(.2, .8, .2, 1);
+}
+.sheet.detent.full { height: 92%; }
+.sheet.detent .grabber { cursor: pointer; padding: 0; }
+.sheet-scroll {
+  flex: 1; min-height: 0; overflow-y: hidden; overscroll-behavior: contain;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+}
+.sheet.detent.full .sheet-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }

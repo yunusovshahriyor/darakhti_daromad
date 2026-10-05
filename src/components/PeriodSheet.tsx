@@ -35,7 +35,7 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
   useEffect(() => {
     const t = setTimeout(() => {
       const el = selRef.current;
-      const box = el?.closest('.sheet') as HTMLElement | null;
+      const box = el?.closest('.sheet-scroll') as HTMLElement | null;
       if (!el || !box) return;
       const e = el.getBoundingClientRect();
       const b = box.getBoundingClientRect();
@@ -60,7 +60,7 @@ export default function PeriodSheet({ kind, offset, onSelect, onClose }: {
   const step = (d: number) => (k === 'day' ? stepMonth(d) : stepYear(d));
 
   return (
-    <Sheet title="Давраи ҳисобот" onClose={onClose}>
+    <Sheet title="Давраи ҳисобот" onClose={onClose} detents>
       <SegTabs value={k} onChange={id => setK(id as PeriodKind)}
         tabs={KINDS.map(x => ({ id: x, label: PERIOD_LABELS[x].name }))} />
 
