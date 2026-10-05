@@ -31,6 +31,7 @@ const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисоб�
 const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
 const HIDE_KEY = 'darakhti:hide';
 const NAV_KEY = 'darakhti:nav';
+const FILTER_KEY = 'darakhti:hfilter';
 
 const TAB_IDS: Tab[] = ['home', 'accounts', 'history', 'more'];
 const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings'];
@@ -42,6 +43,14 @@ interface Nav {
   acct: AccountId | null;
   filter: HistoryFilter;
 }
+
+const readFilter = (): HistoryFilter => {
+  try {
+    const f = localStorage.getItem(FILTER_KEY) as HistoryFilter | null;
+    if (f && FILTER_IDS.includes(f)) return f;
+  } catch { /* ignore */ }
+  return 'all';
+};
 
 /** Ҷойгиршавӣ (таб, саҳифа, ҳисоб) пас аз навсозии саҳифа аз нав барқарор мешавад. */
 function readNav(): Nav {
@@ -72,7 +81,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(nav0.tab);
   const [sub, setSub] = useState<Sub | null>(nav0.sub);
   const [acct, setAcct] = useState<AccountId | null>(nav0.acct);
-  const [filter, setFilter] = useState<HistoryFilter>(nav0.filter);
+  const [filter, setFilter] = useState<HistoryFilter>(readFilter);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -87,6 +96,10 @@ export default function App() {
   const prevBal = useRef<Alloc | null>(null);
 
   useEffect(() => saveState(state), [state]);
+
+  useEffect(() => {
+    try { localStorage.setItem(FILTER_KEY, filter); } catch { /* ignore */ }
+  }, [filter]);
 
   useEffect(() => {
     try { sessionStorage.setItem(NAV_KEY, JSON.stringify({ tab, sub, acct, filter })); } catch { /* ignore */ }
@@ -140,7 +153,7 @@ export default function App() {
     setSub(null);
     setAcct(null);
     setTab(t);
-    if (t === 'history') setFilter(f ?? 'all');
+    if (t === 'history' && f) setFilter(f);
   };
 
   const openAccount = (id: AccountId) => {

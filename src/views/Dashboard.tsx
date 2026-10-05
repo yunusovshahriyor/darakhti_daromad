@@ -1,4 +1,4 @@
-import { CSSProperties, useState } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
 import { BackIcon, ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
 import SegTabs from '../components/SegTabs';
@@ -14,14 +14,31 @@ import type { HistoryFilter } from './History';
 import type { Props, Tab } from './props';
 
 const KINDS: PeriodKind[] = ['day', 'week', 'month', 'year'];
+const PERIOD_KEY = 'darakhti:period';
+
+/** Давраи интихобшуда танҳо бо амали корбар иваз мешавад, на бо навсозии саҳифа. */
+function readPeriod(): { kind: PeriodKind; offset: number } {
+  try {
+    const r = JSON.parse(localStorage.getItem(PERIOD_KEY) ?? 'null') as { kind?: PeriodKind; offset?: number } | null;
+    if (r && r.kind && KINDS.includes(r.kind) && Number.isInteger(r.offset) && r.offset! >= -120 && r.offset! <= 24) {
+      return { kind: r.kind, offset: r.offset! };
+    }
+  } catch { /* ignore */ }
+  return { kind: 'month', offset: 0 };
+}
 export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, onProfile, onOpenAccount }: Props & Privacy & {
   onNavigate: (t: Tab, filter?: HistoryFilter) => void;
   onProfile: () => void;
   onOpenAccount: (id: AccountId) => void;
 }) {
   const { incomes, expenses } = state;
-  const [kind, setKind] = useState<PeriodKind>('month');
-  const [offset, setOffset] = useState(0);
+  const [saved] = useState(readPeriod);
+  const [kind, setKind] = useState<PeriodKind>(saved.kind);
+  const [offset, setOffset] = useState(saved.offset);
+
+  useEffect(() => {
+    try { localStorage.setItem(PERIOD_KEY, JSON.stringify({ kind, offset })); } catch { /* ignore */ }
+  }, [kind, offset]);
   const [picker, setPicker] = useState(false);
 
   const mask = (v: string) => (hidden ? '••••' : v);
