@@ -52,6 +52,10 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
   const spentPrev = inRange(expenses, prevPeriod).reduce((s, e) => s + e.amount, 0);
   const incomeNow = inRange(incomes).reduce((s, i) => s + i.amount, 0);
   const left = incomeNow - spentNow;
+  // Боқимондаи ҳамаи ҳисобҳо то охири давраи интихобшуда (барои давраи ҷорӣ — ҳозира)
+  const balanceNow =
+    incomes.filter(i => i.date <= period.end).reduce((sum, i) => sum + i.amount, 0) -
+    expenses.filter(e => e.date <= period.end).reduce((sum, e) => sum + e.amount, 0);
   const change = spentPrev > 0 ? ((spentNow - spentPrev) / spentPrev) * 100 : null;
   const proj = forecast(spentNow, period, kind);
 
@@ -62,8 +66,8 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
     .sort((a, b) => b.value - a.value);
   const top = segs[0];
 
-  const spentText = fmt(spentNow);
-  const bigSize = spentText.length <= 6 ? '3.6rem' : spentText.length <= 8 ? '3rem' : spentText.length <= 10 ? '2.4rem' : '2rem';
+  const balText = fmt(balanceNow);
+  const bigSize = balText.length <= 6 ? '3.6rem' : balText.length <= 8 ? '3rem' : balText.length <= 10 ? '2.4rem' : '2rem';
   const pctSpent = incomeNow > 0 ? Math.min(100, (spentNow / incomeNow) * 100) : spentNow > 0 ? 100 : 0;
 
   // ----- Ҳисобҳо -----
@@ -99,10 +103,10 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
       </div>
 
       <section className="spent">
-        <span className="spent-label">Харҷ шуд</span>
+        <span className="spent-label">{offset === 0 ? 'Боқимонда дар ҳамаи ҳисобҳо' : 'Боқимонда то охири давра'}</span>
         <div className="spent-row">
           <div className="spent-num">
-            <span style={{ fontSize: bigSize }}>{mask(spentText)}</span>
+            <span style={{ fontSize: bigSize }} className={balanceNow < 0 ? 'neg' : ''}>{mask(balText)}</span>
             <small>смн</small>
           </div>
           <button className="round-btn" onClick={onToggleHidden}
@@ -110,22 +114,33 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
             {hidden ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         </div>
-        {change !== null && (
-          <div className={change <= 0 ? 'trend good' : 'trend bad'}>
-            {change <= 0 ? '↓' : '↑'} {Math.abs(change).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}% нисбат ба {PERIOD_LABELS[kind].prev}
-          </div>
-        )}
       </section>
 
-      <button className="income-row" onClick={() => onNavigate('history', 'income')}>
-        <div className="grow">
-          <small>Даромад дар давра</small>
-          <b>{mask(fmt(incomeNow))} смн</b>
-          <small className={left < 0 ? 'neg' : ''}>Бақия {mask(fmt(left))} смн</small>
-        </div>
-        <ChevronIcon />
+      <div className="income-row">
+        <button className="ir-block" onClick={() => onNavigate('history', 'expense')}>
+          <div className="grow">
+            <small>Харҷ шуд</small>
+            <b>{mask(fmt(spentNow))} смн</b>
+            {change !== null && (
+              <em className={change <= 0 ? 'trend-sm good' : 'trend-sm bad'}>
+                {change <= 0 ? '↓' : '↑'} {Math.abs(change).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}% нисбат ба {PERIOD_LABELS[kind].prev}
+              </em>
+            )}
+          </div>
+          <ChevronIcon />
+        </button>
+
+        <button className="ir-block" onClick={() => onNavigate('history', 'income')}>
+          <div className="grow">
+            <small>Даромад дар давра</small>
+            <b>{mask(fmt(incomeNow))} смн</b>
+            <small className={left < 0 ? 'neg' : ''}>Бақия {mask(fmt(left))} смн</small>
+          </div>
+          <ChevronIcon />
+        </button>
+
         <div className="line"><i style={{ width: `${pctSpent}%` }} className={pctSpent > 90 ? 'warn' : ''} /></div>
-      </button>
+      </div>
 
       <div className="mini-cards">
         <div className="mini">

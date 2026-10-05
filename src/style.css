@@ -736,3 +736,19 @@ input[type='date'] { min-height: 50px; }
   padding-bottom: calc(18px + env(safe-area-inset-bottom));
 }
 .sheet.detent.full .sheet-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* ---------- Блоки «Харҷ шуд» ва «Даромад дар давра» ---------- */
+.income-row { display: grid; gap: 0; padding: 0 4px 16px; margin-top: 10px; border-top: 1px solid var(--border); position: relative; }
+.ir-block {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: none;
+  color: var(--text); padding: 14px 0 6px;
+}
+.ir-block + .ir-block { padding-top: 8px; padding-bottom: 12px; }
+.ir-block .grow { flex: 1; display: grid; gap: 3px; min-width: 0; }
+.ir-block small { color: var(--muted); font-size: .9rem; }
+.ir-block b { font-size: 1.45rem; letter-spacing: -.02em; }
+.ir-block svg { color: var(--muted); flex: none; }
+.trend-sm { font-style: normal; font-weight: 700; font-size: .85rem; }
+.trend-sm.good { color: var(--primary); }
+.trend-sm.bad { color: var(--danger); }
+.income-row .line { position: absolute; left: 4px; right: 4px; bottom: 0; }
