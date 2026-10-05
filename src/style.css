@@ -469,8 +469,6 @@ input[type='date'] { min-height: 50px; }
 }
 .actions button:active .act-ic { transform: scale(.92); }
 
-.info-card { background: var(--surface); border-radius: 20px; padding: 14px 16px; margin: 14px 0 4px; display: grid; gap: 6px; }
-.info-card .note { margin: 4px 0 0; }
 
 /* Филтрҳо дар Таърих */
 .chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 8px; scrollbar-width: none; }
@@ -551,3 +549,37 @@ input[type='date'] { min-height: 50px; }
 }
 .switch input:checked + i { background: var(--primary); }
 .switch input:checked + i::after { transform: translateX(20px); }
+
+/* ---------- Саҳифаи ҳисоб: блоки ин моҳ ва қарз ---------- */
+.actions.two { grid-template-columns: repeat(2, 1fr); }
+.actions button:disabled { opacity: .45; }
+.ah-sub { display: grid; gap: 2px; }
+.ah-sub span { font-size: .8rem; opacity: .85; }
+.ah-sub b { font-size: 1.2rem; letter-spacing: -.01em; }
+.ah-ready {
+  background: rgba(255, 255, 255, .16); border-radius: 14px; padding: 10px 12px; font-size: .85rem; line-height: 1.4;
+}
+
+.month-card { background: var(--surface); border-radius: 24px; padding: 16px; margin: 14px 0 4px; display: grid; gap: 12px; }
+.mc-head { display: flex; align-items: baseline; gap: 8px; }
+.mc-head b { font-size: 1.05rem; }
+.mc-head small { color: var(--muted); flex: 1; }
+.mc-net { font-weight: 800; font-size: 1.05rem; }
+.mc-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mc-tile { border-radius: 18px; padding: 12px; display: grid; gap: 2px; min-width: 0; }
+.mc-tile small { color: var(--muted); font-size: .76rem; }
+.mc-tile b { font-size: 1.2rem; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.mc-tile.in { background: color-mix(in srgb, var(--success) 12%, transparent); }
+.mc-tile.out { background: color-mix(in srgb, var(--danger) 11%, transparent); }
+.mc-tile.in b { color: var(--success); }
+.mc-tile.out b { color: var(--danger); }
+.mc-ic {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800;
+  margin-bottom: 4px; color: #fff;
+}
+.mc-tile.in .mc-ic { background: var(--success); }
+.mc-tile.out .mc-ic { background: var(--danger); }
+.mc-split { height: 8px; border-radius: 99px; overflow: hidden; background: color-mix(in srgb, var(--danger) 55%, transparent); }
+.mc-split i { display: block; height: 100%; background: var(--success); border-radius: 99px; transition: width .4s; }
+.mc-split.empty { background: var(--border); }
+.month-card .note { margin: 0; }

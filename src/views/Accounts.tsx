@@ -2,7 +2,7 @@ import { CSSProperties, useEffect, useState } from 'react';
 import { ChevronIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import {
   ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, SAVING_IDS, balancesOf, fmt, groupNote, groupSum,
-  hasDebt, leafHint, savedThisMonth,
+  hasDebt, hiddenAccounts, leafHint, remaining, savedThisMonth,
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
@@ -36,6 +36,10 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
   const savings = SAVING_IDS.reduce((s, id) => s + bal[id], 0);
   const saved = savedThisMonth(state);
   const debt = hasDebt(state.debts);
+  const hide = hiddenAccounts(state);
+  const debtTotal = state.debts.reduce((sum, d) => sum + d.amount, 0);
+  const debtPaid = state.debts.reduce((sum, d) => sum + Math.min(d.amount, d.paid), 0);
+  const debtLeft = state.debts.reduce((sum, d) => sum + remaining(d), 0);
   const mask = (v: string) => (hidden ? '••••' : v);
 
   const message =
@@ -44,8 +48,12 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
     : 'Ин моҳ ҳанӯз чизе ҷамъ нашудааст. Аз ҳисоби хароҷот ба «Сармоя» гузаронед 🎯';
 
   const card = (id: AccountId) => {
-    const goal = state.goals[id];
-    const pct = goal ? Math.max(0, Math.min(100, (bal[id] / goal) * 100)) : 0;
+    // Барои «Пардохти қарз» мақсад — худи қарзҳо мебошанд
+    const isDebt = id === 'debt' && debt;
+    const goal = isDebt ? debtTotal : state.goals[id];
+    const pct = isDebt
+      ? (debtTotal > 0 ? (debtPaid / debtTotal) * 100 : 0)
+      : goal ? Math.max(0, Math.min(100, (bal[id] / goal) * 100)) : 0;
     return (
       <button key={id} className="acct-card" onClick={() => onOpenAccount(id)}
         style={{ '--c': CARD_COLORS[id] } as CSSProperties}>
@@ -55,7 +63,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
         {goal ? (
           <span className="ac-goal">
             <span className="bar"><i style={{ width: `${pct}%` }} /></span>
-            <small>{pct >= 100 ? '🎉 Мақсад расид' : `${Math.floor(pct)}% аз ${mask(fmt(goal))}`}</small>
+            <small>{isDebt ? `${Math.floor(pct)}% қарз пардохт шуд · боқӣ ${mask(fmt(debtLeft))}` : pct >= 100 ? '🎉 Мақсад расид' : `${Math.floor(pct)}% аз ${mask(fmt(goal ?? 0))}`}</small>
           </span>
         ) : (
           <small className="ac-hint">{leafHint(id, state.settings, debt)}</small>
@@ -66,7 +74,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
 
   const group = (g: AccountGroup, sub = false) => {
     const open = !closed.includes(g.key);
-    const leaves = g.items.filter((i): i is AccountId => typeof i === 'string');
+    const leaves = g.items.filter((i): i is AccountId => typeof i === 'string' && !hide.includes(i));
     const subs = g.items.filter((i): i is AccountGroup => typeof i !== 'string');
     return (
       <div className={sub ? 'grp sub' : 'grp'} key={g.key}>

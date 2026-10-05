@@ -3,7 +3,7 @@ import Donut from '../components/Donut';
 import { ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
 import {
   ACCOUNTS, ACCOUNT_COLORS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
-  inPeriod, monthlyIncome, periodAt, spent,
+  hiddenAccounts, inPeriod, monthlyIncome, periodAt, spent,
 } from '../model';
 import type { PeriodKind } from '../model';
 import type { AccountId } from '../types';
@@ -152,7 +152,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
           <button className="link-btn sm" onClick={() => onNavigate('accounts')}>Ҳама</button>
         </h3>
         <div className="strip">
-          {ACCOUNT_ORDER.map(id => (
+          {ACCOUNT_ORDER.filter(id => !hiddenAccounts(state).includes(id)).map(id => (
             <button key={id} className="mini-acct" onClick={() => onOpenAccount(id)}
               style={{ '--c': CARD_COLORS[id] } as CSSProperties}>
               <span className="ma-ic">{ACCOUNTS[id].icon}</span>

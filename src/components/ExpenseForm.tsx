@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, balancesOf, fmt, today, uid } from '../model';
+import { ACCOUNTS, balancesOf, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountSelect from './AccountSelect';
@@ -35,7 +35,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
   return (
     <form onSubmit={onSubmit}>
       <Field label="Аз кадом ҳисоб">
-        <AccountSelect value={account} onChange={setAccount} bal={bal} />
+        <AccountSelect value={account} onChange={setAccount} bal={bal} hidden={hiddenAccounts(state)} />
       </Field>
       <Field label="Барои чӣ">
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, хӯрок" required />

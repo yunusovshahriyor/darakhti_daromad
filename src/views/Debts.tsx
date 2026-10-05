@@ -1,24 +1,20 @@
-import { FormEvent, useState } from 'react';
-import AccountSelect from '../components/AccountSelect';
+import { useState } from 'react';
 import DebtForm from '../components/DebtForm';
 import Empty from '../components/Empty';
 import Fab from '../components/Fab';
-import Field from '../components/Field';
 import { PencilIcon } from '../components/Icons';
+import PayDebtForm from '../components/PayDebtForm';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { balancesOf, fmt, remaining, sortDebts, today, uid } from '../model';
-import type { AccountId, Debt } from '../types';
+import { fmt, remaining, sortDebts, uid } from '../model';
+import type { Debt } from '../types';
 import type { Props } from './props';
 
 export default function Debts({ state, setState }: Props) {
   const [adding, setAdding] = useState(false);
   const [editFor, setEditFor] = useState<Debt | null>(null);
   const [payFor, setPayFor] = useState<Debt | null>(null);
-  const [payAmount, setPayAmount] = useState('');
-  const [source, setSource] = useState<AccountId>('debt');
 
-  const bal = balancesOf(state);
   const debts = sortDebts(state.debts);
   const unpaid = debts.filter(d => remaining(d) > 0.005);
   const first = unpaid[0];
@@ -33,25 +29,6 @@ export default function Debts({ state, setState }: Props) {
     const id = editFor.id;
     setState(s => ({ ...s, debts: s.debts.map(d => (d.id === id ? { ...d, ...v } : d)) }));
     setEditFor(null);
-  };
-
-  const pay = (e: FormEvent) => {
-    e.preventDefault();
-    if (!payFor) return;
-    const a = Math.min(parseFloat(payAmount) || 0, remaining(payFor));
-    if (!(a > 0)) return;
-    const id = payFor.id;
-    const name = payFor.title;
-    setState(s => ({
-      ...s,
-      debts: s.debts.map(x => (x.id === id ? { ...x, paid: x.paid + a } : x)),
-      expenses: [
-        { id: uid(), account: source, title: `Қарз: ${name}`, amount: a, date: today(), debtId: id },
-        ...s.expenses,
-      ],
-    }));
-    setPayAmount('');
-    setPayFor(null);
   };
 
   const remove = (id: number) =>
@@ -123,17 +100,8 @@ export default function Debts({ state, setState }: Props) {
 
       {payFor && (
         <Sheet title={`Пардохт: ${payFor.title}`} onClose={() => setPayFor(null)}>
-          <form onSubmit={pay}>
-            <p className="muted">Бақия: {fmt(remaining(payFor))} сомонӣ</p>
-            <Field label="Аз кадом ҳисоб">
-              <AccountSelect value={source} onChange={setSource} bal={bal} />
-            </Field>
-            <Field label="Маблағи пардохт">
-              <input type="number" inputMode="decimal" min="0" step="0.01" value={payAmount}
-                onChange={e => setPayAmount(e.target.value)} placeholder="0.00" required />
-            </Field>
-            <button className="btn" type="submit">Пардохт кардан</button>
-          </form>
+          <PayDebtForm state={state} setState={setState} debt={payFor}
+            onDone={() => setPayFor(null)} />
         </Sheet>
       )}
     </>

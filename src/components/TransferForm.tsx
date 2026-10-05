@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, balancesOf, fmt, today, uid } from '../model';
+import { ACCOUNTS, balancesOf, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountSelect from './AccountSelect';
@@ -17,6 +17,7 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
   const [amount, setAmount] = useState('');
 
   const bal = balancesOf(state);
+  const hide = hiddenAccounts(state);
   const num = parseFloat(amount) || 0;
   const same = from === to;
   const over = num > bal[from] + 0.005;
@@ -37,10 +38,10 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
   return (
     <form onSubmit={onSubmit}>
       <Field label="Аз ҳисоби">
-        <AccountSelect value={from} onChange={setFrom} bal={bal} />
+        <AccountSelect value={from} onChange={setFrom} bal={bal} hidden={hide} />
       </Field>
       <Field label="Ба ҳисоби">
-        <AccountSelect value={to} onChange={setTo} bal={bal} />
+        <AccountSelect value={to} onChange={setTo} bal={bal} hidden={hide} />
       </Field>
       <Field label="Маблағ (сомонӣ)">
         <input type="number" inputMode="decimal" min="0" step="0.01" value={amount}
