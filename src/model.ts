@@ -443,8 +443,10 @@ const DAY_MS = 86400000;
 const mondayOf = (d: Date) => addDays(d, -((d.getDay() + 6) % 7));
 
 /**
- * Рӯйхати давраҳо (боло — оянда, баъд ҳозира, баъд гузашта): сол — 2000…соли оянда; моҳ — 12 моҳи соли anchorYear;
- * ҳафта — ҳамаи ҳафтаҳои соли anchorYear; рӯз — ҳамаи рӯзҳои моҳи anchorMonth.
+ * Рӯйхати давраҳо барои варақаи интихоб (навтарин боло):
+ * дар боло танҳо ЯК давраи оянда (хира), баъд давраи ҷорӣ (ҷои дуюм), баъд гузаштаҳо.
+ * Сол — 2000…; моҳ — моҳҳои соли anchorYear; ҳафта — ҳафтаҳои соли anchorYear;
+ * рӯз — рӯзҳои моҳи anchorMonth. Барои соли/моҳи гузашта танҳо гузаштаҳо нишон дода мешаванд.
  */
 export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: number, now = new Date()): PickItem[] {
   const ny = now.getFullYear();
@@ -455,29 +457,42 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
     return { off, start: p.start, label, now: off === 0, future: p.start > today };
   };
 
+  let all: PickItem[];
   if (kind === 'year') {
-    const out: PickItem[] = [];
-    for (let y = ny + 1; y >= MIN_YEAR; y--) out.push(make(y - ny, String(y)));
-    return out;
-  }
-  if (kind === 'month') {
-    return Array.from({ length: 12 }, (_, m) =>
+    all = [];
+    for (let y = ny; y >= MIN_YEAR; y--) all.push(make(y - ny, String(y)));
+  } else if (kind === 'month') {
+    all = Array.from({ length: 12 }, (_, m) =>
       make((anchorYear - ny) * 12 + (m - nm), `${MONTH_NAMES[m]} ${anchorYear}`)).reverse();
-  }
-  if (kind === 'week') {
-    const out: PickItem[] = [];
+  } else if (kind === 'week') {
+    all = [];
     const nowMonday = utcDay(mondayOf(now));
     const end = new Date(anchorYear, 11, 31);
     for (let s = mondayOf(new Date(anchorYear, 0, 1)); s <= end; s = addDays(s, 7)) {
       const off = Math.round((utcDay(s) - nowMonday) / (7 * DAY_MS));
-      out.push(make(off, periodLabel('week', periodAt('week', off, now))));
+      all.push(make(off, periodLabel('week', periodAt('week', off, now))));
     }
-    return out.reverse();
+    all.reverse();
+  } else {
+    const days = new Date(anchorYear, anchorMonth + 1, 0).getDate();
+    all = Array.from({ length: days }, (_, i) => {
+      const d = new Date(anchorYear, anchorMonth, i + 1);
+      const off = Math.round((utcDay(d) - utcDay(now)) / DAY_MS);
+      return make(off, `${i + 1} ${MONTHS[anchorMonth]} · ${WEEKDAYS[d.getDay()]}`);
+    }).reverse();
   }
-  const days = new Date(anchorYear, anchorMonth + 1, 0).getDate();
-  return Array.from({ length: days }, (_, i) => {
-    const d = new Date(anchorYear, anchorMonth, i + 1);
-    const off = Math.round((utcDay(d) - utcDay(now)) / DAY_MS);
-    return make(off, `${i + 1} ${MONTHS[anchorMonth]} · ${WEEKDAYS[d.getDay()]}`);
-  }).reverse();
+
+  const past = all.filter(i => !i.future);
+  const inCurrent =
+    kind === 'year' || (kind === 'day' ? anchorYear === ny && anchorMonth === nm : anchorYear === ny);
+  if (!inCurrent) return past;
+
+  // Танҳо як давраи оянда (хира) дар боло, то ҳозира дар ҷои дуюм бошад
+  const next = periodAt(kind, 1, now);
+  const [ny1, nm1, nd1] = next.start.split('-').map(Number);
+  const nextLabel =
+    kind === 'year' ? String(ny1)
+    : kind === 'day' ? `${nd1} ${MONTHS[nm1 - 1]} · ${WEEKDAYS[new Date(ny1, nm1 - 1, nd1).getDay()]}`
+    : periodLabel(kind, next);
+  return [make(1, nextLabel), ...past];
 }
