@@ -66,8 +66,8 @@ body {
 .stat strong { font-size: clamp(1rem, 3.6vw, 1.45rem); letter-spacing: -.01em; }
 .stat.main strong { color: var(--success); }
 
-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-form .wide { grid-column: 1 / -1; }
+.form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form .wide { grid-column: 1 / -1; }
 label { display: grid; gap: 6px; font-size: .8rem; color: var(--muted); }
 input {
   width: 100%;
@@ -146,5 +146,68 @@ input:focus {
 @media (max-width: 520px) {
   .stats { grid-template-columns: 1fr 1fr; }
   .stat.main { grid-column: 1 / -1; }
-  form { grid-template-columns: 1fr; }
+  .form { grid-template-columns: 1fr; }
 }
+
+/* ---- Навигатсия ---- */
+.tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 12px; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font: inherit; font-size: .9rem; cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.tab.active { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; border-color: transparent; }
+
+.alert {
+  background: rgba(245, 158, 11, .14); color: #b45309; border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 16px; font-size: .92rem;
+}
+.alert.danger { background: rgba(239, 68, 68, .12); color: var(--danger); margin-bottom: 0; }
+@media (prefers-color-scheme: dark) { .alert { color: #fbbf24; } }
+
+select {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--bg); color: var(--text); font: inherit; font-size: 1rem;
+}
+.muted { color: var(--muted); font-weight: 400; }
+.neg { color: var(--danger) !important; }
+.up { color: var(--success); }
+.down { color: var(--danger); }
+.stat small { display: block; margin-top: 4px; font-size: .75rem; }
+
+/* ---- Ҳисобҳо ---- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.acct { border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: grid; gap: 6px; background: var(--bg); }
+.acct-head { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: .85rem; }
+.acct-head .icon { font-size: 1.2rem; }
+.acct strong { font-size: 1.3rem; letter-spacing: -.01em; }
+.acct small { color: var(--muted); font-size: .75rem; }
+.progress { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--success); border-radius: 99px; transition: width .3s; }
+.progress i.warn { background: var(--danger); }
+
+/* ---- График ---- */
+.chart { display: flex; align-items: flex-end; gap: 10px; height: 170px; padding-top: 8px; }
+.chart .col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; }
+.chart .bar { width: 100%; max-width: 44px; min-height: 3px; border-radius: 8px 8px 4px 4px; background: linear-gradient(180deg, var(--primary-2), var(--primary)); }
+.chart .val { font-size: .62rem; color: var(--muted); white-space: nowrap; }
+.chart .lbl { font-size: .75rem; color: var(--muted); }
+
+/* ---- Рӯйхатҳо ва форма ---- */
+.preview { background: var(--bg); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; font-size: .92rem; }
+.row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+.col-item { flex-direction: column; align-items: stretch; gap: 8px; }
+.line { display: flex; align-items: center; gap: 12px; }
+details { font-size: .88rem; color: var(--muted); }
+summary { cursor: pointer; }
+.neg-bg { background: rgba(239, 68, 68, .12); }
+.inline { display: flex; gap: 8px; }
+.btn-sm {
+  flex: none; padding: 8px 12px; border: 0; border-radius: 10px; cursor: pointer;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; font: inherit; font-size: .85rem;
+}
+.btn-sm.danger { background: var(--danger); }
+.card h2 small { font-size: .8rem; }
+.inline { flex-wrap: wrap; }
+.inline select, .inline input { flex: 1 1 140px; width: auto; }
