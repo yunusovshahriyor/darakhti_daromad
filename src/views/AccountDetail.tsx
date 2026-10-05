@@ -6,6 +6,7 @@ import ExpenseForm from '../components/ExpenseForm';
 import GoalForm from '../components/GoalForm';
 import { EyeIcon, EyeOffIcon, MinusIcon, PlusIcon, SwapIcon, TargetIcon } from '../components/Icons';
 import PayDebtForm from '../components/PayDebtForm';
+import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import TransferForm from '../components/TransferForm';
 import {
@@ -41,6 +42,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const [modal, setModal] = useState<Modal>(null);
   const [payFor, setPayFor] = useState<Debt | null>(null);
   const [buyFor, setBuyFor] = useState<Dream | null>(null);
+  const [planTab, setPlanTab] = useState<'now' | 'done'>('now');
 
   const isDebtAccount = id === 'debt';
   const isDreamAccount = id === 'bigDream' || id === 'smallDream';
@@ -70,6 +72,9 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
           open: () => { setBuyFor(f.dream); setModal('buy'); },
         }))
       : [];
+  const doneList = isDebtAccount
+    ? paidDebts.map(d => ({ key: d.id, title: d.title, priority: !!d.priority, amount: d.amount, date: d.paidAt }))
+    : boughtList.map(d => ({ key: d.id, title: d.title, priority: !!d.priority, amount: d.paidPrice ?? d.target, date: d.boughtAt }));
   const first = rows.find(r => !r.finished);
   const firstPct = first ? Math.min(100, (first.done / first.total) * 100) : 0;
 
@@ -235,75 +240,60 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
               <button className="link-btn sm" onClick={() => onManage(planLabels.page)}>Идора</button>
             </span>
           </h3>
-          {rows.length === 0 ? (
-            <div className="empty small">{isDebtAccount ? 'Қарзи кушода нест.' : 'Орзуи кушода нест.'}</div>
-          ) : (
-            <CollapsibleCells>
-              {rows.map(r => {
-                const pct = Math.min(100, (r.done / r.total) * 100);
-                const left = Math.max(0, r.total - r.done);
-                return (
-                  <div key={r.key} className={r.finished ? 'cell' : 'cell tap'} onClick={() => !r.finished && r.open()}>
-                    <div className={r.finished ? 'rank sm done' : r.rank === 1 ? 'rank sm first' : 'rank sm'}>
-                      {r.finished ? '✓' : r.rank}
-                    </div>
+          <div className="tab-block">
+            <SegTabs value={planTab} onChange={id => setPlanTab(id as 'now' | 'done')}
+              tabs={[
+                { id: 'now', label: 'Ҳозира', count: rows.length },
+                { id: 'done', label: isDebtAccount ? 'Пардохтшуда' : 'Харидшуда', count: doneList.length },
+              ]} />
+
+            {planTab === 'now' ? (
+              rows.length === 0 ? (
+                <div className="empty small">{isDebtAccount ? 'Қарзи кушода нест.' : 'Орзуи кушода нест.'}</div>
+              ) : (
+                <CollapsibleCells>
+                  {rows.map(r => {
+                    const pct = Math.min(100, (r.done / r.total) * 100);
+                    const left = Math.max(0, r.total - r.done);
+                    return (
+                      <div key={r.key} className="cell tap" onClick={() => r.open()}>
+                        <div className={r.rank === 1 ? 'rank sm first' : 'rank sm'}>{r.rank}</div>
+                        <div className="grow">
+                          <div className="r1">
+                            <b>{r.priority ? '⭐ ' : ''}{r.title}</b>
+                            {isDebtAccount
+                              ? <b className="neg">{mask(fmt(left))}</b>
+                              : <b className={r.ready ? 'pos' : ''}>{r.ready ? 'Тайёр ✓' : mask(fmt(r.total))}</b>}
+                          </div>
+                          <div className="mini-line">
+                            <span className="progress thin"><i style={{ width: `${pct}%` }} /></span>
+                            <small>{isDebtAccount ? 'аз' : `${mask(fmt(r.done))} аз`} {mask(fmt(r.total))}</small>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CollapsibleCells>
+              )
+            ) : doneList.length === 0 ? (
+              <div className="empty small">{isDebtAccount ? 'Ҳанӯз қарзи пардохтшуда нест.' : 'Ҳанӯз орзуи харидашуда нест.'}</div>
+            ) : (
+              <CollapsibleCells>
+                {doneList.map(d => (
+                  <div className="cell" key={d.key}>
+                    <div className="rank sm done">✓</div>
                     <div className="grow">
                       <div className="r1">
-                        <b>{r.priority ? '⭐ ' : ''}{r.title}</b>
-                        {isDebtAccount
-                          ? <b className={r.finished ? 'pos' : 'neg'}>{r.finished ? 'Пардохт шуд' : mask(fmt(left))}</b>
-                          : <b className={r.ready ? 'pos' : ''}>{r.ready ? 'Тайёр ✓' : mask(fmt(r.total))}</b>}
+                        <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
+                        <b className="pos">{mask(fmt(d.amount))}</b>
                       </div>
-                      <div className="mini-line">
-                        <span className="progress thin"><i style={{ width: `${pct}%` }} /></span>
-                        <small>{isDebtAccount ? 'аз' : `${mask(fmt(r.done))} аз`} {mask(fmt(r.total))}</small>
-                      </div>
+                      <small>{isDebtAccount ? 'Пардохт шуд' : 'Харида шуд'}{d.date ? ` · ${d.date}` : ''}</small>
                     </div>
                   </div>
-                );
-              })}
-            </CollapsibleCells>
-          )}
-        </section>
-      )}
-
-      {isDebtAccount && paidDebts.length > 0 && (
-        <section>
-          <h3 className="group-title"><span>✅ Пардохтшудаҳо</span><span>{paidDebts.length}</span></h3>
-          <CollapsibleCells>
-            {paidDebts.map(d => (
-              <div className="cell" key={d.id}>
-                <div className="rank sm done">✓</div>
-                <div className="grow">
-                  <div className="r1">
-                    <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                    <b className="pos">{mask(fmt(d.amount))}</b>
-                  </div>
-                  <small>Пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
-                </div>
-              </div>
-            ))}
-          </CollapsibleCells>
-        </section>
-      )}
-
-      {isDreamAccount && boughtList.length > 0 && (
-        <section>
-          <h3 className="group-title"><span>✅ Харидшудаҳо</span><span>{boughtList.length}</span></h3>
-          <CollapsibleCells>
-            {boughtList.map(d => (
-              <div className="cell" key={d.id}>
-                <div className="rank sm done">✓</div>
-                <div className="grow">
-                  <div className="r1">
-                    <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                    <b className="pos">{mask(fmt(d.paidPrice ?? d.target))}</b>
-                  </div>
-                  <small>Харида шуд{d.boughtAt ? ` · ${d.boughtAt}` : ''}</small>
-                </div>
-              </div>
-            ))}
-          </CollapsibleCells>
+                ))}
+              </CollapsibleCells>
+            )}
+          </div>
         </section>
       )}
 

@@ -604,3 +604,22 @@ input[type='date'] { min-height: 50px; }
 .more-row:active { background: var(--bg); }
 .more-row .chev { display: inline-block; font-size: 1.2rem; line-height: 1; transition: transform .2s; }
 .more-row .chev.up { transform: rotate(180deg); }
+
+/* ---------- Як блок бо таб: Ҳозира / Пардохтшуда ---------- */
+.tab-block { background: var(--surface); border-radius: var(--radius); overflow: hidden; margin-bottom: 4px; }
+.tab-block .cells { background: transparent; border-radius: 0; margin: 0; }
+.tab-block .note { padding: 0 14px; margin: 4px 0 8px; }
+.tab-block .group-title { margin: 14px 14px 6px; }
+.tab-block .empty { padding: 28px 16px; }
+.tab-block .cell.muted { padding: 12px 14px; }
+.seg-tabs { display: flex; gap: 4px; padding: 4px; margin: 8px; border-radius: 16px; background: var(--bg); }
+.seg-tabs button {
+  flex: 1; height: 40px; border: 0; border-radius: 12px; background: none; color: var(--muted);
+  font-weight: 700; font-size: .88rem; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.seg-tabs button em {
+  font-style: normal; font-size: .72rem; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px;
+  display: grid; place-items: center; background: var(--border); color: var(--muted);
+}
+.seg-tabs button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0, 0, 0, .14); }
+.seg-tabs button.on em { background: var(--primary); color: #fff; }

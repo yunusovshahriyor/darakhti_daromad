@@ -5,6 +5,7 @@ import Empty from '../components/Empty';
 import Fab from '../components/Fab';
 import { PencilIcon } from '../components/Icons';
 import PayDebtForm from '../components/PayDebtForm';
+import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
 import { fmt, remaining, splitDebts, uid } from '../model';
@@ -15,6 +16,7 @@ export default function Debts({ state, setState }: Props) {
   const [adding, setAdding] = useState(false);
   const [editFor, setEditFor] = useState<Debt | null>(null);
   const [payFor, setPayFor] = useState<Debt | null>(null);
+  const [tab, setTab] = useState<'now' | 'done'>('now');
 
   const { open, paid } = splitDebts(state.debts);
   const first = open[0];
@@ -48,65 +50,72 @@ export default function Debts({ state, setState }: Props) {
         <Empty icon="🎉" text="Қарз нест — 10%-и вақтхушӣ ба «Вақтхушӣ» меравад." />
       )}
 
-      {open.length > 0 && (
-        <>
-          <p className="note order-note">
-            Тартиб: аввал қарзҳои ⭐ афзалиятнок, баъд аз рӯи миқдор аз хурд ба калон.
-          </p>
-          <div className="cells">
-            {open.map((d, i) => {
-              const left = remaining(d);
-              const pct = Math.min(100, (d.paid / d.amount) * 100);
-              return (
+      {state.debts.length > 0 && (
+        <div className="tab-block">
+          <SegTabs value={tab} onChange={id => setTab(id as 'now' | 'done')}
+            tabs={[
+              { id: 'now', label: 'Ҳозира', count: open.length },
+              { id: 'done', label: 'Пардохтшуда', count: paid.length },
+            ]} />
+
+          {tab === 'now' ? (
+            open.length === 0 ? (
+              <div className="empty small">🎉 Ҳамаи қарзҳо пардохт шудаанд!</div>
+            ) : (
+              <>
+                <p className="note order-note">
+                  Тартиб: аввал қарзҳои ⭐ афзалиятнок, баъд аз рӯи миқдор аз хурд ба калон.
+                </p>
+                <div className="cells">
+                  {open.map((d, i) => {
+                    const left = remaining(d);
+                    const pct = Math.min(100, (d.paid / d.amount) * 100);
+                    return (
+                      <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
+                        <div className="cell tap" onClick={() => setPayFor(d)}>
+                          <div className={i === 0 ? 'rank first' : 'rank'}>{i + 1}</div>
+                          <div className="grow">
+                            <div className="r1">
+                              <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
+                              <b className="neg">{fmt(left)}</b>
+                            </div>
+                            <div className="progress"><i style={{ width: `${pct}%` }} /></div>
+                            <small>
+                              Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
+                            </small>
+                          </div>
+                          <button className="icon-btn sm" aria-label="Таҳрир"
+                            onClick={e => { e.stopPropagation(); setEditFor(d); }}>
+                            <PencilIcon />
+                          </button>
+                        </div>
+                      </SwipeRow>
+                    );
+                  })}
+                </div>
+              </>
+            )
+          ) : paid.length === 0 ? (
+            <div className="empty small">Ҳанӯз қарзи пардохтшуда нест.</div>
+          ) : (
+            <CollapsibleCells>
+              {paid.map(d => (
                 <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
-                  <div className="cell tap" onClick={() => setPayFor(d)}>
-                    <div className={i === 0 ? 'rank first' : 'rank'}>{i + 1}</div>
+                  <div className="cell">
+                    <div className="rank sm done">✓</div>
                     <div className="grow">
                       <div className="r1">
                         <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                        <b className="neg">{fmt(left)}</b>
+                        <b className="pos">{fmt(d.amount)}</b>
                       </div>
-                      <div className="progress"><i style={{ width: `${pct}%` }} /></div>
-                      <small>
-                        Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
-                      </small>
+                      <small>Пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
                     </div>
-                    <button className="icon-btn sm" aria-label="Таҳрир"
-                      onClick={e => { e.stopPropagation(); setEditFor(d); }}>
-                      <PencilIcon />
-                    </button>
                   </div>
                 </SwipeRow>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {state.debts.length > 0 && open.length === 0 && (
-        <Empty icon="🎉" text="Ҳамаи қарзҳо пардохт шудаанд!" />
-      )}
-
-      {paid.length > 0 && (
-        <section>
-          <h3 className="group-title"><span>✅ Пардохтшудаҳо</span><span>{paid.length}</span></h3>
-          <CollapsibleCells>
-            {paid.map(d => (
-              <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
-                <div className="cell">
-                  <div className="rank sm done">✓</div>
-                  <div className="grow">
-                    <div className="r1">
-                      <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                      <b className="pos">{fmt(d.amount)}</b>
-                    </div>
-                    <small>Пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
-                  </div>
-                </div>
-              </SwipeRow>
-            ))}
-          </CollapsibleCells>
-        </section>
+              ))}
+            </CollapsibleCells>
+          )}
+        </div>
       )}
 
       <Fab onClick={() => setAdding(true)} label="Қарзи нав" />
