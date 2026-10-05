@@ -1,9 +1,11 @@
 import { CSSProperties, useState } from 'react';
 import Donut from '../components/Donut';
-import { ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
+import { BackIcon, ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
+import SegTabs from '../components/SegTabs';
+import Sheet from '../components/Sheet';
 import {
   ACCOUNTS, ACCOUNT_COLORS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
-  hiddenAccounts, inPeriod, monthlyIncome, periodAt, spent,
+  hiddenAccounts, inPeriod, monthlyIncome, periodAt, periodLabel, spent,
 } from '../model';
 import type { PeriodKind } from '../model';
 import type { AccountId } from '../types';
@@ -20,13 +22,14 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
   const { incomes, expenses } = state;
   const [kind, setKind] = useState<PeriodKind>('month');
   const [offset, setOffset] = useState(0);
+  const [picker, setPicker] = useState(false);
 
   const mask = (v: string) => (hidden ? '••••' : v);
 
   // ----- Давраи интихобшуда -----
   const period = periodAt(kind, offset);
   const prevPeriod = periodAt(kind, offset - 1);
-  const tiles = [-2, -1, 0, 1, 2].map(d => ({ off: offset + d, p: periodAt(kind, offset + d), now: offset + d === 0 }));
+  const pickList = [1, 0, -1, -2, -3, -4, -5, -6].map(o => ({ off: o, label: periodLabel(kind, periodAt(kind, o)) }));
 
   const inRange = <T extends { date: string }>(items: T[], p = period) => items.filter(i => inPeriod(i.date, p));
   const periodExpenses = inRange(expenses);
@@ -44,7 +47,8 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
     .sort((a, b) => b.value - a.value);
   const top = segs[0];
 
-  const bigSize = spentNow >= 1e7 ? '2.6rem' : spentNow >= 1e5 ? '3.4rem' : '4.4rem';
+  const spentText = fmt(spentNow);
+  const bigSize = spentText.length <= 6 ? '3.6rem' : spentText.length <= 8 ? '3rem' : spentText.length <= 10 ? '2.4rem' : '2rem';
   const pctSpent = incomeNow > 0 ? Math.min(100, (spentNow / incomeNow) * 100) : spentNow > 0 ? 100 : 0;
 
   // ----- Ҳисобҳо -----
@@ -62,34 +66,28 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         <button className="avatar-btn" onClick={onProfile} aria-label="Танзимот"><PersonIcon /></button>
       </header>
 
-      <div className="period-row">
-        <div className="segmented">
-          {KINDS.map(k => (
-            <button key={k} className={k === kind ? 'seg on' : 'seg'}
-              onClick={() => { setKind(k); setOffset(0); }}>
-              {PERIOD_LABELS[k].name}
-            </button>
-          ))}
-        </div>
-        <div className="cur-pill">TJS</div>
-      </div>
-
-      <div className="tiles">
-        {tiles.map(t => (
-          <button key={t.off} className={t.off === offset ? 'tile on' : t.off > 0 ? 'tile future' : 'tile'}
-            onClick={() => setOffset(t.off)}>
-            <small>{t.p.top}</small>
-            <b>{t.p.big}</b>
-            <small>{t.p.bottom}</small>
-          </button>
-        ))}
+      <div className="period-nav">
+        <button className="pn-btn" onClick={() => setOffset(o => o - 1)} aria-label="Давраи пештара">
+          <BackIcon />
+        </button>
+        <button className="pn-label" onClick={() => setPicker(true)} aria-label="Интихоби давра">
+          <span>{periodLabel(kind, period)}</span>
+          <span className="pn-caret">⌄</span>
+        </button>
+        {offset !== 0 && (
+          <button className="pn-now" onClick={() => setOffset(0)}>Ҳозир</button>
+        )}
+        <button className="pn-btn flip" onClick={() => setOffset(o => o + 1)} aria-label="Давраи оянда">
+          <BackIcon />
+        </button>
       </div>
 
       <section className="spent">
         <span className="spent-label">Харҷ шуд</span>
         <div className="spent-row">
-          <div className="spent-num" style={{ fontSize: bigSize }}>
-            {mask(fmt(spentNow))} <small>смн</small>
+          <div className="spent-num">
+            <span style={{ fontSize: bigSize }}>{mask(spentText)}</span>
+            <small>смн</small>
           </div>
           <button className="round-btn" onClick={onToggleHidden}
             aria-label={hidden ? 'Нишон додани маблағ' : 'Пинҳон кардани маблағ'}>
@@ -177,6 +175,24 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
           </div>
         </div>
       </section>
+
+      {picker && (
+        <Sheet title="Давраи ҳисобот" onClose={() => setPicker(false)}>
+          <SegTabs value={kind}
+            onChange={id => { setKind(id as PeriodKind); setOffset(0); }}
+            tabs={KINDS.map(k => ({ id: k, label: PERIOD_LABELS[k].name }))} />
+          <div className="period-list">
+            {pickList.map(it => (
+              <button key={it.off} className={it.off === offset ? 'on' : ''}
+                onClick={() => { setOffset(it.off); setPicker(false); }}>
+                <span>{it.label}</span>
+                {it.off === 0 && <em>Ҳозир</em>}
+                {it.off > 0 && <em className="soon">Оянда</em>}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
     </>
   );
 }

@@ -413,3 +413,15 @@ export function savedThisMonth(s: State): number {
   return v;
 }
 
+
+/** Номи давра барои сатри интихоб: «Октябр 2026», «5–11 Окт», «2026», «5 Окт 2026». */
+export function periodLabel(kind: PeriodKind, p: Period): string {
+  const [y1, m1, d1] = p.start.split('-').map(Number);
+  const [, m2, d2] = p.end.split('-').map(Number);
+  if (kind === 'month') return monthTitle(p.start.slice(0, 7));
+  if (kind === 'year') return String(y1);
+  if (kind === 'day') return `${d1} ${MONTHS[m1 - 1]} ${y1}`;
+  return m1 === m2
+    ? `${d1}–${d2} ${MONTHS[m1 - 1]} ${y1}`
+    : `${d1} ${MONTHS[m1 - 1]} – ${d2} ${MONTHS[m2 - 1]}`;
+}
