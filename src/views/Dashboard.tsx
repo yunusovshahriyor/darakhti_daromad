@@ -1,6 +1,6 @@
 import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
-import { BackIcon, ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
+import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, PersonIcon } from '../components/Icons';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import {
@@ -89,7 +89,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         </button>
         <button className="pn-label" onClick={() => setPicker(true)} aria-label="Интихоби давра">
           <span>{periodLabel(kind, period)}</span>
-          <span className="pn-caret">⌄</span>
+          <span className="pn-caret"><ChevronDownIcon /></span>
         </button>
         {offset !== 0 && (
           <button className="pn-now" onClick={() => setOffset(0)}>Ҳозир</button>

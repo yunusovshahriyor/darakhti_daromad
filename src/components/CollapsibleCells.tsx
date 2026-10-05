@@ -1,4 +1,5 @@
 import { Children, ReactNode, useState } from 'react';
+import { ChevronDownIcon } from './Icons';
 
 /**
  * Рӯйхати фишурда: агар аз 4 зиёд бошад, танҳо 4-тои аввал нишон дода мешавад
@@ -16,7 +17,7 @@ export default function CollapsibleCells({ children, limit = 4 }: { children: Re
       {long && (
         <button className="more-row" onClick={() => setOpen(o => !o)} aria-expanded={open}>
           {open ? 'Пӯшидан' : `Ҳамаро нишон додан (${items.length})`}
-          <span className={open ? 'chev up' : 'chev'}>⌄</span>
+          <span className={open ? 'chev up' : 'chev'}><ChevronDownIcon /></span>
         </button>
       )}
     </div>

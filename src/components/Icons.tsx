@@ -75,3 +75,7 @@ export const RefreshIcon = () => (
 export const InfoIcon = () => (
   <Svg size={22}><circle cx="12" cy="12" r="9" /><line x1="12" y1="11" x2="12" y2="16.5" /><circle cx="12" cy="7.8" r=".6" fill="currentColor" /></Svg>
 );
+
+export const ChevronDownIcon = () => (
+  <Svg size={16}><polyline points="6 9 12 15 18 9" /></Svg>
+);
