@@ -37,6 +37,8 @@ export interface Debt {
   title: string;
   amount: number;
   paid: number;
+  /** Қарзи афзалиятнок: аввал пардохт мешавад. */
+  priority?: boolean;
 }
 
 export interface Dream {

@@ -45,6 +45,22 @@ export const emptyAlloc = (): Alloc =>
 
 export const remaining = (d: Debt) => Math.max(0, d.amount - d.paid);
 
+/**
+ * Тартиби пардохти қарзҳо: аввал қарзҳои афзалиятнок, баъд боқимонда;
+ * дар ҳар гурӯҳ аз бақияи кам ба зиёд (қарзҳои хурд аввал). Пардохтшудаҳо дар охир.
+ */
+export function sortDebts(debts: Debt[]): Debt[] {
+  return [...debts].sort((a, b) => {
+    const pa = remaining(a) > 0.005 ? 0 : 1;
+    const pb = remaining(b) > 0.005 ? 0 : 1;
+    if (pa !== pb) return pa - pb;
+    const fa = a.priority ? 0 : 1;
+    const fb = b.priority ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    return remaining(a) - remaining(b) || a.id - b.id;
+  });
+}
+
 export const hasDebt = (debts: Debt[]) => debts.some(d => remaining(d) > 0.005);
 
 /**

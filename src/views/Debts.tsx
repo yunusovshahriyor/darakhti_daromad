@@ -1,32 +1,38 @@
 import { FormEvent, useState } from 'react';
 import AccountSelect from '../components/AccountSelect';
+import DebtForm from '../components/DebtForm';
 import Empty from '../components/Empty';
 import Fab from '../components/Fab';
 import Field from '../components/Field';
+import { PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { balancesOf, fmt, remaining, today, uid } from '../model';
+import { balancesOf, fmt, remaining, sortDebts, today, uid } from '../model';
 import type { AccountId, Debt } from '../types';
 import type { Props } from './props';
 
 export default function Debts({ state, setState }: Props) {
-  const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [editFor, setEditFor] = useState<Debt | null>(null);
   const [payFor, setPayFor] = useState<Debt | null>(null);
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
   const [payAmount, setPayAmount] = useState('');
   const [source, setSource] = useState<AccountId>('debt');
 
   const bal = balancesOf(state);
+  const debts = sortDebts(state.debts);
+  const unpaid = debts.filter(d => remaining(d) > 0.005);
+  const first = unpaid[0];
 
-  const add = (e: FormEvent) => {
-    e.preventDefault();
-    const a = parseFloat(amount);
-    if (!(a > 0)) return;
-    setState(s => ({ ...s, debts: [...s.debts, { id: uid(), title: title.trim(), amount: a, paid: 0 }] }));
-    setTitle('');
-    setAmount('');
-    setOpen(false);
+  const add = (v: { title: string; amount: number; priority: boolean }) => {
+    setState(s => ({ ...s, debts: [...s.debts, { id: uid(), paid: 0, ...v }] }));
+    setAdding(false);
+  };
+
+  const save = (v: { title: string; amount: number; priority: boolean }) => {
+    if (!editFor) return;
+    const id = editFor.id;
+    setState(s => ({ ...s, debts: s.debts.map(d => (d.id === id ? { ...d, ...v } : d)) }));
+    setEditFor(null);
   };
 
   const pay = (e: FormEvent) => {
@@ -53,45 +59,65 @@ export default function Debts({ state, setState }: Props) {
 
   return (
     <>
-      {state.debts.length === 0 ? (
-        <Empty icon="🎉" text="Қарз нест — 10%-и вақтхушӣ ба «Вақтхушӣ» меравад." />
-      ) : (
-        <div className="cells">
-          {state.debts.map(d => {
-            const left = remaining(d);
-            const pct = Math.min(100, (d.paid / d.amount) * 100);
-            return (
-              <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
-                <div className={left > 0 ? 'cell tap' : 'cell'} onClick={() => left > 0 && setPayFor(d)}>
-                  <div className="grow">
-                    <div className="r1">
-                      <b>{d.title}</b>
-                      <b className={left > 0 ? 'neg' : 'pos'}>{left > 0 ? fmt(left) : 'Пардохт шуд ✓'}</b>
-                    </div>
-                    <div className="progress"><i style={{ width: `${pct}%` }} /></div>
-                    <small>Пардохт: {fmt(d.paid)} аз {fmt(d.amount)}{left > 0 ? ' · барои пардохт пахш кунед' : ''}</small>
-                  </div>
-                </div>
-              </SwipeRow>
-            );
-          })}
+      {first && (
+        <div className="next-debt">
+          <small>Аввал пардохт кунед</small>
+          <b>{first.title}</b>
+          <span>Бақия: {fmt(remaining(first))} смн{first.priority ? ' · ⭐ афзалиятнок' : ' · хурдтарин қарз'}</span>
         </div>
       )}
 
-      <Fab onClick={() => setOpen(true)} label="Қарзи нав" />
+      {debts.length === 0 ? (
+        <Empty icon="🎉" text="Қарз нест — 10%-и вақтхушӣ ба «Вақтхушӣ» меравад." />
+      ) : (
+        <>
+          <p className="note order-note">
+            Тартиб: аввал қарзҳои ⭐ афзалиятнок, баъд аз рӯи миқдор аз хурд ба калон.
+          </p>
+          <div className="cells">
+            {debts.map(d => {
+              const left = remaining(d);
+              const done = left <= 0.005;
+              const rank = unpaid.indexOf(d) + 1;
+              const pct = Math.min(100, (d.paid / d.amount) * 100);
+              return (
+                <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
+                  <div className={done ? 'cell' : 'cell tap'} onClick={() => !done && setPayFor(d)}>
+                    <div className={done ? 'rank done' : rank === 1 ? 'rank first' : 'rank'}>{done ? '✓' : rank}</div>
+                    <div className="grow">
+                      <div className="r1">
+                        <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
+                        <b className={done ? 'pos' : 'neg'}>{done ? 'Пардохт шуд' : fmt(left)}</b>
+                      </div>
+                      <div className="progress"><i style={{ width: `${pct}%` }} /></div>
+                      <small>
+                        Пардохт: {fmt(d.paid)} аз {fmt(d.amount)}
+                        {!done && (d.priority ? ' · афзалиятнок' : ' · аз рӯи миқдор')}
+                      </small>
+                    </div>
+                    <button className="icon-btn sm" aria-label="Таҳрир"
+                      onClick={e => { e.stopPropagation(); setEditFor(d); }}>
+                      <PencilIcon />
+                    </button>
+                  </div>
+                </SwipeRow>
+              );
+            })}
+          </div>
+        </>
+      )}
 
-      {open && (
-        <Sheet title="Қарзи нав" onClose={() => setOpen(false)}>
-          <form onSubmit={add}>
-            <Field label="Ба кӣ / барои чӣ">
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, қарз ба Алӣ" required />
-            </Field>
-            <Field label="Маблағ (сомонӣ)">
-              <input type="number" inputMode="decimal" min="0" step="0.01" value={amount}
-                onChange={e => setAmount(e.target.value)} placeholder="0.00" required />
-            </Field>
-            <button className="btn" type="submit">Илова кардан</button>
-          </form>
+      <Fab onClick={() => setAdding(true)} label="Қарзи нав" />
+
+      {adding && (
+        <Sheet title="Қарзи нав" onClose={() => setAdding(false)}>
+          <DebtForm onSubmit={add} submitLabel="Илова кардан" />
+        </Sheet>
+      )}
+
+      {editFor && (
+        <Sheet title="Таҳрири қарз" onClose={() => setEditFor(null)}>
+          <DebtForm initial={editFor} onSubmit={save} submitLabel="Нигоҳ доштан" />
         </Sheet>
       )}
 
