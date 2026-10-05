@@ -94,9 +94,13 @@ export default function Dreams({ state, setState }: Props) {
                     <div className="grow">
                       <div className="r1">
                         <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                        <b className="pos">{fmt(d.paidPrice ?? d.target)}</b>
+                        <b className="pos">{fmt(d.paidPrice ?? d.target)} смн</b>
                       </div>
-                      <small>Харида шуд{d.boughtAt ? ` · ${d.boughtAt}` : ''}</small>
+                      <small>
+                        Арзиш: {fmt(d.paidPrice ?? d.target)} смн
+                        {d.paidPrice !== undefined && Math.abs(d.paidPrice - d.target) > 0.005 ? ` (нақша ${fmt(d.target)})` : ''}
+                        {' · харида шуд'}{d.boughtAt ? ` · ${d.boughtAt}` : ''}
+                      </small>
                     </div>
                   </div>
                 </SwipeRow>

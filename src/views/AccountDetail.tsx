@@ -73,8 +73,8 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
         }))
       : [];
   const doneList = isDebtAccount
-    ? paidDebts.map(d => ({ key: d.id, title: d.title, priority: !!d.priority, amount: d.amount, date: d.paidAt }))
-    : boughtList.map(d => ({ key: d.id, title: d.title, priority: !!d.priority, amount: d.paidPrice ?? d.target, date: d.boughtAt }));
+    ? paidDebts.map(d => ({ key: d.id, title: d.title, priority: !!d.priority, amount: d.amount, planned: d.amount, date: d.paidAt }))
+    : boughtList.map(d => ({ key: d.id, title: d.title, priority: !!d.priority, amount: d.paidPrice ?? d.target, planned: d.target, date: d.boughtAt }));
   const first = rows.find(r => !r.finished);
   const firstPct = first ? Math.min(100, (first.done / first.total) * 100) : 0;
 
@@ -285,9 +285,13 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
                     <div className="grow">
                       <div className="r1">
                         <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                        <b className="pos">{mask(fmt(d.amount))}</b>
+                        <b className="pos">{mask(fmt(d.amount))} смн</b>
                       </div>
-                      <small>{isDebtAccount ? 'Пардохт шуд' : 'Харида шуд'}{d.date ? ` · ${d.date}` : ''}</small>
+                      <small>
+                        Арзиш: {mask(fmt(d.amount))} смн
+                        {Math.abs(d.amount - d.planned) > 0.005 ? ` (нақша ${mask(fmt(d.planned))})` : ''}
+                        {isDebtAccount ? ' · пардохт шуд' : ' · харида шуд'}{d.date ? ` · ${d.date}` : ''}
+                      </small>
                     </div>
                   </div>
                 ))}

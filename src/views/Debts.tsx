@@ -106,9 +106,9 @@ export default function Debts({ state, setState }: Props) {
                     <div className="grow">
                       <div className="r1">
                         <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                        <b className="pos">{fmt(d.amount)}</b>
+                        <b className="pos">{fmt(d.amount)} смн</b>
                       </div>
-                      <small>Пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
+                      <small>Арзиш: {fmt(d.amount)} смн · пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
                     </div>
                   </div>
                 </SwipeRow>
