@@ -106,3 +106,25 @@ export function monthlyIncome(incomes: Income[], n = 6) {
   }
   return out;
 }
+
+const MONTH_NAMES = [
+  'Январ', 'Феврал', 'Март', 'Апрел', 'Май', 'Июн',
+  'Июл', 'Август', 'Сентябр', 'Октябр', 'Ноябр', 'Декабр',
+];
+
+export const monthTitle = (key: string) => {
+  const [y, m] = key.split('-').map(Number);
+  return `${MONTH_NAMES[m - 1]} ${y}`;
+};
+
+/** Гурӯҳбандии рӯйхат аз рӯи моҳ (рӯйхат бояд аз нав ба кӯҳна тартиб шуда бошад). */
+export function groupByMonth<T extends { date: string }>(items: T[]) {
+  const groups: { key: string; items: T[] }[] = [];
+  for (const it of items) {
+    const key = it.date.slice(0, 7);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) last.items.push(it);
+    else groups.push({ key, items: [it] });
+  }
+  return groups;
+}

@@ -1,9 +1,15 @@
 import { FormEvent, useState } from 'react';
+import Empty from '../components/Empty';
+import Fab from '../components/Fab';
+import Field from '../components/Field';
+import Sheet from '../components/Sheet';
+import SwipeRow from '../components/SwipeRow';
 import { balances, fmt, today, uid } from '../model';
 import type { Dream } from '../types';
 import type { Props } from './props';
 
 export default function Dreams({ state, setState }: Props) {
+  const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState<Dream['kind']>('big');
   const [target, setTarget] = useState('');
@@ -17,6 +23,7 @@ export default function Dreams({ state, setState }: Props) {
     setState(s => ({ ...s, dreams: [...s.dreams, { id: uid(), title: title.trim(), kind, target: t }] }));
     setTitle('');
     setTarget('');
+    setOpen(false);
   };
 
   const buy = (d: Dream) =>
@@ -40,31 +47,34 @@ export default function Dreams({ state, setState }: Props) {
     let left = Math.max(0, pool);
     const goals = state.dreams.filter(d => d.kind === k);
     return (
-      <section className="card" key={k}>
-        <h2>{name} <small className="muted">· ҷамъшуда: {fmt(pool)}</small></h2>
+      <section key={k}>
+        <h3 className="group-title"><span>{name}</span><span>Ҷамъшуда: {fmt(pool)}</span></h3>
         {goals.length === 0 ? (
-          <p className="empty">Орзу илова нашудааст.</p>
+          <div className="cells"><div className="cell muted">Орзу илова нашудааст.</div></div>
         ) : (
-          <ul className="list">
+          <div className="cells">
             {goals.map(d => {
               const funded = Math.min(d.target, left);
               left -= funded;
               const done = funded >= d.target - 0.005;
               return (
-                <li className="item col-item" key={d.id}>
-                  <div className="line">
-                    <div className="info">
-                      <b>{d.title}</b>
+                <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
+                  <div className="cell">
+                    <div className="grow">
+                      <div className="r1">
+                        <b>{d.title}</b>
+                        {done
+                          ? <button className="btn-sm" onClick={() => buy(d)}>Харида шуд ✓</button>
+                          : <b>{fmt(d.target)}</b>}
+                      </div>
+                      <div className="progress"><i style={{ width: `${(funded / d.target) * 100}%` }} /></div>
                       <small>{fmt(funded)} аз {fmt(d.target)}</small>
                     </div>
-                    {done && <button className="btn-sm" onClick={() => buy(d)}>Харида шуд ✓</button>}
-                    <button className="del" aria-label="Нест кардан" onClick={() => remove(d.id)}>✕</button>
                   </div>
-                  <div className="progress"><i style={{ width: `${(funded / d.target) * 100}%` }} /></div>
-                </li>
+                </SwipeRow>
               );
             })}
-          </ul>
+          </div>
         )}
       </section>
     );
@@ -72,28 +82,32 @@ export default function Dreams({ state, setState }: Props) {
 
   return (
     <>
-      <form className="card form" onSubmit={add}>
-        <h2 className="wide">Орзуи нав</h2>
-        <label className="wide">
-          Номи орзу
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, мошин" required />
-        </label>
-        <label>
-          Навъ
-          <select value={kind} onChange={e => setKind(e.target.value as Dream['kind'])}>
-            <option value="big">🏠 Калон</option>
-            <option value="small">✈️ Хурд</option>
-          </select>
-        </label>
-        <label>
-          Маблағи лозим
-          <input type="number" min="0" step="0.01" value={target}
-            onChange={e => setTarget(e.target.value)} placeholder="0.00" required />
-        </label>
-        <button className="btn" type="submit">+ Илова кардан</button>
-      </form>
+      {state.dreams.length === 0 && <Empty icon="✨" text="Орзуҳои худро илова кунед: тугмаи +" />}
       {section('big', '🏠 Орзуҳои калон', bal.bigDream)}
       {section('small', '✈️ Орзуҳои хурд', bal.smallDream)}
+
+      <Fab onClick={() => setOpen(true)} label="Орзуи нав" />
+
+      {open && (
+        <Sheet title="Орзуи нав" onClose={() => setOpen(false)}>
+          <form onSubmit={add}>
+            <Field label="Номи орзу">
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, мошин" required />
+            </Field>
+            <Field label="Навъ">
+              <select value={kind} onChange={e => setKind(e.target.value as Dream['kind'])}>
+                <option value="big">🏠 Калон</option>
+                <option value="small">✈️ Хурд</option>
+              </select>
+            </Field>
+            <Field label="Маблағи лозим (сомонӣ)">
+              <input type="number" inputMode="decimal" min="0" step="0.01" value={target}
+                onChange={e => setTarget(e.target.value)} placeholder="0.00" required />
+            </Field>
+            <button className="btn" type="submit">Илова кардан</button>
+          </form>
+        </Sheet>
+      )}
     </>
   );
 }

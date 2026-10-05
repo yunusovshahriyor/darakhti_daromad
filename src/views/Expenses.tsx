@@ -1,9 +1,15 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, ACCOUNT_ORDER, balances, fmt, today, uid } from '../model';
+import Empty from '../components/Empty';
+import Fab from '../components/Fab';
+import Field from '../components/Field';
+import Sheet from '../components/Sheet';
+import SwipeRow from '../components/SwipeRow';
+import { ACCOUNTS, ACCOUNT_ORDER, balances, fmt, groupByMonth, monthTitle, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from './props';
 
 export default function Expenses({ state, setState }: Props) {
+  const [open, setOpen] = useState(false);
   const [account, setAccount] = useState<AccountId>('living');
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
@@ -27,6 +33,7 @@ export default function Expenses({ state, setState }: Props) {
     setTitle('');
     setAmount('');
     setDate(today());
+    setOpen(false);
   };
 
   const remove = (id: number) =>
@@ -41,61 +48,68 @@ export default function Expenses({ state, setState }: Props) {
       };
     });
 
+  const groups = groupByMonth(state.expenses);
+
   return (
     <>
-      <form className="card form" onSubmit={onSubmit}>
-        <h2 className="wide">Илова кардани хароҷот</h2>
-        <label className="wide">
-          Аз кадом ҳисоб
-          <select value={account} onChange={e => setAccount(e.target.value as AccountId)}>
-            {ACCOUNT_ORDER.map(id => (
-              <option key={id} value={id}>
-                {ACCOUNTS[id].icon} {ACCOUNTS[id].name} — {fmt(bal[id])}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="wide">
-          Барои чӣ
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, хӯрок" required />
-        </label>
-        <label>
-          Маблағ (сомонӣ)
-          <input type="number" min="0" step="0.01" value={amount}
-            onChange={e => setAmount(e.target.value)} placeholder="0.00" required />
-        </label>
-        <label>
-          Сана
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} required />
-        </label>
-        {over && num > 0 && (
-          <div className="wide alert danger">
-            ⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[account])}).
-          </div>
-        )}
-        <button className="btn" type="submit">− Сабт кардан</button>
-      </form>
+      {groups.length === 0 && <Empty icon="🧾" text="Ҳанӯз хароҷот нест. Тугмаи + -ро пахш кунед." />}
 
-      <section className="card">
-        <h2>Хароҷотҳо</h2>
-        {state.expenses.length === 0 ? (
-          <p className="empty"><span className="icon">🧾</span>Ҳанӯз хароҷот нест.</p>
-        ) : (
-          <ul className="list">
-            {state.expenses.map(it => (
-              <li className="item" key={it.id}>
-                <div className="avatar neg-bg">{ACCOUNTS[it.account].icon}</div>
-                <div className="info">
-                  <b>{it.title}</b>
-                  <small>{it.date} · {ACCOUNTS[it.account].name}</small>
+      {groups.map(g => (
+        <section key={g.key}>
+          <h3 className="group-title">
+            <span>{monthTitle(g.key)}</span>
+            <span>−{fmt(g.items.reduce((s, i) => s + i.amount, 0))}</span>
+          </h3>
+          <div className="cells">
+            {g.items.map(it => (
+              <SwipeRow key={it.id} onDelete={() => remove(it.id)}>
+                <div className="cell">
+                  <div className="ic neg-bg">{ACCOUNTS[it.account].icon}</div>
+                  <div className="grow">
+                    <div className="r1">
+                      <b>{it.title}</b>
+                      <b className="neg">−{fmt(it.amount)}</b>
+                    </div>
+                    <small>{it.date} · {ACCOUNTS[it.account].name}</small>
+                  </div>
                 </div>
-                <span className="amount neg">−{fmt(it.amount)}</span>
-                <button className="del" aria-label="Нест кардан" onClick={() => remove(it.id)}>✕</button>
-              </li>
+              </SwipeRow>
             ))}
-          </ul>
-        )}
-      </section>
+          </div>
+        </section>
+      ))}
+
+      <Fab onClick={() => setOpen(true)} label="Илова кардани хароҷот" />
+
+      {open && (
+        <Sheet title="Хароҷоти нав" onClose={() => setOpen(false)}>
+          <form onSubmit={onSubmit}>
+            <Field label="Аз кадом ҳисоб">
+              <select value={account} onChange={e => setAccount(e.target.value as AccountId)}>
+                {ACCOUNT_ORDER.map(id => (
+                  <option key={id} value={id}>
+                    {ACCOUNTS[id].icon} {ACCOUNTS[id].name} — {fmt(bal[id])}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Барои чӣ">
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, хӯрок" required />
+            </Field>
+            <Field label="Маблағ (сомонӣ)">
+              <input type="number" inputMode="decimal" min="0" step="0.01" value={amount}
+                onChange={e => setAmount(e.target.value)} placeholder="0.00" required />
+            </Field>
+            <Field label="Сана">
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} required />
+            </Field>
+            {over && num > 0 && (
+              <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[account])}).</div>
+            )}
+            <button className="btn" type="submit">Сабт кардан</button>
+          </form>
+        </Sheet>
+      )}
     </>
   );
 }
