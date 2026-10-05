@@ -12,6 +12,7 @@ export const emptyState = (): State => ({
   dreams: [],
   transfers: [],
   goals: {},
+  debtOrder: 'big',
 });
 
 export function loadState(): State {

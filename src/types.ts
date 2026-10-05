@@ -56,6 +56,8 @@ export interface Transfer {
   date: string;
 }
 
+export type DebtOrder = 'big' | 'small';
+
 export interface State {
   settings: Settings;
   incomes: Income[];
@@ -64,4 +66,6 @@ export interface State {
   dreams: Dream[];
   transfers: Transfer[];
   goals: Partial<Record<AccountId, number>>;
+  /** Тартиби қарзҳо дар як гурӯҳ: аз калон ба хурд ё баръакс. */
+  debtOrder: DebtOrder;
 }

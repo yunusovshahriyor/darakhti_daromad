@@ -6,7 +6,7 @@ import PayDebtForm from '../components/PayDebtForm';
 import Sheet from '../components/Sheet';
 import TransferForm from '../components/TransferForm';
 import {
-  ACCOUNTS, CARD_COLORS, balancesOf, fmt, groupByMonth, hasDebt, ledger, monthTitle,
+  ACCOUNTS, CARD_COLORS, DEBT_ORDER_LABEL, balancesOf, fmt, groupByMonth, hasDebt, ledger, monthTitle,
   remaining, shareOfIncome, sortDebts, subtitleOf, today,
 } from '../model';
 import type { AccountId, Debt } from '../types';
@@ -31,7 +31,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const mask = (v: string) => (hidden ? '••••' : v);
 
   // Мақсади ҳисоб: барои «Пардохти қарз» — қарзи аввалин, барои дигарон — мақсади худи корбар
-  const debts = sortDebts(state.debts);
+  const debts = sortDebts(state.debts, state.debtOrder);
   const unpaid = debts.filter(d => remaining(d) > 0.005);
   const first = unpaid[0];
   const goal = state.goals[id];
@@ -48,6 +48,9 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const net = monthIn - monthOut;
   const inShare = monthIn + monthOut > 0 ? (monthIn / (monthIn + monthOut)) * 100 : 0;
   const groups = groupByMonth(entries);
+
+  const toggleOrder = () =>
+    setState(s => ({ ...s, debtOrder: s.debtOrder === 'big' ? 'small' : 'big' }));
 
   const done = (msg: string) => {
     onToast(msg);
@@ -165,13 +168,16 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
       {isDebtAccount && (
         <section>
           <h3 className="group-title">
-            <span>Қарзҳо · бо тартиби пардохт</span>
-            <button className="link-btn sm" onClick={onOpenDebts}>Идора кардан</button>
+            <span>Навбати қарзҳо</span>
+            <span className="gt-actions">
+              <button className="link-btn sm" onClick={toggleOrder}>{DEBT_ORDER_LABEL[state.debtOrder]}</button>
+              <button className="link-btn sm" onClick={onOpenDebts}>Идора</button>
+            </span>
           </h3>
           {debts.length === 0 ? (
             <div className="empty small">Қарз нест.</div>
           ) : (
-            <div className="cells">
+            <div className="cells compact">
               {debts.map(d => {
                 const left = remaining(d);
                 const paidOff = left <= 0.005;
@@ -180,17 +186,16 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
                 return (
                   <div key={d.id} className={paidOff ? 'cell' : 'cell tap'}
                     onClick={() => { if (!paidOff) { setPayFor(d); setModal('pay'); } }}>
-                    <div className={paidOff ? 'rank done' : rank === 1 ? 'rank first' : 'rank'}>{paidOff ? '✓' : rank}</div>
+                    <div className={paidOff ? 'rank sm done' : rank === 1 ? 'rank sm first' : 'rank sm'}>{paidOff ? '✓' : rank}</div>
                     <div className="grow">
                       <div className="r1">
                         <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
                         <b className={paidOff ? 'pos' : 'neg'}>{paidOff ? 'Пардохт шуд' : mask(fmt(left))}</b>
                       </div>
-                      <div className="progress"><i style={{ width: `${pct}%` }} /></div>
-                      <small>
-                        Пардохт: {mask(fmt(d.paid))} аз {mask(fmt(d.amount))}
-                        {!paidOff && (d.priority ? ' · афзалиятнок' : ' · аз рӯи миқдор')}
-                      </small>
+                      <div className="mini-line">
+                        <span className="progress thin"><i style={{ width: `${pct}%` }} /></span>
+                        <small>аз {mask(fmt(d.amount))}</small>
+                      </div>
                     </div>
                   </div>
                 );

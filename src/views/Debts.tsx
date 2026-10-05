@@ -6,7 +6,7 @@ import { PencilIcon } from '../components/Icons';
 import PayDebtForm from '../components/PayDebtForm';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { fmt, remaining, sortDebts, uid } from '../model';
+import { DEBT_ORDER_LABEL, fmt, remaining, sortDebts, uid } from '../model';
 import type { Debt } from '../types';
 import type { Props } from './props';
 
@@ -15,7 +15,8 @@ export default function Debts({ state, setState }: Props) {
   const [editFor, setEditFor] = useState<Debt | null>(null);
   const [payFor, setPayFor] = useState<Debt | null>(null);
 
-  const debts = sortDebts(state.debts);
+  const order = state.debtOrder;
+  const debts = sortDebts(state.debts, order);
   const unpaid = debts.filter(d => remaining(d) > 0.005);
   const first = unpaid[0];
 
@@ -31,6 +32,9 @@ export default function Debts({ state, setState }: Props) {
     setEditFor(null);
   };
 
+  const toggleOrder = () =>
+    setState(s => ({ ...s, debtOrder: s.debtOrder === 'big' ? 'small' : 'big' }));
+
   const remove = (id: number) =>
     setState(s => ({ ...s, debts: s.debts.filter(d => d.id !== id) }));
 
@@ -40,7 +44,7 @@ export default function Debts({ state, setState }: Props) {
         <div className="next-debt">
           <small>Аввал пардохт кунед</small>
           <b>{first.title}</b>
-          <span>Бақия: {fmt(remaining(first))} смн{first.priority ? ' · ⭐ афзалиятнок' : ' · хурдтарин қарз'}</span>
+          <span>Бақия: {fmt(remaining(first))} смн{first.priority ? ' · ⭐ афзалиятнок' : order === 'big' ? ' · калонтарин қарз' : ' · хурдтарин қарз'}</span>
         </div>
       )}
 
@@ -48,9 +52,12 @@ export default function Debts({ state, setState }: Props) {
         <Empty icon="🎉" text="Қарз нест — 10%-и вақтхушӣ ба «Вақтхушӣ» меравад." />
       ) : (
         <>
-          <p className="note order-note">
-            Тартиб: аввал қарзҳои ⭐ афзалиятнок, баъд аз рӯи миқдор аз хурд ба калон.
-          </p>
+          <div className="order-row">
+            <p className="note">
+              Аввал ⭐ афзалиятнок, баъд аз рӯи миқдор.
+            </p>
+            <button className="link-btn sm" onClick={toggleOrder}>{DEBT_ORDER_LABEL[order]}</button>
+          </div>
           <div className="cells">
             {debts.map(d => {
               const left = remaining(d);

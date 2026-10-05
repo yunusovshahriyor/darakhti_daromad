@@ -1,4 +1,4 @@
-import type { AccountId, Alloc, Debt, Expense, Income, Settings, State, Transfer } from './types';
+import type { AccountId, Alloc, Debt, DebtOrder, Expense, Income, Settings, State, Transfer } from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   charity: 2.5,
@@ -47,9 +47,11 @@ export const remaining = (d: Debt) => Math.max(0, d.amount - d.paid);
 
 /**
  * Тартиби пардохти қарзҳо: аввал қарзҳои афзалиятнок, баъд боқимонда;
- * дар ҳар гурӯҳ аз бақияи кам ба зиёд (қарзҳои хурд аввал). Пардохтшудаҳо дар охир.
+ * дар ҳар гурӯҳ аз рӯи бақия: 'big' — калон боло (1000 пеш аз 780), 'small' — хурд боло.
+ * Қарзҳои пурра пардохтшуда дар охир.
  */
-export function sortDebts(debts: Debt[]): Debt[] {
+export function sortDebts(debts: Debt[], order: DebtOrder = 'big'): Debt[] {
+  const dir = order === 'big' ? -1 : 1;
   return [...debts].sort((a, b) => {
     const pa = remaining(a) > 0.005 ? 0 : 1;
     const pb = remaining(b) > 0.005 ? 0 : 1;
@@ -57,7 +59,7 @@ export function sortDebts(debts: Debt[]): Debt[] {
     const fa = a.priority ? 0 : 1;
     const fb = b.priority ? 0 : 1;
     if (fa !== fb) return fa - fb;
-    return remaining(a) - remaining(b) || a.id - b.id;
+    return dir * (remaining(a) - remaining(b)) || a.id - b.id;
   });
 }
 
@@ -370,3 +372,8 @@ export function savedThisMonth(s: State): number {
   }
   return v;
 }
+
+export const DEBT_ORDER_LABEL: Record<DebtOrder, string> = {
+  big: 'Калон аввал ↓',
+  small: 'Хурд аввал ↑',
+};

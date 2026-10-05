@@ -45,7 +45,7 @@ export default function DebtForm({ initial, onSubmit, submitLabel }: {
       <label className="switch-row">
         <span>
           <b>⭐ Аввал пардохт шавад</b>
-          <small>Қарзҳои қайдшуда пеш меоянд. Дигарон аз рӯи миқдор: аввал хурдтарин.</small>
+          <small>Қарзҳои қайдшуда пеш меоянд, дигарон аз рӯи миқдор.</small>
         </span>
         <span className="switch">
           <input type="checkbox" checked={priority} onChange={e => setPriority(e.target.checked)} />

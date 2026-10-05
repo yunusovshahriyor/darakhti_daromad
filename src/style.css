@@ -521,7 +521,8 @@ input[type='date'] { min-height: 50px; }
 .next-debt small { opacity: .85; }
 .next-debt b { font-size: 1.25rem; letter-spacing: -.01em; }
 .next-debt span { font-size: .85rem; opacity: .92; }
-.order-note { margin: 0 6px 10px; }
+.order-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 6px 8px; }
+.order-row .note { margin: 0; flex: 1; }
 .rank {
   flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
   font-weight: 700; font-size: .9rem; color: var(--primary);
@@ -583,3 +584,14 @@ input[type='date'] { min-height: 50px; }
 .mc-split i { display: block; height: 100%; background: var(--success); border-radius: 99px; transition: width .4s; }
 .mc-split.empty { background: var(--border); }
 .month-card .note { margin: 0; }
+
+/* ---------- Рӯйхати фишурдаи қарзҳо ---------- */
+.gt-actions { display: flex; gap: 12px; align-items: center; }
+.cells.compact .cell { padding: 8px 12px; gap: 10px; }
+.cells.compact .r1 b { font-size: .95rem; }
+.rank.sm { width: 26px; height: 26px; font-size: .78rem; }
+.mini-line { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.mini-line .progress.thin { flex: 1; height: 4px; }
+.mini-line small { white-space: nowrap; font-size: .7rem; }
+.cells.compact .grow { gap: 0; }
+.gt-actions .link-btn { white-space: nowrap; }
