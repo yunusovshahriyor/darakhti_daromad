@@ -86,14 +86,34 @@ export default function History({ state, setState, filter, onFilter }: Props & {
   const row = (it: Item) => {
     if (it.kind === 'income') {
       const x = state.incomes.find(i => i.id === it.id)!;
+      const loan = x.kind === 'loanBack' ? loanOf(x.loanId) : undefined;
+      if (loan) {
+        // Баргардониҳои пештара (аз рӯи сана ва тартиб) то ҳамин баргардонӣ
+        const before = state.incomes
+          .filter(i => i.kind === 'loanBack' && i.loanId === loan.id
+            && (i.date < x.date || (i.date === x.date && i.id < x.id)))
+          .reduce((sum, i) => sum + i.amount, 0);
+        const target = x.alloc ? ALL_IDS.find(id => x.alloc[id] > 0) : undefined;
+        return (
+          <SwipeRow key={`i${it.id}`} onDelete={() => removeIncome(it.id)}>
+            <div className="cell">
+              <div className="ic">↩️</div>
+              <div className="grow">
+                <div className="r1"><b>Бозгашт · {loan.person}</b><b className="pos">+{fmt(x.amount)}</b></div>
+                <small>{x.date} · Қарз баргашт{target ? ` · ба «${ACCOUNTS[target].name}»` : ''}</small>
+                <LoanProgress loan={loan} mark={{ before, part: x.amount }} />
+              </div>
+            </div>
+          </SwipeRow>
+        );
+      }
       return (
         <SwipeRow key={`i${it.id}`} onDelete={() => removeIncome(it.id)}>
           <div className="cell tap" onClick={() => setExpanded(expanded === it.id ? null : it.id)}>
             <div className="ic">{x.title.charAt(0).toUpperCase()}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="pos">+{fmt(x.amount)}</b></div>
-              <small>{x.date} · {x.kind === 'loanBack' ? 'Қарз баргашт' : x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад'}</small>
-              {x.kind === 'loanBack' && loanOf(x.loanId) && <LoanProgress loan={loanOf(x.loanId)!} />}
+              <small>{x.date} · {x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад'}</small>
               {expanded === it.id && (
                 <div className="breakdown">
                   {ALL_IDS.filter(id => x.alloc[id] > 0).map(id => (

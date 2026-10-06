@@ -122,7 +122,7 @@ export function ReturnLoanForm({ state, setState, onDone, afterPad }: Props & Ex
           ))}
         </div>
       </div>
-      <LoanProgress loan={current} extra={num} />
+      <LoanProgress loan={current} mark={{ before: current.returned, part: num }} />
       <p className="muted" style={{ margin: '4px 2px 0' }}>
         Маблағ ба ҳисоби «{ACCOUNTS[target].icon} {ACCOUNTS[target].name}» бармегардад.
       </p>
