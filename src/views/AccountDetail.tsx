@@ -10,7 +10,7 @@ import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import TransferForm from '../components/TransferForm';
 import {
-  ACCOUNTS, CARD_COLORS, balancesOf, boughtDreams, fmt, fundDreams, groupByMonth, hasDebt, ledger, monthTitle,
+  ACCOUNTS, CARD_COLORS, balancesOf, boughtDreams, fmt, dayTitle, fundDreams, groupByDay, hasDebt, ledger, monthTitle,
   remaining, shareOfIncome, splitDebts, subtitleOf, today, uid,
 } from '../model';
 import type { AccountId, Debt, Dream } from '../types';
@@ -89,7 +89,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const monthOut = entries.filter(e => e.date.startsWith(month) && e.amount < 0).reduce((s, e) => s - e.amount, 0);
   const net = monthIn - monthOut;
   const inShare = monthIn + monthOut > 0 ? (monthIn / (monthIn + monthOut)) * 100 : 0;
-  const groups = groupByMonth(entries);
+  const groups = groupByDay(entries);
 
   const done = (msg: string) => {
     onToast(msg);
@@ -305,7 +305,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
         <div className="empty small">Ҳанӯз амалиёт нест.</div>
       ) : groups.map(g => (
         <section key={g.key}>
-          <h3 className="group-title"><span>{monthTitle(g.key)}</span></h3>
+          <h3 className="group-title"><span>{dayTitle(g.key)}</span></h3>
           <div className="cells">
             {g.items.map(e => (
               <div className="cell" key={e.key}>
@@ -314,7 +314,6 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
                     <b>{e.title}</b>
                     <b className={e.amount > 0 ? 'pos' : 'neg'}>{e.amount > 0 ? '+' : '−'}{mask(fmt(Math.abs(e.amount)))}</b>
                   </div>
-                  <small>{e.date}</small>
                 </div>
               </div>
             ))}
