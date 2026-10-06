@@ -923,3 +923,14 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .kt.k-expense.on .kt-ic { background: #d94b4b; }
 .kt.k-transfer.on .kt-ic { background: #3b82f6; }
 .kt.k-debt.on .kt-ic { background: #e59a1b; }
+
+/* ---------- Иловакунӣ: ҷудокунаки ихчам, маблағи калон, сана дар поёни тугмачаҳо ---------- */
+.kind-tabs { padding: 3px; gap: 2px; margin: 0 0 4px; border-radius: 16px; }
+.kt { gap: 2px; padding: 5px 2px 4px; border-radius: 13px; }
+.kt-ic { width: 22px; height: 22px; }
+.kt-ic svg { width: 14px; height: 14px; }
+.kt-t { font-size: .66rem; }
+.sheet.tall .amount-big { font-size: 3.2rem; padding: 4px 0 6px; line-height: 1.05; }
+.sheet.tall .amount-big small { font-size: 1.4rem; }
+.sheet.tall .keypad { margin-bottom: 6px; }
+.sheet.tall .date-row { margin: 0 0 10px; }
