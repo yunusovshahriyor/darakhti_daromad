@@ -164,6 +164,23 @@ export const monthTitle = (key: string) => {
   return `${MONTH_NAMES[m - 1]} ${y}`;
 };
 
+/** «06 октябр 2026» барои сарлавҳаи рӯз. */
+export const dayTitle = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${String(d).padStart(2, '0')} ${MONTH_NAMES[m - 1].toLowerCase()} ${y}`;
+};
+
+/** Гурӯҳбандии рӯйхат аз рӯи рӯз (рӯйхат бояд аз нав ба кӯҳна тартиб шуда бошад). */
+export function groupByDay<T extends { date: string }>(items: T[]) {
+  const groups: { key: string; items: T[] }[] = [];
+  for (const it of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.key === it.date) last.items.push(it);
+    else groups.push({ key: it.date, items: [it] });
+  }
+  return groups;
+}
+
 /** Гурӯҳбандии рӯйхат аз рӯи моҳ (рӯйхат бояд аз нав ба кӯҳна тартиб шуда бошад). */
 export function groupByMonth<T extends { date: string }>(items: T[]) {
   const groups: { key: string; items: T[] }[] = [];

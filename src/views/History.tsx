@@ -2,7 +2,7 @@ import { useState } from 'react';
 import LoanProgress from '../components/LoanProgress';
 import Empty from '../components/Empty';
 import SwipeRow from '../components/SwipeRow';
-import { ACCOUNTS, ALL_IDS, fmt, groupByMonth, monthTitle } from '../model';
+import { ACCOUNTS, ALL_IDS, fmt, dayTitle, groupByDay } from '../model';
 import type { Props } from './props';
 
 export type HistoryFilter = 'all' | 'income' | 'expense' | 'transfer';
@@ -33,7 +33,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
     .filter(i => filter === 'all' || i.kind === filter)
     .sort((a, b) => b.date.localeCompare(a.date) || b.sort - a.sort);
 
-  const groups = groupByMonth(items);
+  const groups = groupByDay(items);
 
   const removeIncome = (id: number) =>
     setState(s => {
@@ -100,7 +100,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
               <div className="ic">↩️</div>
               <div className="grow">
                 <div className="r1"><b>Бозгашт · {loan.person}</b><b className="pos">+{fmt(x.amount)}</b></div>
-                <small>{x.date} · Қарз баргашт{target ? ` · ба «${ACCOUNTS[target].name}»` : ''}</small>
+                <small>Қарз баргашт{target ? ` · ба «${ACCOUNTS[target].name}»` : ''}</small>
                 <LoanProgress loan={loan} mark={{ before, part: x.amount }} />
               </div>
             </div>
@@ -113,7 +113,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
             <div className="ic">{x.title.charAt(0).toUpperCase()}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="pos">+{fmt(x.amount)}</b></div>
-              <small>{x.date} · {x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад'}</small>
+              <small>{x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад'}</small>
               {expanded === it.id && (
                 <div className="breakdown">
                   {ALL_IDS.filter(id => x.alloc[id] > 0).map(id => (
@@ -137,7 +137,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
             <div className="ic neg-bg">{ACCOUNTS[x.account].icon}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="neg">−{fmt(x.amount)}</b></div>
-              <small>{x.date} · {x.loanId ? 'Қарз додам · ' : ''}{ACCOUNTS[x.account].name}</small>
+              <small>{x.loanId ? 'Қарз додам · ' : ''}{ACCOUNTS[x.account].name}</small>
               {x.loanId && loanOf(x.loanId) && <LoanProgress loan={loanOf(x.loanId)!} />}
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
           <div className="ic swap-bg">🔁</div>
           <div className="grow">
             <div className="r1"><b>{ACCOUNTS[x.from].name} → {ACCOUNTS[x.to].name}</b><b>{fmt(x.amount)}</b></div>
-            <small>{x.date} · Гузаронидан</small>
+            <small>Гузаронидан</small>
           </div>
         </div>
       </SwipeRow>
@@ -174,7 +174,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
 
       {groups.map(g => (
         <section key={g.key}>
-          <h3 className="group-title"><span>{monthTitle(g.key)}</span></h3>
+          <h3 className="group-title"><span>{dayTitle(g.key)}</span></h3>
           <div className="cells">{g.items.map(row)}</div>
         </section>
       ))}
