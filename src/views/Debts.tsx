@@ -8,7 +8,7 @@ import PayDebtForm from '../components/PayDebtForm';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { fmt, remaining, splitDebts, uid } from '../model';
+import { balancesOf, fmt, hasDebt, remaining, splitDebts, today, uid } from '../model';
 import type { Debt } from '../types';
 import type { Props } from './props';
 
@@ -22,7 +22,15 @@ export default function Debts({ state, setState }: Props) {
   const first = open[0];
 
   const add = (v: { title: string; amount: number; priority: boolean }) => {
-    setState(s => ({ ...s, debts: [...s.debts, { id: uid(), paid: 0, ...v }] }));
+    setState(s => {
+      const next = { ...s, debts: [...s.debts, { id: uid(), paid: 0, ...v }] };
+      // Қарзи аввал: маблағи «Вақтхушӣ» худкор ба «Пардохти қарз» мегузарад
+      const fun = balancesOf(s).fun ?? 0;
+      if (!hasDebt(s.debts) && fun > 0.005) {
+        next.transfers = [...s.transfers, { id: uid(), from: 'fun', to: 'debt', amount: fun, date: today() }];
+      }
+      return next;
+    });
     setAdding(false);
   };
 

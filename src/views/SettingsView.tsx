@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
-import { ACCOUNTS, CARD_COLORS, effectiveShareNode, fmt, isRemainderNode } from '../model';
+import { ACCOUNTS, CARD_COLORS, effectiveShareNode, fmt, hasDebt, isRemainderNode } from '../model';
 import { emptyState } from '../storage';
 import type { DistNode } from '../types';
 import type { Props } from './props';
@@ -17,6 +17,7 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
   const [adding, setAdding] = useState(false);
   const [closed, setClosed] = useState(readClosed);
   const root = state.tree;
+  const debt = hasDebt(state.debts);
 
   useEffect(() => {
     try { localStorage.setItem(CLOSED_KEY, JSON.stringify(closed)); } catch { /* ignore */ }
@@ -39,16 +40,18 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
     if (node.type === 'account') {
       const def = state.accounts.find(a => a.id === node.accountId);
       if (!def || def.archived) return null;
+      const off = debt && node.accountId === 'fun';
       return (
-        <button key={node.id} className="cell tap tree-row" style={{ paddingLeft: 14 + depth * 16 }}
+        <button key={node.id} className={off ? 'cell tree-row off' : 'cell tap tree-row'}
+          style={{ paddingLeft: 14 + depth * 16 }} disabled={off}
           onClick={() => setEditId(node.id)}>
           <span className="tr-ic" style={{ background: CARD_COLORS[node.accountId] }}>{ACCOUNTS[node.accountId]?.icon}</span>
           <span className="grow">
             <b>{def.name}</b>
-            <small>{n2(share)}% аз ҳар даромад</small>
+            <small>{off ? 'Нофаъол: аввал қарзҳоро пардохт кунед' : `${n2(share)}% аз ҳар даромад`}</small>
           </span>
           <span className="tr-pct">{n2(node.percent)}%{remainder && <em>боқимонда</em>}</span>
-          <ChevronIcon />
+          {!off && <ChevronIcon />}
         </button>
       );
     }
@@ -83,10 +86,15 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
       <h3 className="group-title"><span>Ҳисобҳо ва фоизҳо</span></h3>
       <div className="cells tree">
         {row(root, -1)}
-        <div className="cell tree-row static" style={{ paddingLeft: 14 }}>
-          <span className="tr-ic" style={{ background: CARD_COLORS.debt }}>{ACCOUNTS.debt?.icon}</span>
-          <span className="grow"><b>{ACCOUNTS.debt?.name}</b></span>
-        </div>
+        {debt && (
+          <div className="cell tree-row static" style={{ paddingLeft: 14 }}>
+            <span className="tr-ic" style={{ background: CARD_COLORS.debt }}>{ACCOUNTS.debt?.icon}</span>
+            <span className="grow">
+              <b>{ACCOUNTS.debt?.name}</b>
+              <small>Ҳиссаи «Вақтхушӣ» ба ин ҳисоб меравад</small>
+            </span>
+          </div>
+        )}
       </div>
       <button className="btn" onClick={() => setAdding(true)}><PlusIcon /> Ҳисоби нав</button>
 

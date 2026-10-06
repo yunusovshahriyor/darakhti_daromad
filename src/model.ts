@@ -106,11 +106,14 @@ export function balances(incomes: Income[], expenses: Expense[], transfers: Tran
 export const balancesOf = (s: State) => balances(s.incomes, s.expenses, s.transfers);
 
 /**
- * Ҳисобҳое, ки пинҳон мешаванд: «Пардохти қарз» вақте қарз нест.
- * Агар дар он боқимонда бошад, пинҳон намешавад, то пул аз назар нагузарад.
+ * Ҳисобҳое, ки пинҳон мешаванд: «Пардохти қарз» вақте қарз нест
+ * (агар дар он боқимонда бошад, пинҳон намешавад, то пул аз назар нагузарад)
+ * ва «Вақтхушӣ» вақте қарз ҳаст (ҳиссааш ба «Пардохти қарз» меравад).
  */
-export const hiddenAccounts = (s: State): AccountId[] =>
-  !hasDebt(s.debts) && Math.abs(balancesOf(s).debt) < 0.005 ? ['debt'] : [];
+export const hiddenAccounts = (s: State): AccountId[] => {
+  if (hasDebt(s.debts)) return ['fun'];
+  return Math.abs(balancesOf(s).debt) < 0.005 ? ['debt'] : [];
+};
 
 export function spent(expenses: Expense[]): Alloc {
   const b = emptyAlloc();

@@ -781,6 +781,7 @@ input[type='date'] { min-height: 50px; }
 .tree .tree-row.group { padding-right: 4px; }
 .tree-row .tr-main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; color: inherit; font: inherit; }
 .tree-row .tr-edit { flex: none; margin: 0; color: var(--muted); }
+.tree .tree-row.off { opacity: .5; cursor: default; }
 .tree .tree-row.static { cursor: default; opacity: .85; }
 .tree-row .grow { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .tr-ic {
