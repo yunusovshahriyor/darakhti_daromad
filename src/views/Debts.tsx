@@ -8,7 +8,7 @@ import PayDebtForm from '../components/PayDebtForm';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { fmt, remaining, splitDebts, withNewDebt } from '../model';
+import { fmt, loanLeft, openLoans, remaining, splitDebts, withNewDebt } from '../model';
 import type { Debt } from '../types';
 import type { Props } from './props';
 
@@ -113,6 +113,24 @@ export default function Debts({ state, setState }: Props) {
             </CollapsibleCells>
           )}
         </div>
+      )}
+
+      {openLoans(state.loans).length > 0 && (
+        <>
+          <h3 className="group-title"><span>Ба шумо қарздоранд</span></h3>
+          <div className="cells">
+            {openLoans(state.loans).map(l => (
+              <div className="cell" key={l.id}>
+                <div className="ic">{l.person.charAt(0).toUpperCase()}</div>
+                <div className="grow">
+                  <div className="r1"><b>{l.person}</b><b className="pos">{fmt(loanLeft(l))}</b></div>
+                  <small>Дода шуд {fmt(l.amount)} · {l.date}{l.returned > 0 ? ` · баргашт ${fmt(l.returned)}` : ''}</small>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="note">Баргардонидан: «Илова» → «Қарз» → «Қарзро баргардонданд».</p>
+        </>
       )}
 
       <Fab onClick={() => setAdding(true)} label="Қарзи нав" />

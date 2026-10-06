@@ -1,4 +1,4 @@
-import type { AccountDef, AccountId, Alloc, Debt, DistNode, Dream, Expense, Income, Settings, State, Transfer } from './types';
+import type { AccountDef, AccountId, Alloc, Debt, DistNode, Loan, Dream, Expense, Income, Settings, State, Transfer } from './types';
 
 export const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
 
@@ -79,6 +79,9 @@ export function withNewDebt(s: State, v: { title: string; amount: number; priori
   }
   return next;
 }
+
+export const loanLeft = (l: Loan) => Math.max(0, l.amount - l.returned);
+export const openLoans = (loans: Loan[]) => loans.filter(l => loanLeft(l) > 0.005);
 
 export const hasDebt = (debts: Debt[]) => debts.some(d => remaining(d) > 0.005);
 

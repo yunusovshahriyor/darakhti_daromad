@@ -34,6 +34,10 @@ export interface Income {
   amount: number;
   date: string;
   alloc: Alloc;
+  /** «borrow» — қарзи гирифташуда, «loanBack» — баргардонидани қарзи додашуда: бе тақсими фоизӣ. */
+  kind?: 'borrow' | 'loanBack';
+  loanId?: number;
+  debtId?: number;
 }
 
 export interface Expense {
@@ -44,6 +48,19 @@ export interface Expense {
   date: string;
   debtId?: number;
   dreamId?: number;
+  loanId?: number;
+}
+
+/** Қарзи додашуда: дигарон ба шумо қарздоранд. */
+export interface Loan {
+  id: number;
+  person: string;
+  amount: number;
+  returned: number;
+  /** Ҳисобе, ки аз он дода шуд ва маблағ ба ҳамон бармегардад. */
+  account: AccountId;
+  date: string;
+  returnedAt?: string;
 }
 
 export interface Debt {
@@ -85,6 +102,7 @@ export interface State {
   incomes: Income[];
   expenses: Expense[];
   debts: Debt[];
+  loans: Loan[];
   dreams: Dream[];
   transfers: Transfer[];
   goals: Partial<Record<AccountId, number>>;

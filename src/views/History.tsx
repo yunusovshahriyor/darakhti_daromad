@@ -35,7 +35,23 @@ export default function History({ state, setState, filter, onFilter }: Props & {
   const groups = groupByMonth(items);
 
   const removeIncome = (id: number) =>
-    setState(s => ({ ...s, incomes: s.incomes.filter(i => i.id !== id) }));
+    setState(s => {
+      const inc = s.incomes.find(i => i.id === id);
+      return {
+        ...s,
+        incomes: s.incomes.filter(i => i.id !== id),
+        // Баргардонидани қарзи додашуда бекор шуд: қарз боз кушода мешавад
+        loans: inc?.kind === 'loanBack' && inc.loanId
+          ? s.loans.map(l => {
+              if (l.id !== inc.loanId) return l;
+              const { returnedAt: _drop, ...rest } = l;
+              return { ...rest, returned: Math.max(0, l.returned - inc.amount) };
+            })
+          : s.loans,
+        // Қарзи гирифташуда нест шуд: худи қарз низ нест мешавад
+        debts: inc?.kind === 'borrow' && inc.debtId ? s.debts.filter(d => d.id !== inc.debtId) : s.debts,
+      };
+    });
   const removeTransfer = (id: number) =>
     setState(s => ({ ...s, transfers: s.transfers.filter(t => t.id !== id) }));
   const removeExpense = (id: number) =>
@@ -44,6 +60,9 @@ export default function History({ state, setState, filter, onFilter }: Props & {
       return {
         ...s,
         expenses: s.expenses.filter(x => x.id !== id),
+        // Қарз додан бекор шуд: қарздор ва баргардониданҳои он низ нест мешаванд
+        loans: e?.loanId ? s.loans.filter(l => l.id !== e.loanId) : s.loans,
+        incomes: e?.loanId ? s.incomes.filter(i => i.loanId !== e.loanId) : s.incomes,
         debts: e?.debtId
           ? s.debts.map(d => {
               if (d.id !== e.debtId) return d;

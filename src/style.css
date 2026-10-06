@@ -828,9 +828,9 @@ input:disabled { opacity: .55; }
 .key:active { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); transform: scale(.97); }
 .chips-block { margin-bottom: 12px; }
 .chips-label { font-size: .85rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
-.chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.chip { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 8px 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-align: left; }
-.chip.on { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); border-color: var(--primary); }
+.chips-block .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chips-block .chip { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 8px 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-align: left; }
+.chips-block .chip.on { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); border-color: var(--primary); }
 .chip-ic { font-size: 1.25rem; flex: none; }
 .chip-t { display: grid; min-width: 0; }
 .chip-t b { font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
