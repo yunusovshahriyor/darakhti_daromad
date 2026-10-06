@@ -40,11 +40,11 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
     if (node.type === 'account') {
       const def = state.accounts.find(a => a.id === node.accountId);
       if (!def || def.archived) return null;
-      const off = debt && node.accountId === 'fun';
       const isDebt = node.accountId === 'debt';
+      const off = debt ? node.accountId === 'fun' : isDebt;
       const funNode = state.tree.type === 'group' ? findAccountNode(root, 'fun')?.node : undefined;
-      const sub = off ? 'Нофаъол: аввал қарзҳоро пардохт кунед'
-        : isDebt ? (debt ? `${n2(share + (funNode ? effectiveShareNode(root, funNode.id) : 0))}% аз ҳар даромад (бо «Вақтхушӣ»)` : 'Ҳангоми қарз фаъол мешавад')
+      const sub = off && !isDebt ? 'Нофаъол: аввал қарзҳоро пардохт кунед'
+        : isDebt ? (debt ? `${n2(share + (funNode ? effectiveShareNode(root, funNode.id) : 0))}% аз ҳар даромад (бо «Вақтхушӣ»)` : 'Нофаъол: қарз нест, бо қарзи нав фаъол мешавад')
         : `${n2(share)}% аз ҳар даромад`;
       return (
         <button key={node.id} className={off ? 'cell tree-row off' : 'cell tap tree-row'}
