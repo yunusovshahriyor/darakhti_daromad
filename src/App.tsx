@@ -5,7 +5,7 @@ import {
   BackIcon, GridIcon, InfoIcon, ListIcon, MoreIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
-import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, syncCatalog } from './model';
+import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
 import { loadState, saveState } from './storage';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
@@ -97,6 +97,18 @@ export default function App() {
   const prevBal = useRef<Alloc | null>(null);
 
   useEffect(() => saveState(state), [state]);
+
+  // Ҳамаи қарзҳо пардохт шуданд: боқимондаи «Пардохти қарз» ба «Сармоя» мегузарад
+  useEffect(() => {
+    if (hasDebt(state.debts) || !state.accounts.some(a => a.id === 'capital' && !a.archived)) return;
+    const left = balancesOf(state).debt ?? 0;
+    if (left > 0.005) {
+      setState(s => ({
+        ...s,
+        transfers: [...s.transfers, { id: uid(), from: 'debt', to: 'capital', amount: left, date: today() }],
+      }));
+    }
+  }, [state]);
 
   useEffect(() => {
     try { localStorage.setItem(FILTER_KEY, filter); } catch { /* ignore */ }
