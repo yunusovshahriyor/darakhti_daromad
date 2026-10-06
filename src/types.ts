@@ -55,6 +55,8 @@ export interface Debt {
   priority?: boolean;
   /** Санаи пардохти пурра. */
   paidAt?: string;
+  /** Санаи гирифтани қарз. */
+  date?: string;
 }
 
 export interface Dream {

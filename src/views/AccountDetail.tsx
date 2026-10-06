@@ -339,7 +339,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
       )}
       {modal === 'pay' && payFor && (
         <Sheet title={`Пардохт: ${payFor.title}`} onClose={close}>
-          <PayDebtForm {...common} debt={payFor} defaultSource="debt" onDone={done} />
+          <PayDebtForm {...common} debt={payFor} onDone={done} />
         </Sheet>
       )}
       {modal === 'buy' && buyFor && (

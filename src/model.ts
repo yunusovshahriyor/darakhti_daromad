@@ -70,6 +70,16 @@ export function fundDreams(dreams: Dream[], pool: number): FundedDream[] {
   });
 }
 
+/** Қарзи нав: агар аввалин қарз бошад, боқимондаи «Вақтхушӣ» худкор ба «Пардохти қарз» мегузарад. */
+export function withNewDebt(s: State, v: { title: string; amount: number; priority: boolean; date?: string }): State {
+  const next: State = { ...s, debts: [...s.debts, { id: uid(), paid: 0, ...v }] };
+  const fun = balancesOf(s).fun ?? 0;
+  if (!hasDebt(s.debts) && fun > 0.005) {
+    next.transfers = [...s.transfers, { id: uid(), from: 'fun', to: 'debt', amount: fun, date: v.date ?? today() }];
+  }
+  return next;
+}
+
 export const hasDebt = (debts: Debt[]) => debts.some(d => remaining(d) > 0.005);
 
 /**
