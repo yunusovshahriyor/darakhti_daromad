@@ -1,15 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
-import { ChevronIcon, PlusIcon } from '../components/Icons';
+import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { ACCOUNTS, CARD_COLORS, effectiveShareNode, fmt, isRemainderNode } from '../model';
 import { emptyState } from '../storage';
 import type { DistNode } from '../types';
 import type { Props } from './props';
 
+const CLOSED_KEY = 'darakhti:setclosed';
+
+const readClosed = (): string[] => {
+  try { return JSON.parse(localStorage.getItem(CLOSED_KEY) ?? '[]') as string[]; } catch { return []; }
+};
+
 export default function SettingsView({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
   const [editId, setEditId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [closed, setClosed] = useState(readClosed);
   const root = state.tree;
+
+  useEffect(() => {
+    try { localStorage.setItem(CLOSED_KEY, JSON.stringify(closed)); } catch { /* ignore */ }
+  }, [closed]);
+
+  const toggle = (id: string) =>
+    setClosed(c => (c.includes(id) ? c.filter(k => k !== id) : [...c, id]));
 
   const wipe = () => {
     if (window.confirm('Ҳамаи маълумот (даромад, хароҷот, қарз, орзуҳо, ҳисобҳо) нест мешавад. Идома медиҳед?')) {
@@ -38,21 +52,26 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
         </button>
       );
     }
-    const rows = node.children.map(c => row(c, depth + 1));
     const isRoot = node.id === 'root';
+    const open = isRoot || !closed.includes(node.id);
+    const rows = open ? node.children.map(c => row(c, depth + 1)) : null;
     return (
       <div key={node.id}>
         {!isRoot && (
-          <button className="cell tap tree-row group" style={{ paddingLeft: 14 + depth * 16 }}
-            onClick={() => setEditId(node.id)}>
-            <span className="tr-ic soft">{node.icon}</span>
-            <span className="grow">
-              <b>{node.title}</b>
-              <small>{n2(share)}% аз ҳар даромад</small>
-            </span>
-            <span className="tr-pct">{n2(node.percent)}%{remainder && <em>боқимонда</em>}</span>
-            <ChevronIcon />
-          </button>
+          <div className="cell tree-row group" style={{ paddingLeft: 14 + depth * 16 }}>
+            <button className="tr-main tap" onClick={() => toggle(node.id)} aria-expanded={open}>
+              <span className={open ? 'chev open' : 'chev'}><ChevronIcon /></span>
+              <span className="tr-ic soft">{node.icon}</span>
+              <span className="grow">
+                <b>{node.title}</b>
+                <small>{n2(share)}% аз ҳар даромад</small>
+              </span>
+              <span className="tr-pct">{n2(node.percent)}%{remainder && <em>боқимонда</em>}</span>
+            </button>
+            <button className="icon-btn tr-edit" onClick={() => setEditId(node.id)} aria-label="Таҳрир">
+              <PencilIcon />
+            </button>
+          </div>
         )}
         {rows}
       </div>
@@ -66,22 +85,11 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
         {row(root, -1)}
         <div className="cell tree-row static" style={{ paddingLeft: 14 }}>
           <span className="tr-ic" style={{ background: CARD_COLORS.debt }}>{ACCOUNTS.debt?.icon}</span>
-          <span className="grow">
-            <b>{ACCOUNTS.debt?.name}</b>
-            <small>Ҳангоми қарз фоизи «Вақтхушӣ» ба ин ҳисоб меравад</small>
-          </span>
+          <span className="grow"><b>{ACCOUNTS.debt?.name}</b></span>
         </div>
       </div>
-      <p className="note">
-        Фоиз нисбат ба гурӯҳи волид аст. Охирин ҳисоби ҳар гурӯҳ — боқимонда: фоизи он худкор ҳисоб мешавад, то ҷамъ 100% бошад.
-        Тағйирот танҳо ба даромадҳои нав таъсир мекунад.
-      </p>
       <button className="btn" onClick={() => setAdding(true)}><PlusIcon /> Ҳисоби нав</button>
 
-      <h3 className="group-title"><span>Маълумот</span></h3>
-      <div className="cells">
-        <div className="cell"><div className="grow muted">Маълумот танҳо дар ин дастгоҳ нигоҳ дошта мешавад.</div></div>
-      </div>
       <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
 
       {editId && (

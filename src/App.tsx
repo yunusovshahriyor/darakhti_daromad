@@ -191,7 +191,7 @@ export default function App() {
     }
   };
 
-  const infoKind = !acct && (sub === 'debts' || sub === 'dreams') ? sub : null;
+  const infoKind = !acct && (sub === 'debts' || sub === 'dreams' || sub === 'settings') ? sub : null;
   const home = tab === 'home' && !sub && !acct;
   const title = acct ? ACCOUNTS[acct].name : sub ? SUB_TITLES[sub] : TITLES[tab];
   const props = { state, setState };
