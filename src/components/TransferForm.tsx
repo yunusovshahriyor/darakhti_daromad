@@ -2,8 +2,8 @@ import { FormEvent, useState } from 'react';
 import { ACCOUNTS, balancesOf, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
-import AccountSelect from './AccountSelect';
-import Field from './Field';
+import AccountChips from './AccountChips';
+import AmountEntry from './AmountEntry';
 
 interface Extra {
   from?: AccountId;
@@ -15,6 +15,7 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
   const [from, setFrom] = useState<AccountId>(f0 ?? 'living');
   const [to, setTo] = useState<AccountId>(t0 ?? (f0 === 'future' ? 'living' : 'future'));
   const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(today);
 
   const bal = balancesOf(state);
   const hide = hiddenAccounts(state);
@@ -30,28 +31,21 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
     )) return;
     setState(s => ({
       ...s,
-      transfers: [{ id: uid(), from, to, amount: num, date: today() }, ...s.transfers],
+      transfers: [{ id: uid(), from, to, amount: num, date }, ...s.transfers],
     }));
     onDone(`${fmt(num)} смн гузаронида шуд ✓`);
   };
 
   return (
     <form onSubmit={onSubmit}>
-      <Field label="Аз ҳисоби">
-        <AccountSelect value={from} onChange={setFrom} bal={bal} hidden={hide} />
-      </Field>
-      <Field label="Ба ҳисоби">
-        <AccountSelect value={to} onChange={setTo} bal={bal} hidden={hide} />
-      </Field>
-      <Field label="Маблағ (сомонӣ)">
-        <input type="number" inputMode="decimal" min="0" step="0.01" value={amount}
-          onChange={e => setAmount(e.target.value)} placeholder="0.00" required />
-      </Field>
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AccountChips label="Аз ҳисоби" value={from} onChange={setFrom} bal={bal} hidden={hide} />
+      <AccountChips label="Ба ҳисоби" value={to} onChange={setTo} bal={bal} hidden={hide} />
       {same && <div className="alert danger">Ҳисоби фиристанда ва қабулкунанда бояд гуногун бошанд.</div>}
       {!same && over && num > 0 && (
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[from])}).</div>
       )}
-      <button className="btn" type="submit" disabled={same}>Гузаронидан</button>
+      <button className="btn big" type="submit" disabled={same || num <= 0}>Гузаронидан</button>
     </form>
   );
 }

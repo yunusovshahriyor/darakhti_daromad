@@ -8,10 +8,14 @@ interface Props {
   children: ReactNode;
   /** Нимкушода кушода мешавад; бо кашидан ба боло пурра мешавад, бо кашидан ба поён кӯтоҳ ё баста мешавад. */
   detents?: boolean;
+  /** Сатри хурд дар болои сарлавҳа. */
+  eyebrow?: string;
+  /** Варақаи баланд (92%). */
+  tall?: boolean;
 }
 
 /** Варақаи поёнӣ (bottom sheet) мисли барномаҳои мобилӣ. */
-export default function Sheet({ title, onClose, children, detents = false }: Props) {
+export default function Sheet({ title, onClose, children, detents = false, eyebrow, tall = false }: Props) {
   useHistoryLayer(true, onClose);
   const [full, setFull] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -50,7 +54,7 @@ export default function Sheet({ title, onClose, children, detents = false }: Pro
 
   const onTouchEnd = () => { touch.current = null; };
 
-  const cls = `sheet${detents ? ' detent' : ''}${full ? ' full' : ''}`;
+  const cls = `sheet${detents ? ' detent' : ''}${full ? ' full' : ''}${tall ? ' tall' : ''}`;
 
   return (
     <div className="backdrop" onClick={onClose}>
@@ -58,7 +62,7 @@ export default function Sheet({ title, onClose, children, detents = false }: Pro
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}>
         <div className="grabber" onClick={detents ? () => setFull(f => !f) : undefined} />
         <div className="sheet-head">
-          <h2>{title}</h2>
+          <div>{eyebrow && <small className="eyebrow">{eyebrow}</small>}<h2>{title}</h2></div>
           <button className="icon-btn" onClick={onClose} aria-label="Пӯшидан"><CloseIcon /></button>
         </div>
         {detents ? <div className="sheet-scroll" ref={scrollRef}>{children}</div> : children}
