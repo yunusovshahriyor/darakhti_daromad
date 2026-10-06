@@ -36,6 +36,8 @@ export interface Income {
   alloc: Alloc;
   /** «borrow» — қарзи гирифташуда, «loanBack» — баргардонидани қарзи додашуда: бе тақсими фоизӣ. */
   kind?: 'borrow' | 'loanBack';
+  /** Манбаи даромад: «Музд», «Кори иловагӣ»… */
+  source?: string;
   loanId?: number;
   debtId?: number;
 }
@@ -107,6 +109,8 @@ export interface State {
   loans: Loan[];
   /** Категорияҳои хароҷоти худи корбар. */
   categories?: { name: string; icon: string }[];
+  /** Манбаъҳои даромади худи корбар. */
+  incomeSources?: { name: string; icon: string }[];
   dreams: Dream[];
   transfers: Transfer[];
   goals: Partial<Record<AccountId, number>>;

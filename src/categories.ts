@@ -46,3 +46,24 @@ export function orderedCategories(
     .sort((a, b) => b.v - a.v || a.i - b.i)
     .map(x => x.c);
 }
+
+export const INCOME_SOURCES: { name: string; icon: string }[] = [
+  { name: 'Музд', icon: '💼' },
+  { name: 'Кори иловагӣ', icon: '🛠️' },
+  { name: 'Бозгашт', icon: '↩️' },
+  { name: 'Дигар', icon: '✨' },
+];
+
+/** Манбаъҳои даромад: аввал ончое, ки зиёдтар даромад овардааст (чап); «Дигар» дар охир. */
+export function orderedSources(
+  custom: { name: string; icon: string }[],
+  incomes: { source?: string; amount: number }[],
+): { name: string; icon: string }[] {
+  const base = [...custom, ...INCOME_SOURCES.filter(c => c.name !== 'Дигар'), INCOME_SOURCES[INCOME_SOURCES.length - 1]];
+  const sum = new Map<string, number>();
+  for (const i of incomes) if (i.source) sum.set(i.source, (sum.get(i.source) ?? 0) + i.amount);
+  return base
+    .map((c, i) => ({ c, i, v: sum.get(c.name) ?? 0 }))
+    .sort((a, b) => b.v - a.v || a.i - b.i)
+    .map(x => x.c);
+}

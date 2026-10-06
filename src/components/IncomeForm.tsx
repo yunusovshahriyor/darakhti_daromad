@@ -1,16 +1,29 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
+import { orderedSources } from '../categories';
 import { ACCOUNTS, ACCOUNT_ORDER, allocate, fmt, hasDebt, today, uid } from '../model';
 import type { Props } from '../views/props';
 import AmountEntry from './AmountEntry';
+import AddCategorySheet from './AddCategorySheet';
 import Field from './Field';
 
-const SOURCES: [string, string][] = [['Музд', '💼'], ['Кори иловагӣ', '🛠️'], ['Бозгашт', '↩️'], ['Дигар', '✨']];
-
 export default function IncomeForm({ state, setState, onDone }: Props & { onDone: (msg: string) => void }) {
-  const [source, setSource] = useState(SOURCES[0][0]);
+  const [source, setSource] = useState('Музд');
+  const [adding, setAdding] = useState(false);
+  const row = useRef<HTMLDivElement>(null);
+  const sources = orderedSources(state.incomeSources ?? [], state.incomes);
   const [note, setNote] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
+
+  // Манбаи интихобшуда дар сатр намоён бошад
+  useEffect(() => {
+    const box = row.current;
+    const el = box?.querySelector<HTMLElement>('.chip.on');
+    if (!box || !el) return;
+    if (el.offsetLeft < box.scrollLeft || el.offsetLeft + el.offsetWidth > box.scrollLeft + box.clientWidth) {
+      box.scrollTo({ left: Math.max(0, el.offsetLeft - 16), behavior: 'smooth' });
+    }
+  }, [source, sources.length]);
 
   const debt = hasDebt(state.debts);
   const num = parseFloat(amount) || 0;
@@ -21,7 +34,7 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
     if (num <= 0) return;
     const n = note.trim();
     const income = {
-      id: uid(), title: n ? `${source} · ${n}` : source, amount: num, date,
+      id: uid(), title: n ? `${source} · ${n}` : source, source, amount: num, date,
       alloc: allocate(num, state.tree, debt),
     };
     setState(s => ({
@@ -36,9 +49,12 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" />
 
       <div className="chips-block">
-        <div className="chips-label">Манбаи даромад</div>
-        <div className="chips">
-          {SOURCES.map(([s, ic]) => (
+        <div className="chips-head">
+          <div className="chips-label">Манбаи даромад</div>
+          <button type="button" className="chips-add" onClick={() => setAdding(true)}>+ Илова</button>
+        </div>
+        <div className="chips" ref={row}>
+          {sources.map(({ name: s, icon: ic }) => (
             <button key={s} type="button" className={s === source ? 'chip on' : 'chip'} onClick={() => setSource(s)}>
               <span className="chip-ic soft">{ic}</span>
               <span className="chip-t"><b>{s}</b></span>
@@ -47,6 +63,11 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
           ))}
         </div>
       </div>
+
+      {adding && (
+        <AddCategorySheet kind="income" state={state} setState={setState} onClose={() => setAdding(false)}
+          onAdded={setSource} />
+      )}
 
       <Field label="Эзоҳ (ихтиёрӣ)">
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="Масалан, лоиҳа ё музди моҳ" />
