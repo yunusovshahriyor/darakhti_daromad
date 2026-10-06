@@ -22,6 +22,7 @@ export interface Settings {
   parents: number;
   future: number;
   fun: number;
+  debt?: number;
   company: number;
   capital: number;
   bigDream: number;

@@ -84,9 +84,15 @@ export function allocate(amount: number, tree: DistNode, debt: boolean): Alloc {
       out[target] = (out[target] ?? 0) + value;
       return;
     }
-    const sum = n.children.reduce((t, c) => t + c.percent, 0);
+    // Бе қарз ҳиссаи «Пардохти қарз» ба боқимонда (охирин фарзанд) мегузарад
+    const w = n.children.map(c => (!debt && c.type === 'account' && c.accountId === 'debt' ? 0 : c.percent));
+    if (!debt) {
+      const skipped = n.children.reduce((t, c, i) => t + c.percent - w[i], 0);
+      if (skipped > 0) w[w.length - 1] += skipped;
+    }
+    const sum = w.reduce((t, x) => t + x, 0);
     if (sum <= 0) return;
-    for (const c of n.children) walk(c, (value * c.percent) / sum);
+    n.children.forEach((c, i) => walk(c, (value * w[i]) / sum));
   };
   walk(tree, amount);
   return out;
@@ -263,7 +269,7 @@ export function leafHint(id: AccountId, debt: boolean): string {
   if (id === 'fun' && debt) return 'Ҳангоми қарз пур намешавад';
   if (id === 'debt') {
     const f = LEAF_INFO.fun;
-    return debt && f ? `${n(f.percent)}% аз ${f.parent}` : 'Ҳангоми қарз пур мешавад';
+    return debt && f && info ? `${n(info.percent + f.percent)}% аз ${info.parent}` : 'Ҳангоми қарз пур мешавад';
   }
   return info ? `${n(info.percent)}% аз ${info.parent}` : 'Бе фоизи худкор';
 }
@@ -539,6 +545,7 @@ export function defaultTree(s: Settings = DEFAULT_SETTINGS): DistNode {
       acct('charity', s.charity),
       acct('parents', s.parents),
       acct('future', s.future),
+      acct('debt', s.debt ?? 10),
       acct('fun', s.fun),
       grp('monthly', 'Даромади моҳона', '🗓️', 0, [
         grp('company', 'Ҳисоби ширкат', '🏢', s.company, [
@@ -556,6 +563,7 @@ export const DEFAULT_SETTINGS: Settings = {
   parents: 10,
   future: 10,
   fun: 10,
+  debt: 10,
   company: 55,
   capital: 80,
   bigDream: 50,

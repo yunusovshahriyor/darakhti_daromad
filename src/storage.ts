@@ -1,4 +1,4 @@
-import { DEFAULT_ACCOUNTS, DEFAULT_SETTINGS, allocate, defaultTree, syncCatalog } from './model';
+import { DEFAULT_ACCOUNTS, DEFAULT_SETTINGS, addAccountNode, allocate, defaultTree, findAccountNode, syncCatalog } from './model';
 import type { Income, State } from './types';
 
 const KEY = 'darakhti:v2';
@@ -28,8 +28,12 @@ function readState(): State {
       const s = JSON.parse(raw) as Partial<State> & { settings?: typeof DEFAULT_SETTINGS };
       const base = emptyState();
       // Версияи кӯҳна: ҳисобҳо ва дарахт бо фоизҳои сабтшуда сохта мешаванд
-      const tree = s.tree ?? defaultTree({ ...DEFAULT_SETTINGS, ...(s.settings ?? {}) });
+      let tree = s.tree ?? defaultTree({ ...DEFAULT_SETTINGS, ...(s.settings ?? {}) });
       const accounts = s.accounts ?? base.accounts;
+      // «Пардохти қарз» ҳиссаи худро (10%) дар дарахт дорад
+      if (!findAccountNode(tree, 'debt') && accounts.some(a => a.id === 'debt' && !a.archived)) {
+        tree = addAccountNode(tree, 'root', 'debt', 10);
+      }
       const { settings: _legacy, ...rest } = s;
       return { ...base, ...rest, accounts, tree };
     }
