@@ -947,3 +947,10 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .sheet.tall .chip-ok { display: none; }
 .sheet.tall .chips-block .chip.on .chip-t b { color: var(--primary); }
 .sheet.tall .chip-note { flex: none; align-self: center; white-space: nowrap; padding-left: 6px; }
+
+.chips-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.chips-head .chips-label { margin: 0; }
+.chips-add { border: 0; background: none; color: var(--primary); font-size: .85rem; font-weight: 700; padding: 2px 0 2px 10px; }
+.icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 14px; }
+.icon-grid button { height: 46px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); font-size: 1.4rem; }
+.icon-grid button.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }

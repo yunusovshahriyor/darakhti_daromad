@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, balancesOf, fmt, hiddenAccounts, today, uid } from '../model';
+import { ACCOUNTS, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountChips from './AccountChips';
@@ -39,13 +39,13 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
   return (
     <form onSubmit={onSubmit}>
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
-      <AccountChips label="Аз ҳисоби" value={from} onChange={setFrom} bal={bal} hidden={hide} />
+      <AccountChips label="Аз ҳисоби" value={from} onChange={setFrom} bal={bal} hidden={hide} spentBy={spent(state.expenses)} />
       <button type="button" className="swap-btn" onClick={() => { setFrom(to); setTo(from); }}>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"
           strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3" /></svg>
         Ҷойи ҳисобҳоро иваз кардан
       </button>
-      <AccountChips label="Ба ҳисоби" value={to} onChange={setTo} bal={bal} hidden={hide} />
+      <AccountChips label="Ба ҳисоби" value={to} onChange={setTo} bal={bal} hidden={hide} spentBy={spent(state.expenses)} />
       {same && <div className="alert danger">Ҳисоби фиристанда ва қабулкунанда бояд гуногун бошанд.</div>}
       {!same && over && num > 0 && (
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[from])}).</div>

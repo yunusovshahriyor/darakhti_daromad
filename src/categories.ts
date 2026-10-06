@@ -20,8 +20,28 @@ export const EXPENSE_CATEGORIES: Category[] = [
 ];
 
 /** Категорияро аз эзоҳ мепайдо мекунад («барои такси» → Транспорт). */
-export function guessCategory(note: string): string | null {
+export function guessCategory(note: string, custom: { name: string }[] = []): string | null {
   const t = note.toLowerCase();
   if (!t.trim()) return null;
+  const own = custom.find(c => t.includes(c.name.toLowerCase()));
+  if (own) return own.name;
   return EXPENSE_CATEGORIES.find(c => c.words.some(w => t.includes(w)))?.name ?? null;
+}
+
+/** Рӯйхати категорияҳо: аввал ончое, ки зиёдтар сарф шудааст (чап); «Дигар» дар охир, агар сарф нашуда бошад. */
+export function orderedCategories(
+  custom: { name: string; icon: string }[],
+  expenses: { category?: string; amount: number }[],
+): { name: string; icon: string }[] {
+  const base = [
+    ...EXPENSE_CATEGORIES.filter(c => c.name !== 'Дигар').map(({ name, icon }) => ({ name, icon })),
+    ...custom,
+    { name: 'Дигар', icon: '✨' },
+  ];
+  const sum = new Map<string, number>();
+  for (const e of expenses) if (e.category) sum.set(e.category, (sum.get(e.category) ?? 0) + e.amount);
+  return base
+    .map((c, i) => ({ c, i, v: sum.get(c.name) ?? 0 }))
+    .sort((a, b) => b.v - a.v || a.i - b.i)
+    .map(x => x.c);
 }

@@ -1,6 +1,6 @@
 import { FormEvent, ReactNode, useState } from 'react';
 import {
-  ACCOUNTS, ACCOUNT_ORDER, balancesOf, fmt, hiddenAccounts, loanLeft, openLoans, today, uid, withNewDebt,
+  ACCOUNTS, ACCOUNT_ORDER, balancesOf, spent, fmt, hiddenAccounts, loanLeft, openLoans, today, uid, withNewDebt,
 } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
@@ -51,7 +51,7 @@ export function LendForm({ state, setState, onDone, afterPad }: Props & Extra) {
     <form onSubmit={submit}>
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
       {afterPad}
-      <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal}
+      <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal} spentBy={spent(state.expenses)}
         hidden={hiddenAccounts(state)} />
       <Field label="Ба кӣ қарз медиҳед">
         <input value={person} onChange={e => setPerson(e.target.value)} placeholder="Масалан, Алӣ" />
@@ -165,7 +165,7 @@ export function BorrowForm({ state, setState, onDone, afterPad }: Props & Extra)
     <form onSubmit={submit}>
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" />
       {afterPad}
-      <AccountChips label="Ба кадом ҳисоб илова шавад" value={account} onChange={setAccount} bal={bal}
+      <AccountChips label="Ба кадом ҳисоб илова шавад" value={account} onChange={setAccount} bal={bal} spentBy={spent(state.expenses)}
         hidden={[...hiddenAccounts(state), 'debt']} />
       <Field label="Аз кӣ қарз гирифтед">
         <input value={person} onChange={e => setPerson(e.target.value)} placeholder="Масалан, Алӣ" />

@@ -105,6 +105,8 @@ export interface State {
   expenses: Expense[];
   debts: Debt[];
   loans: Loan[];
+  /** Категорияҳои хароҷоти худи корбар. */
+  categories?: { name: string; icon: string }[];
   dreams: Dream[];
   transfers: Transfer[];
   goals: Partial<Record<AccountId, number>>;

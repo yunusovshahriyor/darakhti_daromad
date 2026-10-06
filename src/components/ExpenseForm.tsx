@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { guessCategory } from '../categories';
-import { ACCOUNTS, balancesOf, fmt, hiddenAccounts, today, uid } from '../model';
+import { ACCOUNTS, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountChips from './AccountChips';
@@ -42,14 +42,14 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
   return (
     <form onSubmit={onSubmit}>
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
-      <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal}
+      <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal} spentBy={spent(state.expenses)}
         hidden={hiddenAccounts(state)} />
-      <CategoryChips value={category} onChange={c => { setCategory(c); setManual(true); }} />
+      <CategoryChips state={state} setState={setState} value={category} onChange={c => { setCategory(c); setManual(true); }} />
       <Field label="Эзоҳ (ихтиёрӣ)">
         <input value={note} placeholder="Масалан, такси ба кор"
           onChange={e => {
             setNote(e.target.value);
-            if (!manual) setCategory(guessCategory(e.target.value));
+            if (!manual) setCategory(guessCategory(e.target.value, state.categories));
           }} />
       </Field>
       {over && num > 0 && (

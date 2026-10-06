@@ -3,7 +3,9 @@ import { ACCOUNTS, ACCOUNT_ORDER, CARD_COLORS, fmt } from '../model';
 import type { AccountId, Alloc } from '../types';
 
 /** Интихоби ҳисоб: сатри уфуқии чипҳо бо скролл. */
-export default function AccountChips({ label, value, onChange, bal, hidden = [] }: {
+export default function AccountChips({ label, value, onChange, bal, hidden = [], spentBy }: {
+  /** Маблағи сарфшуда ба ҳар ҳисоб: ҳисоби бештар сарфшуда дар чап меистад. */
+  spentBy?: Alloc;
   label: string;
   value: AccountId;
   onChange: (id: AccountId) => void;
@@ -18,7 +20,10 @@ export default function AccountChips({ label, value, onChange, bal, hidden = [] 
     if (el && row.current) row.current.scrollLeft = el.offsetLeft - row.current.clientWidth / 2 + el.offsetWidth / 2;
   }, []);
 
-  const ids = ACCOUNT_ORDER.filter(id => id === value || !hidden.includes(id));
+  const ids = ACCOUNT_ORDER.filter(id => id === value || !hidden.includes(id))
+    .map((id, i) => ({ id, i, v: spentBy?.[id] ?? 0 }))
+    .sort((a, b) => b.v - a.v || a.i - b.i)
+    .map(x => x.id);
 
   return (
     <div className="chips-block">
