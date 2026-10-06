@@ -1,9 +1,11 @@
 import { FormEvent, useState } from 'react';
+import { guessCategory } from '../categories';
 import { ACCOUNTS, balancesOf, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountChips from './AccountChips';
 import AmountEntry from './AmountEntry';
+import CategoryChips from './CategoryChips';
 import Field from './Field';
 
 export default function ExpenseForm({ state, setState, onDone, initialAccount }: Props & {
@@ -12,6 +14,9 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
 }) {
   const [account, setAccount] = useState<AccountId>(initialAccount ?? 'living');
   const [note, setNote] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
+  // Агар категория дастӣ интихоб нашуда бошад, аз эзоҳ худкор пешниҳод мешавад
+  const [manual, setManual] = useState(false);
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
 
@@ -25,7 +30,8 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
     if (over && !window.confirm(
       `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account])} сомонӣ мавҷуд аст. Ба ҳар ҳол харҷ мекунед?`,
     )) return;
-    const expense = { id: uid(), account, title: note.trim() || ACCOUNTS[account].name, amount: num, date };
+    const expense = { id: uid(), account, title: note.trim() || category || ACCOUNTS[account].name, amount: num, date,
+      ...(category ? { category } : {}) };
     setState(s => ({
       ...s,
       expenses: [...s.expenses, expense].sort((a, b) => b.date.localeCompare(a.date)),
@@ -38,8 +44,13 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
       <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal}
         hidden={hiddenAccounts(state)} />
+      <CategoryChips value={category} onChange={c => { setCategory(c); setManual(true); }} />
       <Field label="Эзоҳ (ихтиёрӣ)">
-        <input value={note} onChange={e => setNote(e.target.value)} placeholder="Масалан, хӯрок" />
+        <input value={note} placeholder="Масалан, такси ба кор"
+          onChange={e => {
+            setNote(e.target.value);
+            if (!manual) setCategory(guessCategory(e.target.value));
+          }} />
       </Field>
       {over && num > 0 && (
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[account])}).</div>

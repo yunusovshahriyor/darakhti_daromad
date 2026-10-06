@@ -49,6 +49,8 @@ export interface Expense {
   debtId?: number;
   dreamId?: number;
   loanId?: number;
+  /** Категорияи хароҷот: «Транспорт», «Хӯрок»… */
+  category?: string;
 }
 
 /** Қарзи додашуда: дигарон ба шумо қарздоранд. */

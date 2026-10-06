@@ -137,7 +137,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
             <div className="ic neg-bg">{ACCOUNTS[x.account].icon}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="neg">−{fmt(x.amount)}</b></div>
-              <small>{x.loanId ? 'Қарз додам · ' : ''}{ACCOUNTS[x.account].name}</small>
+              <small>{x.loanId ? 'Қарз додам · ' : ''}{x.category ? `${x.category} · ` : ''}{ACCOUNTS[x.account].name}</small>
               {x.loanId && loanOf(x.loanId) && <LoanProgress loan={loanOf(x.loanId)!} />}
             </div>
           </div>

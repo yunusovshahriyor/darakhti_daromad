@@ -934,3 +934,16 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .sheet.tall .amount-big small { font-size: 1.4rem; }
 .sheet.tall .keypad { margin-bottom: 6px; }
 .sheet.tall .date-row { margin: 0 0 10px; }
+
+/* ---------- Иловакунӣ: чипҳо дар як сатри уфуқӣ бо скролл ---------- */
+.sheet.tall .date-row { margin-top: 12px; }
+.sheet.tall .keypad { margin-bottom: 12px; }
+.sheet.tall .chips-block .chips { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.sheet.tall .chips-block .chips::-webkit-scrollbar { display: none; }
+.sheet.tall .chips-block .chip { flex: none; min-height: 36px; padding: 4px 12px 4px 6px; border-radius: 999px; }
+.sheet.tall .chip-ic { width: 24px; height: 24px; border-radius: 50%; font-size: .85rem; }
+.sheet.tall .chip-t b { font-size: .8rem; }
+.sheet.tall .chip-t small { font-size: .62rem; }
+.sheet.tall .chip-ok { display: none; }
+.sheet.tall .chips-block .chip.on .chip-t b { color: var(--primary); }
+.sheet.tall .chip-note { flex: none; align-self: center; white-space: nowrap; padding-left: 6px; }
