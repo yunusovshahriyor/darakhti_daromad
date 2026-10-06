@@ -4,26 +4,18 @@ import ExpenseForm from './ExpenseForm';
 import IncomeForm from './IncomeForm';
 import { BorrowForm, LendForm, ReturnLoanForm } from './LoanForms';
 import PayDebtForm from './PayDebtForm';
-import SegTabs from './SegTabs';
 import Sheet from './Sheet';
 import TransferForm from './TransferForm';
 
 type Kind = 'income' | 'expense' | 'transfer' | 'debt';
 type DebtKind = 'lend' | 'back' | 'take' | 'pay';
 
-const TITLES: Record<Kind, string> = {
-  income: 'Илова кардани даромад',
-  expense: 'Илова кардани хароҷот',
-  transfer: 'Гузаронидан байни ҳисобҳо',
-  debt: 'Илова кардани қарз',
-};
-
-const DEBT_TITLES: Record<DebtKind, string> = {
-  lend: 'Қарз додан',
-  back: 'Баргардонидани қарз',
-  take: 'Қарз гирифтан',
-  pay: 'Пардохти қарз',
-};
+const KINDS: { id: Kind; label: string; icon: string }[] = [
+  { id: 'income', label: 'Даромад', icon: 'M12 4v11m0 0-4-4m4 4 4-4M5 20h14' },
+  { id: 'expense', label: 'Хароҷот', icon: 'M12 20V9m0 0-4 4m4-4 4 4M5 4h14' },
+  { id: 'transfer', label: 'Гузаронидан', icon: 'M7 7h12m0 0-3-3m3 3-3 3M17 17H5m0 0 3-3m-3 3 3 3' },
+  { id: 'debt', label: 'Қарз', icon: 'M3 7h18v12H3zM3 11h18M16 15h2' },
+];
 
 /** Варақаи якҷоя: ҷудокунак (даромад / хароҷот / гузаронидан / қарз) ва форма бо тугмачаҳои рақамӣ. */
 export default function AddSheet({ state, setState, onClose, onDone }: Props & {
@@ -56,15 +48,20 @@ export default function AddSheet({ state, setState, onClose, onDone }: Props & {
   );
 
   return (
-    <Sheet title={kind === 'debt' ? DEBT_TITLES[debtKind] : TITLES[kind]} eyebrow="Амалиёти нав"
-      onClose={onClose} tall>
+    <Sheet title="Амалиёти нав" onClose={onClose} tall>
       <div className={`add-body tone-${tone}`}>
-      <SegTabs className="add-tabs" value={kind} onChange={k => setKind(k as Kind)} tabs={[
-        { id: 'income', label: 'Даромад' },
-        { id: 'expense', label: 'Хароҷот' },
-        { id: 'transfer', label: 'Гузаронидан' },
-        { id: 'debt', label: 'Қарз' },
-      ]} />
+      <div className="kind-tabs" role="tablist">
+        {KINDS.map(k => (
+          <button key={k.id} type="button" role="tab" aria-selected={k.id === kind}
+            className={`kt k-${k.id}${k.id === kind ? ' on' : ''}`} onClick={() => setKind(k.id)}>
+            <span className="kt-ic">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={k.icon} /></svg>
+            </span>
+            <span className="kt-t">{k.label}</span>
+          </button>
+        ))}
+      </div>
       {kind === 'income' && <IncomeForm key="i" {...common} />}
       {kind === 'expense' && <ExpenseForm key="e" {...common} />}
       {kind === 'transfer' && <TransferForm key="t" {...common} />}

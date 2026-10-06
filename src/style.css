@@ -908,3 +908,18 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .dp-day.sel { background: var(--primary); color: #fff; font-weight: 700; }
 .dp-day:disabled { opacity: .28; }
 .dp-day:not(:disabled):not(.sel):active { background: var(--bg); }
+
+/* ---------- Иловакунӣ: сарлавҳа ва ҷудокунаки нав ---------- */
+.sheet.tall .sheet-head h2 { font-size: 1.25rem; font-weight: 800; }
+.sheet.tall .sheet-head .icon-btn { background: var(--bg); border-radius: 50%; }
+.kind-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; margin: 2px 0 6px; border-radius: 20px; background: var(--bg); }
+.kt { display: grid; justify-items: center; gap: 4px; padding: 8px 2px 7px; border: 0; border-radius: 16px; background: none; color: var(--muted); font: inherit; transition: background .15s; }
+.kt-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); transition: background .15s, color .15s; }
+.kt-t { font-size: .72rem; font-weight: 600; white-space: nowrap; }
+.kt.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 6px rgba(0, 0, 0, .12); }
+.kt.on .kt-t { font-weight: 800; }
+.kt.on .kt-ic { color: #fff; }
+.kt.k-income.on .kt-ic { background: #1d8a63; }
+.kt.k-expense.on .kt-ic { background: #d94b4b; }
+.kt.k-transfer.on .kt-ic { background: #3b82f6; }
+.kt.k-debt.on .kt-ic { background: #e59a1b; }
