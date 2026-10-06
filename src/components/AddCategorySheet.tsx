@@ -20,6 +20,8 @@ export default function AddCategorySheet({ state, setState, onClose, onAdded }: 
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    // Ин форма дар дохили формаи хароҷот аст: ба он нарасад
+    e.stopPropagation();
     if (!clean || exists) return;
     setState(s => ({ ...s, categories: [...(s.categories ?? []), { name: clean, icon }] }));
     onAdded(clean);

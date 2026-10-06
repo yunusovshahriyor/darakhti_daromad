@@ -33,9 +33,10 @@ export function orderedCategories(
   custom: { name: string; icon: string }[],
   expenses: { category?: string; amount: number }[],
 ): { name: string; icon: string }[] {
+  // Категорияҳои худи корбар аввал меоянд (дар байни баробар), «Дигар» дар охир
   const base = [
-    ...EXPENSE_CATEGORIES.filter(c => c.name !== 'Дигар').map(({ name, icon }) => ({ name, icon })),
     ...custom,
+    ...EXPENSE_CATEGORIES.filter(c => c.name !== 'Дигар').map(({ name, icon }) => ({ name, icon })),
     { name: 'Дигар', icon: '✨' },
   ];
   const sum = new Map<string, number>();
