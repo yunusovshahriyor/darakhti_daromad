@@ -35,7 +35,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
 
   return (
     <form onSubmit={onSubmit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
       <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal}
         hidden={hiddenAccounts(state)} />
       <Field label="Эзоҳ (ихтиёрӣ)">

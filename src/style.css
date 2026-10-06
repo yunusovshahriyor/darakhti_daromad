@@ -878,3 +878,16 @@ input:disabled { opacity: .55; }
 .sheet.tall .switch-row { padding: 8px 2px; }
 .sheet.tall .btn.big { height: 48px; border-radius: 15px; font-size: .98rem; margin-top: 8px; }
 .sheet.tall .loan-prog { margin: 3px 0; }
+
+/* ---------- Иловакунӣ: ранг ва нишонаҳо ---------- */
+.amount-big .sg { margin-right: 2px; }
+.amount-big.pos { color: var(--success); }
+.amount-big.neg { color: var(--text); }
+.chips-block .chip { position: relative; }
+.chip-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; font-size: 1rem; flex: none; }
+.chip-ic.soft { background: var(--bg); }
+.sheet.tall .chip-ic { width: 26px; height: 26px; border-radius: 8px; font-size: .9rem; }
+.chip-ok { margin-left: auto; color: var(--primary); font-weight: 800; font-size: .8rem; }
+.swap-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: -2px 0 8px; padding: 6px; border: 0; background: none; color: var(--primary); font-size: .78rem; font-weight: 700; }
+.add-body.tone-pos .btn.big { background: var(--primary); color: #fff; }
+.add-body.tone-pos .key:active { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }

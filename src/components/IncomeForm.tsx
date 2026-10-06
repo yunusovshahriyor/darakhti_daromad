@@ -4,10 +4,10 @@ import type { Props } from '../views/props';
 import AmountEntry from './AmountEntry';
 import Field from './Field';
 
-const SOURCES = ['Музд', 'Кори иловагӣ', 'Бозгашт', 'Дигар'];
+const SOURCES: [string, string][] = [['Музд', '💼'], ['Кори иловагӣ', '🛠️'], ['Бозгашт', '↩️'], ['Дигар', '✨']];
 
 export default function IncomeForm({ state, setState, onDone }: Props & { onDone: (msg: string) => void }) {
-  const [source, setSource] = useState(SOURCES[0]);
+  const [source, setSource] = useState(SOURCES[0][0]);
   const [note, setNote] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
@@ -33,14 +33,16 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
 
   return (
     <form onSubmit={onSubmit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" />
 
       <div className="chips-block">
         <div className="chips-label">Манбаи даромад</div>
         <div className="chips">
-          {SOURCES.map(s => (
+          {SOURCES.map(([s, ic]) => (
             <button key={s} type="button" className={s === source ? 'chip on' : 'chip'} onClick={() => setSource(s)}>
+              <span className="chip-ic soft">{ic}</span>
               <span className="chip-t"><b>{s}</b></span>
+              {s === source && <span className="chip-ok">✓</span>}
             </button>
           ))}
         </div>

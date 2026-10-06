@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ACCOUNTS, ACCOUNT_ORDER, fmt } from '../model';
+import { ACCOUNTS, ACCOUNT_ORDER, CARD_COLORS, fmt } from '../model';
 import type { AccountId, Alloc } from '../types';
 
 /** Интихоби ҳисоб бо чипҳо: 4 тои аввал, боқӣ бо «Ҳамаи ҳисобҳо». */
@@ -21,8 +21,9 @@ export default function AccountChips({ label, value, onChange, bal, hidden = [] 
       <div className="chips">
         {list.map(id => (
           <button key={id} type="button" className={id === value ? 'chip on' : 'chip'} onClick={() => onChange(id)}>
-            <span className="chip-ic">{ACCOUNTS[id].icon}</span>
+            <span className="chip-ic" style={{ background: CARD_COLORS[id] }}>{ACCOUNTS[id].icon}</span>
             <span className="chip-t"><b>{ACCOUNTS[id].name}</b><small>{fmt(bal[id] ?? 0)}</small></span>
+            {id === value && <span className="chip-ok">✓</span>}
           </button>
         ))}
       </div>

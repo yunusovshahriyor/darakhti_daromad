@@ -37,14 +37,18 @@ export default function AddSheet({ state, setState, onClose, onDone }: Props & {
     onClose();
   };
   const common = { state, setState, onDone: done };
+  // Ранги тугмаи сабт: сабз барои воридот, торик барои баромад ва гузаронидан
+  const tone = kind === 'income' || (kind === 'debt' && (debtKind === 'back' || debtKind === 'take')) ? 'pos' : 'neg';
 
   const what = (
     <div className="chips-block">
       <div className="chips-label">Чӣ шуд</div>
       <div className="chips">
-        {([['lend', 'Қарз додам'], ['back', 'Қарзро баргардонданд'], ['take', 'Қарз гирифтам'], ['pay', 'Пардохт кардам']] as [DebtKind, string][]).map(([id, label]) => (
+        {([['lend', 'Қарз додам', '📤'], ['back', 'Қарзро баргардонданд', '📥'], ['take', 'Қарз гирифтам', '🤝'], ['pay', 'Пардохт кардам', '✅']] as [DebtKind, string, string][]).map(([id, label, ic]) => (
           <button key={id} type="button" className={id === debtKind ? 'chip on' : 'chip'} onClick={() => setDebtKind(id)}>
+            <span className="chip-ic soft">{ic}</span>
             <span className="chip-t"><b>{label}</b></span>
+            {id === debtKind && <span className="chip-ok">✓</span>}
           </button>
         ))}
       </div>
@@ -54,6 +58,7 @@ export default function AddSheet({ state, setState, onClose, onDone }: Props & {
   return (
     <Sheet title={kind === 'debt' ? DEBT_TITLES[debtKind] : TITLES[kind]} eyebrow="Амалиёти нав"
       onClose={onClose} tall>
+      <div className={`add-body tone-${tone}`}>
       <SegTabs className="add-tabs" value={kind} onChange={k => setKind(k as Kind)} tabs={[
         { id: 'income', label: 'Даромад' },
         { id: 'expense', label: 'Хароҷот' },
@@ -67,6 +72,7 @@ export default function AddSheet({ state, setState, onClose, onDone }: Props & {
       {kind === 'debt' && debtKind === 'back' && <ReturnLoanForm key="db" {...common} afterPad={what} />}
       {kind === 'debt' && debtKind === 'take' && <BorrowForm key="dt" {...common} afterPad={what} />}
       {kind === 'debt' && debtKind === 'pay' && <PayDebtForm key="dp" {...common} afterPad={what} />}
+      </div>
     </Sheet>
   );
 }

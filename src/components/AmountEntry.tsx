@@ -26,7 +26,9 @@ function shown(value: string) {
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'back'];
 
 /** Маблағ бо тугмачаҳои рақамӣ + сана: тарҳи барномаи мобилӣ. */
-export default function AmountEntry({ value, onChange, date, onDate }: {
+export default function AmountEntry({ value, onChange, date, onDate, sign }: {
+  /** «+» барои воридот, «−» барои баромад: ранг ва аломат дар маблағи калон. */
+  sign?: '+' | '−';
   value: string;
   onChange: (v: string) => void;
   date: string;
@@ -44,8 +46,8 @@ export default function AmountEntry({ value, onChange, date, onDate }: {
 
   return (
     <>
-      <div className={value ? 'amount-big' : 'amount-big empty'}>
-        {shown(value)} <small>смн</small>
+      <div className={`amount-big${value ? '' : ' empty'}${sign === '+' ? ' pos' : sign === '−' ? ' neg' : ''}`}>
+        {sign && value ? <span className="sg">{sign}</span> : null}{shown(value)} <small>смн</small>
       </div>
 
       <label className="date-row">

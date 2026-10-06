@@ -49,7 +49,7 @@ export function LendForm({ state, setState, onDone, afterPad }: Props & Extra) {
 
   return (
     <form onSubmit={submit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
       {afterPad}
       <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal}
         hidden={hiddenAccounts(state)} />
@@ -109,7 +109,7 @@ export function ReturnLoanForm({ state, setState, onDone, afterPad }: Props & Ex
 
   return (
     <form onSubmit={submit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" />
       {afterPad}
       <div className="chips-block">
         <div className="chips-label">Кӣ баргардонд</div>
@@ -163,7 +163,7 @@ export function BorrowForm({ state, setState, onDone, afterPad }: Props & Extra)
 
   return (
     <form onSubmit={submit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" />
       {afterPad}
       <AccountChips label="Ба кадом ҳисоб илова шавад" value={account} onChange={setAccount} bal={bal}
         hidden={[...hiddenAccounts(state), 'debt']} />

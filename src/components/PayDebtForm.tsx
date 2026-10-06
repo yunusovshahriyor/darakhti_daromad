@@ -58,7 +58,7 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
 
   return (
     <form onSubmit={submit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
       {afterPad}
 
       {!debt && open.length > 1 && (
