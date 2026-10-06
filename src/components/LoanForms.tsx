@@ -7,6 +7,7 @@ import type { Props } from '../views/props';
 import AccountChips from './AccountChips';
 import AmountEntry from './AmountEntry';
 import Field from './Field';
+import LoanProgress from './LoanProgress';
 
 interface Extra {
   onDone: (msg: string) => void;
@@ -121,6 +122,7 @@ export function ReturnLoanForm({ state, setState, onDone, afterPad }: Props & Ex
           ))}
         </div>
       </div>
+      <LoanProgress loan={current} extra={num} />
       <p className="muted" style={{ margin: '4px 2px 0' }}>
         Маблағ ба ҳисоби «{ACCOUNTS[target].icon} {ACCOUNTS[target].name}» бармегардад.
       </p>

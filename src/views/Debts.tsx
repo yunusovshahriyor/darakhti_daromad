@@ -4,6 +4,7 @@ import DebtForm from '../components/DebtForm';
 import Empty from '../components/Empty';
 import Fab from '../components/Fab';
 import { PencilIcon } from '../components/Icons';
+import LoanProgress from '../components/LoanProgress';
 import PayDebtForm from '../components/PayDebtForm';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
@@ -115,21 +116,40 @@ export default function Debts({ state, setState }: Props) {
         </div>
       )}
 
-      {openLoans(state.loans).length > 0 && (
+      {state.loans.length > 0 && (
         <>
           <h3 className="group-title"><span>Ба шумо қарздоранд</span></h3>
-          <div className="cells">
-            {openLoans(state.loans).map(l => (
-              <div className="cell" key={l.id}>
-                <div className="ic">{l.person.charAt(0).toUpperCase()}</div>
-                <div className="grow">
-                  <div className="r1"><b>{l.person}</b><b className="pos">{fmt(loanLeft(l))}</b></div>
-                  <small>Дода шуд {fmt(l.amount)} · {l.date}{l.returned > 0 ? ` · баргашт ${fmt(l.returned)}` : ''}</small>
+          {openLoans(state.loans).length > 0 && (
+            <div className="cells">
+              {openLoans(state.loans).map(l => (
+                <div className="cell" key={l.id}>
+                  <div className="ic">{l.person.charAt(0).toUpperCase()}</div>
+                  <div className="grow">
+                    <div className="r1"><b>{l.person}</b><b className="pos">{fmt(loanLeft(l))}</b></div>
+                    <LoanProgress loan={l} />
+                    <small>Дода шуд {l.date}{l.returned > 0 ? '' : ' · ҳанӯз чизе нагашт'}</small>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <p className="note">Баргардонидан: «Илова» → «Қарз» → «Қарзро баргардонданд».</p>
+              ))}
+            </div>
+          )}
+          {state.loans.some(l => loanLeft(l) <= 0.005) && (
+            <>
+              <h3 className="group-title"><span>Баргардонидашуда</span></h3>
+              <CollapsibleCells>
+                {state.loans.filter(l => loanLeft(l) <= 0.005).map(l => (
+                  <div className="cell" key={l.id}>
+                    <div className="rank sm done">✓</div>
+                    <div className="grow">
+                      <div className="r1"><b>{l.person}</b><b className="pos">{fmt(l.amount)} смн</b></div>
+                      <small>Баргашт{l.returnedAt ? ` · ${l.returnedAt}` : ''}</small>
+                    </div>
+                  </div>
+                ))}
+              </CollapsibleCells>
+            </>
+          )}
+          <p className="note">Баргардонидан: «Илова» → «Қарз» → «Қарзро баргардонданд». Қисман баргардонидан низ мумкин аст.</p>
         </>
       )}
 

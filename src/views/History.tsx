@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import LoanProgress from '../components/LoanProgress';
 import Empty from '../components/Empty';
 import SwipeRow from '../components/SwipeRow';
 import { ACCOUNTS, ALL_IDS, fmt, groupByMonth, monthTitle } from '../model';
@@ -80,6 +81,8 @@ export default function History({ state, setState, filter, onFilter }: Props & {
       };
     });
 
+  const loanOf = (id?: number) => state.loans.find(l => l.id === id);
+
   const row = (it: Item) => {
     if (it.kind === 'income') {
       const x = state.incomes.find(i => i.id === it.id)!;
@@ -89,7 +92,8 @@ export default function History({ state, setState, filter, onFilter }: Props & {
             <div className="ic">{x.title.charAt(0).toUpperCase()}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="pos">+{fmt(x.amount)}</b></div>
-              <small>{x.date} · Даромад</small>
+              <small>{x.date} · {x.kind === 'loanBack' ? 'Қарз баргашт' : x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад'}</small>
+              {x.kind === 'loanBack' && loanOf(x.loanId) && <LoanProgress loan={loanOf(x.loanId)!} />}
               {expanded === it.id && (
                 <div className="breakdown">
                   {ALL_IDS.filter(id => x.alloc[id] > 0).map(id => (
@@ -113,7 +117,8 @@ export default function History({ state, setState, filter, onFilter }: Props & {
             <div className="ic neg-bg">{ACCOUNTS[x.account].icon}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="neg">−{fmt(x.amount)}</b></div>
-              <small>{x.date} · {ACCOUNTS[x.account].name}</small>
+              <small>{x.date} · {x.loanId ? 'Қарз додам · ' : ''}{ACCOUNTS[x.account].name}</small>
+              {x.loanId && loanOf(x.loanId) && <LoanProgress loan={loanOf(x.loanId)!} />}
             </div>
           </div>
         </SwipeRow>

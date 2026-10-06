@@ -840,3 +840,5 @@ input:disabled { opacity: .55; }
 .btn.big:disabled { opacity: .4; }
 .chip-note { grid-column: 1 / -1; font-size: .78rem; color: var(--muted); }
 .add-tabs button { font-size: .85rem; padding: 11px 2px; }
+.loan-prog { display: grid; gap: 4px; margin: 5px 0 2px; }
+.loan-prog small b { color: var(--text); }
