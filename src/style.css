@@ -891,3 +891,20 @@ input:disabled { opacity: .55; }
 .swap-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: -2px 0 8px; padding: 6px; border: 0; background: none; color: var(--primary); font-size: .78rem; font-weight: 700; }
 .add-body.tone-pos .btn.big { background: var(--primary); color: #fff; }
 .add-body.tone-pos .key:active { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+
+/* ---------- Тақвими худсохт ---------- */
+button.date-row { width: 100%; text-align: left; font: inherit; }
+.dp-quick { display: flex; gap: 8px; margin-bottom: 10px; }
+.dp-quick button { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); font-weight: 600; }
+.dp-quick button.on { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); border-color: var(--primary); color: var(--primary); }
+.dp-nav { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
+.dp-nav b { flex: 1; text-align: center; font-size: 1.05rem; }
+.dp-nav button { width: 38px; height: 38px; border: 0; border-radius: 12px; background: var(--bg); color: var(--text); font-size: 1.2rem; }
+.dp-nav button:disabled { opacity: .3; }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding-bottom: 6px; }
+.dp-wd { text-align: center; font-size: .72rem; font-weight: 700; color: var(--muted); padding: 4px 0; }
+.dp-day { height: 44px; border: 0; border-radius: 50%; background: none; color: var(--text); font-size: 1rem; }
+.dp-day.today { box-shadow: inset 0 0 0 1.5px var(--primary); }
+.dp-day.sel { background: var(--primary); color: #fff; font-weight: 700; }
+.dp-day:disabled { opacity: .28; }
+.dp-day:not(:disabled):not(.sel):active { background: var(--bg); }
