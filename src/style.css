@@ -842,7 +842,7 @@ input:disabled { opacity: .55; }
 .add-tabs button { font-size: .85rem; padding: 11px 2px; }
 .loan-prog { display: grid; gap: 4px; margin: 5px 0 2px; }
 .loan-prog small b { color: var(--text); }
-.progress.seg { display: flex; }
-.progress.seg i { border-radius: 0; flex: none; }
+.progress.seg { position: relative; }
+.progress.seg i { position: absolute; top: 0; bottom: 0; height: auto; border-radius: 0; }
 .progress.seg i.prev { background: color-mix(in srgb, var(--success) 42%, var(--border)); }
 .loan-prog { grid-template-columns: minmax(0, 1fr); }

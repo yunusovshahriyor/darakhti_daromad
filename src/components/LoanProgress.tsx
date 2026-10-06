@@ -13,9 +13,9 @@ export default function LoanProgress({ loan, mark }: { loan: Loan; mark?: { befo
   const left = Math.max(0, loan.amount - total);
   return (
     <div className="loan-prog">
-      <div className="progress seg">
-        <i className={part > 0 ? 'prev' : ''} style={{ width: `${pct(before)}%` }} />
-        {part > 0 && <i style={{ width: `${pct(part)}%` }} />}
+      <div className={part > 0 ? 'progress seg' : 'progress'}>
+        <i className={part > 0 ? 'prev' : ''} style={part > 0 ? { left: 0, width: `${pct(before)}%` } : { width: `${pct(before)}%` }} />
+        {part > 0 && <i style={{ left: `${pct(before)}%`, width: `${pct(part)}%` }} />}
       </div>
       <small>
         {left <= 0.005
