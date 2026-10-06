@@ -435,7 +435,7 @@ input[type='date'] { min-height: 50px; }
 .ac-hint { opacity: .8; }
 
 /* Навори кортҳои хурд дар саҳифаи асосӣ */
-.strip { display: flex; gap: 10px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 8px; scrollbar-width: none; scroll-snap-type: x proximity; }
+.strip { display: flex; gap: 10px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 8px; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: 16px; }
 .strip::-webkit-scrollbar { display: none; }
 .mini-acct {
   flex: none; width: 118px; text-align: left; border: 0; border-radius: 20px; padding: 12px;
