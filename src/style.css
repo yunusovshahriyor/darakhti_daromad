@@ -842,7 +842,8 @@ input:disabled { opacity: .55; }
 .add-tabs button { font-size: .85rem; padding: 11px 2px; }
 .loan-prog { display: grid; gap: 4px; margin: 5px 0 2px; }
 .loan-prog small b { color: var(--text); }
-.progress.seg { position: relative; }
-.progress.seg i { position: absolute; top: 0; bottom: 0; height: auto; border-radius: 0; }
-.progress.seg i.prev { background: color-mix(in srgb, var(--success) 42%, var(--border)); }
+.lbar { position: relative; display: block; height: 6px; min-height: 6px; max-height: 6px; overflow: hidden; border-radius: 99px; background: var(--border); }
+.lbar i { position: absolute; top: 0; height: 6px; display: block; background: var(--success); }
+.lbar i.prev { background: color-mix(in srgb, var(--success) 42%, var(--border)); }
+.lbar i.now { background: var(--success); }
 .loan-prog { grid-template-columns: minmax(0, 1fr); }
