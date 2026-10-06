@@ -862,10 +862,6 @@ input:disabled { opacity: .55; }
 .sheet.tall .date-row { height: 42px; padding: 0 12px; margin-bottom: 6px; border-radius: 14px; gap: 8px; font-size: .88rem; border-color: transparent; background: var(--bg); }
 .sheet.tall .date-row svg { width: 18px; height: 18px; }
 .sheet.tall .date-row .dr-label { font-size: .88rem; }
-.sheet.tall .keypad { gap: 4px; margin-bottom: 10px; }
-.sheet.tall .key { height: 42px; border: 0; border-radius: 12px; background: transparent; font-size: 1.35rem; font-weight: 500; }
-.sheet.tall .key svg { width: 22px; height: 22px; }
-.sheet.tall .key:active { background: var(--bg); transform: none; }
 .sheet.tall .chips-block { margin-bottom: 8px; }
 .sheet.tall .chips-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
 .sheet.tall .chips-block .chips { gap: 6px; }
