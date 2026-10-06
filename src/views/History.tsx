@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import LoanProgress from '../components/LoanProgress';
+import ReceiptSheet from '../components/ReceiptSheet';
+import type { ReceiptRef } from '../components/ReceiptSheet';
 import Empty from '../components/Empty';
 import SwipeRow from '../components/SwipeRow';
 import { ACCOUNTS, ALL_IDS, fmt, dayTitle, groupByDay } from '../model';
@@ -23,7 +25,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
   filter: HistoryFilter;
   onFilter: (f: HistoryFilter) => void;
 }) {
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [receipt, setReceipt] = useState<ReceiptRef | null>(null);
 
   const items: Item[] = [
     ...state.incomes.map(i => ({ kind: 'income' as const, id: i.id, date: i.date, sort: i.id })),
@@ -96,7 +98,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
         const target = x.alloc ? ALL_IDS.find(id => x.alloc[id] > 0) : undefined;
         return (
           <SwipeRow key={`i${it.id}`} onDelete={() => removeIncome(it.id)}>
-            <div className="cell">
+            <div className="cell tap" onClick={() => setReceipt({ kind: 'income', id: it.id })}>
               <div className="ic">↩️</div>
               <div className="grow">
                 <div className="r1"><b>Бозгашт · {loan.person}</b><b className="pos">+{fmt(x.amount)}</b></div>
@@ -109,21 +111,11 @@ export default function History({ state, setState, filter, onFilter }: Props & {
       }
       return (
         <SwipeRow key={`i${it.id}`} onDelete={() => removeIncome(it.id)}>
-          <div className="cell tap" onClick={() => setExpanded(expanded === it.id ? null : it.id)}>
+          <div className="cell tap" onClick={() => setReceipt({ kind: 'income', id: it.id })}>
             <div className="ic">{x.title.charAt(0).toUpperCase()}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="pos">+{fmt(x.amount)}</b></div>
               <small>{x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад'}</small>
-              {expanded === it.id && (
-                <div className="breakdown">
-                  {ALL_IDS.filter(id => x.alloc[id] > 0).map(id => (
-                    <div className="row" key={id}>
-                      <span>{ACCOUNTS[id].icon} {ACCOUNTS[id].name}</span>
-                      <span>{fmt(x.alloc[id])}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </SwipeRow>
@@ -133,7 +125,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
       const x = state.expenses.find(e => e.id === it.id)!;
       return (
         <SwipeRow key={`e${it.id}`} onDelete={() => removeExpense(it.id)}>
-          <div className="cell">
+          <div className="cell tap" onClick={() => setReceipt({ kind: 'expense', id: it.id })}>
             <div className="ic neg-bg">{ACCOUNTS[x.account].icon}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="neg">−{fmt(x.amount)}</b></div>
@@ -147,7 +139,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
     const x = state.transfers.find(t => t.id === it.id)!;
     return (
       <SwipeRow key={`t${it.id}`} onDelete={() => removeTransfer(it.id)}>
-        <div className="cell">
+        <div className="cell tap" onClick={() => setReceipt({ kind: 'transfer', id: it.id })}>
           <div className="ic swap-bg">🔁</div>
           <div className="grow">
             <div className="r1"><b>{ACCOUNTS[x.from].name} → {ACCOUNTS[x.to].name}</b><b>{fmt(x.amount)}</b></div>
@@ -178,6 +170,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
           <div className="cells">{g.items.map(row)}</div>
         </section>
       ))}
+      {receipt && <ReceiptSheet state={state} refItem={receipt} onClose={() => setReceipt(null)} />}
     </>
   );
 }

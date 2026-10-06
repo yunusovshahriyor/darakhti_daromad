@@ -954,3 +954,27 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 14px; }
 .icon-grid button { height: 46px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); font-size: 1.4rem; }
 .icon-grid button.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+
+/* ---------- Чеки амалиёт ---------- */
+.receipt { background: var(--bg); border-radius: 22px; overflow: hidden; margin-bottom: 8px; }
+.rc-top { display: grid; justify-items: center; gap: 4px; padding: 20px 16px 16px; }
+.rc-ic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; font-size: 1.6rem; background: var(--surface); box-shadow: 0 2px 10px rgba(0, 0, 0, .12); }
+.rc-amount { font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; }
+.rc-amount small { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
+.rc-top.pos .rc-amount { color: var(--success); }
+.rc-top.neg .rc-amount { color: var(--text); }
+.rc-top.swap .rc-amount { color: #3b82f6; }
+.rc-ok { font-size: .78rem; font-weight: 700; color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); padding: 3px 10px; border-radius: 999px; }
+.rc-tear { position: relative; border-top: 2px dashed var(--border); margin: 0 14px; }
+.rc-tear::before, .rc-tear::after { content: ''; position: absolute; top: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); }
+.rc-tear::before { left: -24px; }
+.rc-tear::after { right: -24px; }
+.rc-body { padding: 12px 16px 6px; display: grid; gap: 2px; }
+.rc-line { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 0; font-size: .9rem; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.rc-line > span { color: var(--muted); flex: none; }
+.rc-line > b { text-align: right; font-weight: 600; word-break: break-word; }
+.rc-line em { font-style: normal; font-weight: 500; font-size: .75rem; color: var(--muted); margin-left: 4px; }
+.rc-split { margin-top: 6px; }
+.rc-h { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 0 0; }
+.rc-body .loan-prog { margin-top: 10px; }
+.rc-foot { text-align: center; font-size: .7rem; color: var(--muted); padding: 10px 0 14px; letter-spacing: .04em; }
