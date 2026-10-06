@@ -30,7 +30,7 @@ export default function AddSheet({ state, setState, onClose, onDone }: Props & {
   onClose: () => void;
   onDone: (msg: string) => void;
 }) {
-  const [kind, setKind] = useState<Kind>('income');
+  const [kind, setKind] = useState<Kind>('expense');
   const [debtKind, setDebtKind] = useState<DebtKind>('lend');
   const done = (msg: string) => {
     onDone(msg);
