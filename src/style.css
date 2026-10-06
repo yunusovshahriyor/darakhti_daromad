@@ -847,3 +847,38 @@ input:disabled { opacity: .55; }
 .lbar i.prev { background: color-mix(in srgb, var(--success) 42%, var(--border)); }
 .lbar i.now { background: var(--success); }
 .loan-prog { grid-template-columns: minmax(0, 1fr); }
+
+/* ---------- Варақаи иловакунӣ: тоза ва ихчам ---------- */
+.sheet.tall { height: 92%; max-height: 92%; padding: 6px 16px calc(14px + env(safe-area-inset-bottom)); }
+.sheet.tall .grabber { margin: 2px auto 6px; }
+.sheet.tall .sheet-head { margin-bottom: 6px; }
+.sheet.tall .sheet-head h2 { font-size: 1.15rem; letter-spacing: -.01em; }
+.sheet.tall .eyebrow { font-size: .62rem; margin-bottom: 0; }
+.sheet.tall .icon-btn { width: 34px; height: 34px; }
+.add-tabs { margin: 4px 0 2px; padding: 3px; border-radius: 14px; gap: 2px; }
+.add-tabs button { padding: 8px 2px; border-radius: 11px; font-size: .8rem; font-weight: 600; }
+.sheet.tall .amount-big { font-size: 2.3rem; padding: 6px 0 4px; font-weight: 800; }
+.sheet.tall .amount-big small { font-size: 1.2rem; font-weight: 700; color: var(--muted); }
+.sheet.tall .date-row { height: 42px; padding: 0 12px; margin-bottom: 6px; border-radius: 14px; gap: 8px; font-size: .88rem; border-color: transparent; background: var(--bg); }
+.sheet.tall .date-row svg { width: 18px; height: 18px; }
+.sheet.tall .date-row .dr-label { font-size: .88rem; }
+.sheet.tall .keypad { gap: 4px; margin-bottom: 10px; }
+.sheet.tall .key { height: 42px; border: 0; border-radius: 12px; background: transparent; font-size: 1.35rem; font-weight: 500; }
+.sheet.tall .key svg { width: 22px; height: 22px; }
+.sheet.tall .key:active { background: var(--bg); transform: none; }
+.sheet.tall .chips-block { margin-bottom: 8px; }
+.sheet.tall .chips-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+.sheet.tall .chips-block .chips { gap: 6px; }
+.sheet.tall .chips-block .chip { min-height: 40px; padding: 5px 10px; border-radius: 12px; gap: 6px; }
+.sheet.tall .chip-ic { font-size: 1.05rem; }
+.sheet.tall .chip-t b { font-size: .84rem; }
+.sheet.tall .chip-t small { font-size: .66rem; line-height: 1.1; }
+.sheet.tall .chips-more { margin-top: 4px; padding: 4px 2px; font-size: .85rem; }
+.sheet.tall .chip-note { font-size: .7rem; }
+.sheet.tall .field { margin-bottom: 8px; gap: 4px; font-size: .72rem; }
+.sheet.tall input:not([type='date']):not([type='checkbox']), .sheet.tall select { height: 42px; border-radius: 12px; font-size: .92rem; }
+.sheet.tall .preview { padding: 8px 12px; margin: 8px 0 0; font-size: .8rem; border-radius: 12px; }
+.sheet.tall .alert { padding: 8px 12px; font-size: .78rem; margin-top: 8px; border-radius: 12px; }
+.sheet.tall .switch-row { padding: 8px 2px; }
+.sheet.tall .btn.big { height: 48px; border-radius: 15px; font-size: .98rem; margin-top: 8px; }
+.sheet.tall .loan-prog { margin: 3px 0; }
