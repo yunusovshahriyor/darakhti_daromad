@@ -1046,3 +1046,38 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .dd-buy:not(.ready) button { background: rgba(255, 255, 255, .16); color: #fff; }
 .dr-sub { display: flex; justify-content: space-between; gap: 8px; }
 .dr-sub b { color: var(--primary); }
+
+/* ---------- Орзуҳо: майдонҳои иловагӣ ---------- */
+.img-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.img-row img, .img-ph { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; background: var(--bg); display: grid; place-items: center; font-size: 1.6rem; }
+.btn-sm.ghost { background: none; color: var(--danger); }
+.sub-fields { padding: 4px 0 0 12px; margin: -4px 0 12px; border-left: 3px solid var(--border); }
+.dd-img { height: 150px; border-radius: 22px; background-size: cover; background-position: center; box-shadow: 0 6px 18px rgba(0, 0, 0, .18); }
+.dd-pct { color: var(--dc, var(--primary)); }
+.dd-bar i { background: var(--dc, var(--primary)); }
+.dd-card { display: grid; gap: 5px; padding: 12px 16px; border-radius: 18px; background: var(--bg); }
+.dd-card small { color: var(--muted); line-height: 1.4; }
+.dd-card small b, .dd-card small .hl { color: var(--text); }
+.dd-card small b.hl { color: var(--primary); }
+.dd-card.ok { box-shadow: inset 3px 0 0 var(--primary); }
+.dd-card.warn { box-shadow: inset 3px 0 0 #e59a1b; background: color-mix(in srgb, #e59a1b 10%, var(--bg)); }
+.dd-link { justify-self: start; border: 0; background: none; color: var(--primary); font-weight: 700; padding: 4px 0; }
+.ladder { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px; margin-top: 6px; }
+.ladder i { height: 12px; border-radius: 4px; background: var(--border); }
+.ladder i.on { background: var(--dc, var(--primary)); }
+
+/* ---------- Орзуҳо: боло, нишонҳо, акс дар рӯйхат ---------- */
+.dr-top { display: grid; gap: 8px; margin-bottom: 12px; }
+.dr-top > div { padding: 10px 14px; border-radius: 16px; font-size: .86rem; line-height: 1.4; }
+.dr-streak { background: color-mix(in srgb, #e59a1b 16%, var(--surface)); }
+.dr-nudge { background: color-mix(in srgb, var(--primary) 12%, var(--surface)); }
+.dr-warn { background: color-mix(in srgb, #d94b4b 12%, var(--surface)); }
+.progress.dc i { background: var(--dc, var(--success)); }
+.thumb { flex: none; position: relative; width: 44px; height: 44px; border-radius: 14px; background-size: cover; background-position: center; }
+.thumb em { position: absolute; left: -4px; top: -4px; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center; border-radius: 99px; background: var(--primary); color: #fff; font-size: .68rem; font-style: normal; font-weight: 700; }
+.medals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.medal { display: grid; gap: 2px; padding: 12px; border-radius: 16px; background: var(--bg); opacity: .45; filter: grayscale(1); }
+.medal.on { opacity: 1; filter: none; background: color-mix(in srgb, var(--primary) 10%, var(--surface)); }
+.medal span { font-size: 1.6rem; }
+.medal b { font-size: .85rem; }
+.medal small { color: var(--muted); font-size: .7rem; line-height: 1.3; }

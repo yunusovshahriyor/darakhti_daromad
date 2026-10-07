@@ -94,6 +94,28 @@ export interface Dream {
   /** Санаи харид ва нархи воқеӣ: орзуи харидашуда аз рӯйхат намеравад. */
   boughtAt?: string;
   paidPrice?: number;
+  /** Санаи мақсад: то кай харидан мехоҳед. */
+  deadline?: string;
+  /** Акс (data URL, хурдшуда). */
+  image?: string;
+  /** Ранги орзу. */
+  color?: string;
+  /** Истинод ба мағоза / эзоҳ. */
+  link?: string;
+  note?: string;
+  /** Ҳиссаи худкор аз ҳар даромади оддӣ (фоиз) ва ҳисоб, ки аз он гирифта мешавад. */
+  incomeShare?: { percent: number; from: AccountId };
+  /** Ҷамъкунии даврӣ: ҳар ҳафта / моҳ; «ladder» — бозии 52 ҳафта (маблағ ҳар дафъа k маротиба). */
+  autoSave?: {
+    amount: number;
+    every: 'week' | 'month';
+    from: AccountId;
+    ladder?: boolean;
+    /** Санаи оғоз ва охирин иҷро (санаи давр). */
+    started: string;
+    lastRun?: string;
+    count: number;
+  };
 }
 
 export interface Transfer {

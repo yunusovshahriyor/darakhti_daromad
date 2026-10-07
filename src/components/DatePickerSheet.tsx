@@ -12,20 +12,27 @@ const iso = (y: number, m: number, d: number) =>
   `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
 /** Тақвими худсохт барои интихоби сана (рӯзҳои оянда баста ҳастанд). */
-export default function DatePickerSheet({ value, onSelect, onClose }: {
+export default function DatePickerSheet({ value, onSelect, onClose, min, max, title = 'Санаи амалиёт', quick = true }: {
   value: string;
+  /** Санаи ҳадди ақал / ҳадди аксар (пешфарз: то имрӯз). */
+  min?: string;
+  max?: string;
+  title?: string;
+  quick?: boolean;
   onSelect: (date: string) => void;
   onClose: () => void;
 }) {
   const t = today();
-  const [ty, tm] = t.split('-').map(Number).map((n, i) => (i === 1 ? n - 1 : n));
+  const hi = max ?? t;
+  const [ty, tm] = hi.split('-').map(Number).map((n, i) => (i === 1 ? n - 1 : n));
+  const [ly, lm] = (min ?? '2000-01-01').split('-').map(Number);
   const [vy, vm] = value.split('-').map(Number);
   const [view, setView] = useState({ y: vy, m: vm - 1 });
 
   const total = view.y * 12 + view.m;
   const maxTotal = ty * 12 + tm;
   const go = (delta: number) => {
-    const n = Math.min(maxTotal, Math.max(2000 * 12, total + delta));
+    const n = Math.min(maxTotal, Math.max(ly * 12 + (lm - 1), total + delta));
     setView({ y: Math.floor(n / 12), m: n % 12 });
   };
 
@@ -40,11 +47,11 @@ export default function DatePickerSheet({ value, onSelect, onClose }: {
   const pick = (d: string) => { onSelect(d); onClose(); };
 
   return (
-    <Sheet title="Санаи амалиёт" onClose={onClose}>
-      <div className="dp-quick">
+    <Sheet title={title} onClose={onClose}>
+      {quick && <div className="dp-quick">
         <button type="button" className={value === t ? 'on' : ''} onClick={() => pick(t)}>Имрӯз</button>
         <button type="button" className={value === y ? 'on' : ''} onClick={() => pick(y)}>Дирӯз</button>
-      </div>
+      </div>}
 
       <div className="dp-nav">
         <button type="button" onClick={() => go(-12)} aria-label="Соли пеш">«</button>
@@ -60,7 +67,7 @@ export default function DatePickerSheet({ value, onSelect, onClose }: {
         {cells.map((d, i) => {
           if (d === null) return <span key={`b${i}`} />;
           const date = iso(view.y, view.m, d);
-          const future = date > t;
+          const future = date > hi || (min !== undefined && date < min);
           const cls = `dp-day${date === value ? ' sel' : ''}${date === t ? ' today' : ''}`;
           return (
             <button key={date} type="button" className={cls} disabled={future} onClick={() => pick(date)}>{d}</button>

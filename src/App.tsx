@@ -8,6 +8,7 @@ import {
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
 import { loadState, saveState } from './storage';
+import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { useDreamMilestones } from './useDreamMilestones';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
@@ -124,6 +125,33 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem(HIDE_KEY, hidden ? '1' : '0'); } catch { /* ignore */ }
   }, [hidden]);
+
+  // Ҷамъкунии худкор ба орзуҳо: ҳангоми кушодан, баъди таҳрир ва ҳангоми баргашт ба барнома
+  useEffect(() => {
+    setState(s => runAutoSaves(s));
+  }, [state.dreams]);
+  useEffect(() => {
+    const h = () => { if (document.visibilityState === 'visible') setState(s => runAutoSaves(s)); };
+    document.addEventListener('visibilitychange', h);
+    return () => document.removeEventListener('visibilitychange', h);
+  }, []);
+
+  // Хотиррасонии рӯзона: ҳафта гузашт, ба орзуҳо чизе нагузоштаед
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const day = new Date().toLocaleDateString('sv-SE');
+        if (localStorage.getItem('darakhti:nudge') === day) return;
+        if (state.dreams.some(d => !d.boughtAt) && noDepositThisWeek(state)) {
+          localStorage.setItem('darakhti:nudge', day);
+          setToast('💡 Ин ҳафта ба орзуҳо ҳанӯз чизе нагузоштаед');
+        }
+      } catch { /* ignore */ }
+    }, 2500);
+    return () => clearTimeout(t);
+    // танҳо ҳангоми кушодани барнома
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Ҳавасмандии орзуҳо: марҳилаҳои 25/50/75/100% ва ҷашни харид
   useDreamMilestones(state, setToast, (title, text) => setCelebration({ title, text }));

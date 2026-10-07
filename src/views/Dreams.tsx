@@ -7,6 +7,7 @@ import Fab from '../components/Fab';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
+import { badges, deadlinePlans, depositStreak, noDepositThisWeek } from '../dreams';
 import { balancesOf, boughtDreams, fmt, fundDreams, monthlyPoolRate, uid } from '../model';
 import type { AccountId, Dream } from '../types';
 import type { Props } from './props';
@@ -43,12 +44,12 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
       if (p.dream.id === d.id) {
         const need = Math.max(0, cum - pool);
         return {
-          funded: p.funded, ready: p.ready, rank: p.rank, rate, extra,
+          funded: p.funded, ready: p.ready, rank: p.rank, need, rate, extra,
           months: rate > 0 ? need / rate : 0, faster: rate > 0 ? need / (rate + extra) : 0,
         };
       }
     }
-    return { funded: 0, ready: false, rank: 1, rate, extra, months: 0, faster: 0 };
+    return { funded: 0, ready: false, rank: 1, need: 0, rate, extra, months: 0, faster: 0 };
   };
 
   /** Ҳар навъ (калон / хурд) блоки алоҳида бо табҳои худ дорад. */
@@ -75,14 +76,18 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
               <div className="cells">
                 {plan.map(({ dream: d, funded, ready, rank }) => (
                   <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
-                    <div className="cell tap" onClick={() => setDetailId(d.id)}>
-                      <div className={ready || rank === 1 ? 'rank first' : 'rank'}>{rank}</div>
+                    <div className="cell tap" onClick={() => setDetailId(d.id)}
+                      style={d.color ? ({ '--dc': d.color } as React.CSSProperties) : undefined}>
+                      {d.image
+                        ? <div className="thumb" style={{ backgroundImage: `url(${d.image})` }}><em>{rank}</em></div>
+                        : <div className={ready || rank === 1 ? 'rank first' : 'rank'}
+                          style={d.color ? { background: d.color } : undefined}>{rank}</div>}
                       <div className="grow">
                         <div className="r1">
                           <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
                           <b className={ready ? 'pos' : ''}>{ready ? 'Тайёр ✓' : fmt(d.target)}</b>
                         </div>
-                        <div className="progress"><i style={{ width: `${(funded / d.target) * 100}%` }} /></div>
+                        <div className="progress dc"><i style={{ width: `${(funded / d.target) * 100}%` }} /></div>
                         <div className="dr-sub">
                           <small>Ҷамъшуда: {fmt(funded)}</small>
                           <small><b>{Math.floor((funded / d.target) * 100)}%</b></small>
@@ -122,10 +127,51 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
     );
   };
 
+  // Ҳавасмандӣ: силсила, огоҳии ҳафтаина, аз реҷа мондаҳо ва нишонҳо
+  const active = state.dreams.filter(d => !d.boughtAt);
+  const streak = depositStreak(state);
+  const nudge = active.length > 0 && noDepositThisWeek(state);
+  const behind = deadlinePlans(state, d => {
+    const plan = fundDreams(state.dreams.filter(x => x.kind === d.kind), bal[d.kind === 'big' ? 'bigDream' : 'smallDream']);
+    let cum = 0;
+    for (const p of plan) { cum += p.dream.target; if (p.dream.id === d.id) return { funded: p.funded, need: Math.max(0, cum - bal[d.kind === 'big' ? 'bigDream' : 'smallDream']) }; }
+    return { funded: 0, need: 0 };
+  }).filter(p => p.behind);
+  const bestPct = Math.max(0, ...['big', 'small'].flatMap(k => {
+    const pool = bal[k === 'big' ? 'bigDream' : 'smallDream'];
+    return fundDreams(state.dreams.filter(d => d.kind === k), pool).map(f => (f.funded / f.dream.target) * 100);
+  }));
+  const medals = badges(state, bestPct);
+
   return (
     <>
+      {(streak > 0 || nudge || behind.length > 0) && (
+        <section className="dr-top">
+          {streak > 0 && (
+            <div className="dr-streak">🔥 <b>{streak}</b> ҳафта пай дар пай ба орзуҳо маблағ мегузоред</div>
+          )}
+          {nudge && <div className="dr-nudge">💡 Ин ҳафта ба орзуҳо ҳанӯз чизе нагузоштаед. Ҳатто 50 смн ҳам мешавад!</div>}
+          {behind.map(p => (
+            <div className="dr-warn" key={p.dream.id}>
+              ⚠️ «{p.dream.title}» аз реҷа мондааст: ҳар моҳ {fmt(Math.ceil(p.perMonth))} лозим, ҳозир {fmt(Math.round(p.rate))}
+            </div>
+          ))}
+        </section>
+      )}
+
       {block('big', '🏠 Орзуҳои калон', 'bigDream')}
       {block('small', '✈️ Орзуҳои хурд', 'smallDream')}
+
+      <h3 className="group-title"><span>Нишонҳо</span><span>{medals.filter(m => m.done).length} аз {medals.length}</span></h3>
+      <div className="medals">
+        {medals.map(m => (
+          <div key={m.id} className={m.done ? 'medal on' : 'medal'} title={m.text}>
+            <span>{m.icon}</span>
+            <b>{m.title}</b>
+            <small>{m.text}</small>
+          </div>
+        ))}
+      </div>
 
       <Fab onClick={() => setAdding(true)} label="Орзуи нав" />
 

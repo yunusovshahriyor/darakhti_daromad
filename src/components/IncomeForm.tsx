@@ -1,5 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { orderedSources } from '../categories';
+import { poolOf } from '../dreams';
+import type { Transfer } from '../types';
 import { ACCOUNTS, ACCOUNT_ORDER, allocate, fmt, hasDebt, today, uid } from '../model';
 import type { Props } from '../views/props';
 import AmountEntry from './AmountEntry';
@@ -37,10 +39,21 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
       id: uid(), title: n ? `${source} · ${n}` : source, source, amount: num, date,
       alloc: allocate(num, state.tree, debt),
     };
-    setState(s => ({
-      ...s,
-      incomes: [...s.incomes, income].sort((a, b) => b.date.localeCompare(a.date)),
-    }));
+    setState(s => {
+      // Ҳиссаи худкор ба орзуҳо: аз ҳисоби интихобшуда ба ҳисоби орзуҳо мегузарад
+      const shares: Transfer[] = s.dreams
+        .filter(d => !d.boughtAt && d.incomeShare && d.incomeShare.percent > 0)
+        .map(d => ({
+          id: uid(), from: d.incomeShare!.from, to: poolOf(d), date,
+          amount: Math.round(num * d.incomeShare!.percent) / 100,
+        }))
+        .filter(t => t.amount > 0 && t.from !== t.to);
+      return {
+        ...s,
+        incomes: [...s.incomes, income].sort((a, b) => b.date.localeCompare(a.date)),
+        transfers: shares.length ? [...shares, ...s.transfers] : s.transfers,
+      };
+    });
     onDone('Даромад илова шуд ✓');
   };
 
