@@ -1098,3 +1098,29 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .pc-colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 6px; justify-items: start; padding-top: 2px; }
 .pc-colors button { width: 28px; height: 28px; padding: 0; border: 2px solid transparent; border-radius: 50%; background-clip: padding-box; }
 .pc-colors button.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+
+/* ---------- Форма орзу: гурӯҳҳои тоза ва шаффоф (мисли танзимоти телефон) ---------- */
+.fgs { display: grid; gap: 22px; padding: 6px 0 8px; }
+.fg { display: grid; border-radius: 18px; background: color-mix(in srgb, var(--bg) 70%, transparent); overflow: hidden; }
+.fg-h { margin: 0; padding: 12px 16px 2px; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.fr { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 54px; padding: 8px 16px; width: 100%; border: 0; background: none; color: var(--text); font: inherit; text-align: left; }
+.fr + .fr, .fg-h + .fr { border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+.fr > span:first-child { flex: none; color: var(--text); font-size: .95rem; }
+.fr input:not([type='checkbox']) { flex: 1; min-width: 0; height: 40px; padding: 0; border: 0; border-radius: 0; background: none; text-align: right; font-size: .95rem; box-shadow: none; }
+.fr input:focus { box-shadow: none; }
+.fr input::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+.fr .picker-btn { flex: 1; width: auto; height: 40px; padding: 0; border: 0; background: none; justify-content: flex-end; font-size: .95rem; }
+.fr .picker-btn .pk-t { flex: none; }
+.fr-btn b { flex: 1; text-align: right; font-weight: 500; color: var(--muted); font-size: .95rem; }
+.fr-x { flex: none; font-style: normal; font-size: .8rem; color: var(--muted); padding: 4px 6px; }
+.fr.sw { padding: 12px 16px; }
+.fr-t { display: grid; gap: 3px; min-width: 0; }
+.fr-t b { font-size: .95rem; font-weight: 600; }
+.fr-t small { color: var(--muted); font-size: .76rem; line-height: 1.35; }
+.fg .photo-color { padding: 8px 16px 16px; margin: 0; }
+.btn.big-save { height: 54px; border-radius: 18px; font-size: 1.02rem; margin: 4px 0 0; }
+.fr .picker-btn small { display: none; }
+.fgs, .fg { grid-template-columns: minmax(0, 1fr); }
+.fr > .fr-t { flex: 1; min-width: 0; }
+.fr.sw .switch { margin-left: 4px; }
+.fr > .fr-t:first-child { flex: 1; min-width: 0; color: var(--text); }

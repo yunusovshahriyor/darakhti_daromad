@@ -3,7 +3,6 @@ import { balancesOf, fmt, today } from '../model';
 import type { AccountId, Dream, State } from '../types';
 import AccountSelect from './AccountSelect';
 import DatePickerSheet from './DatePickerSheet';
-import Field from './Field';
 import MoneyInput from './MoneyInput';
 import PickerField from './PickerField';
 
@@ -111,8 +110,8 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
   };
 
   const switchRow = (on: boolean, set: (v: boolean) => void, t: string, hint: string) => (
-    <label className="switch-row">
-      <span><b>{t}</b><small>{hint}</small></span>
+    <label className="fr sw">
+      <span className="fr-t"><b>{t}</b><small>{hint}</small></span>
       <span className="switch">
         <input type="checkbox" checked={on} onChange={e => set(e.target.checked)} />
         <i />
@@ -121,102 +120,117 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
   );
 
   return (
-    <form id={formId} onSubmit={submit}>
-      <Field label="Номи орзу">
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, мошин" required />
-      </Field>
-      <Field label="Навъ">
-        <PickerField value={kind} onChange={v => setKind(v as Dream['kind'])} title="Навъи орзу" options={[
-          { value: 'big', label: 'Калон', icon: '🏠', note: 'мошин, хона…' },
-          { value: 'small', label: 'Хурд', icon: '✈️', note: 'сафар, телефон…' },
-        ]} />
-      </Field>
-      <Field label="Нархи орзу (сомонӣ)">
-        <MoneyInput value={target} onChange={setTarget} placeholder="0" required />
-      </Field>
-
-      {switchRow(priority, setPriority, '⭐ Аввал харида шавад', 'Орзуҳои қайдшуда пеш меоянд, дигарон аз рӯи нарх: аввал арзонтарин.')}
+    <form id={formId} onSubmit={submit} className="fgs">
+      <section className="fg">
+        <label className="fr">
+          <span>Ном</span>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, мошин" required />
+        </label>
+        <div className="fr">
+          <span>Навъ</span>
+          <PickerField value={kind} onChange={v => setKind(v as Dream['kind'])} title="Навъи орзу" options={[
+            { value: 'big', label: 'Калон', icon: '🏠', note: 'мошин, хона…' },
+            { value: 'small', label: 'Хурд', icon: '✈️', note: 'сафар, телефон…' },
+          ]} />
+        </div>
+        <label className="fr">
+          <span>Нарх (сомонӣ)</span>
+          <MoneyInput value={target} onChange={setTarget} placeholder="0" required />
+        </label>
+        {switchRow(priority, setPriority, '⭐ Аввал харида шавад', 'Орзуҳои қайдшуда пеш меоянд.')}
+      </section>
 
       {extras && (
         <>
-          <Field label="Санаи мақсад (то кай харидан мехоҳед)">
-            <button type="button" className="picker-btn" onClick={() => setPickDeadline(true)}>
-              <span className="pk-ic">📅</span>
-              <span className="pk-t">{deadline ? dateText(deadline) : 'Муайян нашудааст'}</span>
-              {deadline && <small onClick={e => { e.stopPropagation(); setDeadline(''); }}>✕ бекор</small>}
+          <section className="fg">
+            <h4 className="fg-h">Намуд</h4>
+            <div className="photo-color">
+              <div className="pc-col">
+                <span>Акс</span>
+                <div className="pc-photo">
+                  <button type="button" className="pc-img" onClick={() => file.current?.click()} aria-label="Акс интихоб кардан"
+                    style={image ? { backgroundImage: `url(${image})` } : undefined}>
+                    {!image && '🖼️'}
+                  </button>
+                  <button type="button" className="pc-badge" onClick={() => file.current?.click()}
+                    aria-label={image ? 'Иваз кардани акс' : 'Илова кардани акс'}>{image ? '✎' : '+'}</button>
+                  {image && <button type="button" className="pc-x" onClick={() => setImage('')} aria-label="Нест кардани акс">✕</button>}
+                  <input ref={file} type="file" accept="image/*" hidden
+                    onChange={e => { void pickImage(e.target.files?.[0]); e.target.value = ''; }} />
+                </div>
+              </div>
+              <div className="pc-col grow">
+                <span>Ранг</span>
+                <div className="pc-colors">
+                  {COLORS.map(c => (
+                    <button type="button" key={c} className={c === color ? 'on' : ''} style={{ background: c }}
+                      onClick={() => setColor(c === color ? '' : c)} aria-label={c} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="fg">
+            <h4 className="fg-h">Мақсад</h4>
+            <button type="button" className="fr fr-btn" onClick={() => setPickDeadline(true)}>
+              <span>📅 Санаи мақсад</span>
+              <b>{deadline ? dateText(deadline) : 'Муайян нашудааст'}</b>
+              {deadline && <i className="fr-x" role="button" aria-label="Бекор кардани сана"
+                onClick={e => { e.stopPropagation(); setDeadline(''); }}>✕</i>}
             </button>
-          </Field>
+            <label className="fr">
+              <span>🔗 Истинод</span>
+              <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://…" inputMode="url" />
+            </label>
+            <label className="fr">
+              <span>📝 Эзоҳ</span>
+              <input value={note} onChange={e => setNote(e.target.value)} placeholder="Ранги сафед, 2023…" />
+            </label>
+          </section>
 
-          <div className="photo-color">
-            <div className="pc-col">
-              <span>Акс</span>
-              <div className="pc-photo">
-                <button type="button" className="pc-img" onClick={() => file.current?.click()} aria-label="Акс интихоб кардан"
-                  style={image ? { backgroundImage: `url(${image})` } : undefined}>
-                  {!image && '🖼️'}
-                </button>
-                <button type="button" className="pc-badge" onClick={() => file.current?.click()}
-                  aria-label={image ? 'Иваз кардани акс' : 'Илова кардани акс'}>{image ? '✎' : '+'}</button>
-                {image && <button type="button" className="pc-x" onClick={() => setImage('')} aria-label="Нест кардани акс">✕</button>}
-                <input ref={file} type="file" accept="image/*" hidden
-                  onChange={e => { void pickImage(e.target.files?.[0]); e.target.value = ''; }} />
-              </div>
-            </div>
-            <div className="pc-col grow">
-              <span>Ранг</span>
-              <div className="pc-colors">
-                {COLORS.map(c => (
-                  <button type="button" key={c} className={c === color ? 'on' : ''} style={{ background: c }}
-                    onClick={() => setColor(c === color ? '' : c)} aria-label={c} />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <Field label="Истинод ба мағоза / эълон (ихтиёрӣ)">
-            <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://…" inputMode="url" />
-          </Field>
-          <Field label="Эзоҳ (ихтиёрӣ)">
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder="Масалан, ранги сафед, 2023" />
-          </Field>
-
-          {switchRow(autoOn, setAutoOn, '🔁 Ҷамъкунии худкор', 'Ҳар ҳафта ё моҳ маблағ худкор ба орзуҳо мегузарад.')}
-          {autoOn && (
-            <div className="sub-fields">
-              <Field label="Маблағ (сомонӣ)">
-                <MoneyInput value={autoAmount} onChange={setAutoAmount} placeholder="50" />
-              </Field>
-              <Field label="Басомад">
-                <PickerField value={every} onChange={v => setEvery(v as 'week' | 'month')} title="Басомад" options={[
-                  { value: 'week', label: 'Ҳар ҳафта', icon: '📆' },
-                  { value: 'month', label: 'Ҳар моҳ', icon: '🗓️' },
-                ]} />
-              </Field>
-              <Field label="Аз кадом ҳисоб">
-                <AccountSelect value={autoFrom} onChange={setAutoFrom} bal={bal}
-                  hidden={['bigDream', 'smallDream']} />
-              </Field>
-              {every === 'week' && switchRow(ladder, setLadder, '🪜 Бозии 52 ҳафта',
-                `Ҳафтаи 1: ${fmt(parseFloat(autoAmount) || 0)}, ҳафтаи 2: ${fmt((parseFloat(autoAmount) || 0) * 2)}… то ҳафтаи 52.`)}
-            </div>
-          )}
-
-          {switchRow(shareOn, setShareOn, '💸 Ҳиссаи ҳар даромад', 'Аз ҳар даромади оддӣ фоизи муайян худкор ба ин орзу меравад.')}
-          {shareOn && (
-            <div className="sub-fields">
-              <Field label="Фоиз аз даромад">
-                <MoneyInput value={sharePct} onChange={setSharePct} placeholder="10" />
-              </Field>
-              <Field label="Аз кадом ҳисоб гирифта шавад">
-                <AccountSelect value={shareFrom} onChange={setShareFrom} bal={bal}
-                  hidden={['bigDream', 'smallDream']} />
-              </Field>
-            </div>
-          )}
+          <section className="fg">
+            <h4 className="fg-h">Ҷамъкунии худкор</h4>
+            {switchRow(autoOn, setAutoOn, '🔁 Мунтазам', 'Ҳар ҳафта ё моҳ маблағ худкор ба орзуҳо мегузарад.')}
+            {autoOn && (
+              <>
+                <label className="fr">
+                  <span>Маблағ</span>
+                  <MoneyInput value={autoAmount} onChange={setAutoAmount} placeholder="50" />
+                </label>
+                <div className="fr">
+                  <span>Басомад</span>
+                  <PickerField value={every} onChange={v => setEvery(v as 'week' | 'month')} title="Басомад" options={[
+                    { value: 'week', label: 'Ҳар ҳафта', icon: '📆' },
+                    { value: 'month', label: 'Ҳар моҳ', icon: '🗓️' },
+                  ]} />
+                </div>
+                <div className="fr">
+                  <span>Аз ҳисоби</span>
+                  <AccountSelect value={autoFrom} onChange={setAutoFrom} bal={bal} hidden={['bigDream', 'smallDream']} />
+                </div>
+                {every === 'week' && switchRow(ladder, setLadder, '🪜 Бозии 52 ҳафта',
+                  `Ҳафтаи 1: ${fmt(parseFloat(autoAmount) || 0)}, ҳафтаи 2: ${fmt((parseFloat(autoAmount) || 0) * 2)}… то ҳафтаи 52.`)}
+              </>
+            )}
+            {switchRow(shareOn, setShareOn, '💸 Ҳиссаи ҳар даромад', 'Аз ҳар даромади оддӣ фоизи муайян ба ин орзу меравад.')}
+            {shareOn && (
+              <>
+                <label className="fr">
+                  <span>Фоиз</span>
+                  <MoneyInput value={sharePct} onChange={setSharePct} placeholder="10" />
+                </label>
+                <div className="fr">
+                  <span>Аз ҳисоби</span>
+                  <AccountSelect value={shareFrom} onChange={setShareFrom} bal={bal} hidden={['bigDream', 'smallDream']} />
+                </div>
+              </>
+            )}
+          </section>
         </>
       )}
 
-      {!hideSubmit && <button className="btn" type="submit">{submitLabel}</button>}
+      {!hideSubmit && <button className="btn big-save" type="submit">{submitLabel}</button>}
 
       {pickDeadline && (
         <DatePickerSheet value={deadline || today()} min={today()} max={`${new Date().getFullYear() + 15}-12-31`}
