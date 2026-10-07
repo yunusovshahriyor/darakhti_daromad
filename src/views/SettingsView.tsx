@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isRemainderNode } from '../model';
@@ -26,10 +27,16 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
   const toggle = (id: string) =>
     setClosed(c => (c.includes(id) ? c.filter(k => k !== id) : [...c, id]));
 
-  const wipe = () => {
-    if (window.confirm('Ҳамаи маълумот (даромад, хароҷот, қарз, орзуҳо, ҳисобҳо) нест мешавад. Идома медиҳед?')) {
-      setState(emptyState());
-    }
+  const [ask, confirmDialog] = useConfirm();
+
+  const wipe = async () => {
+    const ok = await ask({
+      title: 'Нест кардани ҳамаи маълумот',
+      text: 'Ҳамаи маълумот (даромад, хароҷот, қарз, орзуҳо, ҳисобҳо) нест мешавад ва онро барқарор кардан мумкин нест.',
+      ok: 'Ҳаа, нест кунед',
+      danger: true,
+    });
+    if (ok) setState(emptyState());
   };
 
   const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
@@ -95,6 +102,8 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
       <button className="btn" onClick={() => setAdding(true)}><PlusIcon /> Ҳисоби нав</button>
 
       <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
+
+      {confirmDialog}
 
       {editId && (
         <EditNodeSheet state={state} setState={setState} nodeId={editId}

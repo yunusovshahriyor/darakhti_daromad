@@ -8,6 +8,7 @@ import CategoryChips from './CategoryChips';
 import type { ReceiptRef } from './ReceiptSheet';
 import Field from './Field';
 import Sheet from './Sheet';
+import { useConfirm } from './ConfirmSheet';
 
 export type Snapshot =
   | { kind: 'income'; item: Income }
@@ -52,6 +53,8 @@ export default function EditOperationSheet({ state, setState, refItem, onClose, 
   const [from, setFrom] = useState<AccountId>(trf?.from ?? 'living');
   const [to, setTo] = useState<AccountId>(trf?.to ?? 'future');
 
+  const [ask, confirmDialog] = useConfirm();
+
   if (!base) return null;
 
   const num = parseFloat(amount) || 0;
@@ -69,11 +72,9 @@ export default function EditOperationSheet({ state, setState, refItem, onClose, 
   const sameTransfer = !!trf && from === to;
   const ready = num > 0 && !sameTransfer;
 
-  const save = () => {
+  const save = async () => {
     if (!ready) return;
-    if (over && !window.confirm(
-      `Дар ҳисоби «${ACCOUNTS[outAccount!].name}» ҳамагӣ ${fmt(avail(outAccount!))} сомонӣ мавҷуд аст. Ба ҳар ҳол сабт мекунед?`,
-    )) return;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[outAccount!].name}» ҳамагӣ ${fmt(avail(outAccount!))} сомонӣ мавҷуд аст. Ба ҳар ҳол сабт мекунед?`, ok: 'Сабт кардан' }))) return;
     const mark = today();
     if (inc) {
       const prev = { ...inc };
@@ -146,6 +147,7 @@ export default function EditOperationSheet({ state, setState, refItem, onClose, 
           <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(avail(outAccount!))}).</div>
         )}
         <button type="button" className="btn big" onClick={save} disabled={!ready}>Нигоҳ доштан</button>
+        {confirmDialog}
       </div>
     </Sheet>
   );

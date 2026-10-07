@@ -5,6 +5,7 @@ import type { Props } from '../views/props';
 import AccountSelect from './AccountSelect';
 import Field from './Field';
 import MoneyInput from './MoneyInput';
+import { useConfirm } from './ConfirmSheet';
 
 /** Харидани орзу аз ҳисоби интихобшуда: хароҷот сабт мешавад ва орзу аз рӯйхат мебарояд. */
 export default function BuyDreamForm({ state, setState, dream, defaultSource, onDone }: Props & {
@@ -19,12 +20,11 @@ export default function BuyDreamForm({ state, setState, dream, defaultSource, on
   const num = parseFloat(price) || 0;
   const over = num > bal[source] + 0.005;
 
-  const submit = (e: FormEvent) => {
+  const [ask, confirmDialog] = useConfirm();
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!(num > 0)) return;
-    if (over && !window.confirm(
-      `Дар ҳисоби «${ACCOUNTS[source].name}» ҳамагӣ ${fmt(bal[source])} сомонӣ мавҷуд аст. Ба ҳар ҳол мехаред?`,
-    )) return;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[source].name}» ҳамагӣ ${fmt(bal[source])} сомонӣ мавҷуд аст. Ба ҳар ҳол мехаред?`, ok: 'Харидан' }))) return;
     const id = dream.id;
     const name = dream.title;
     setState(s => ({
@@ -50,6 +50,7 @@ export default function BuyDreamForm({ state, setState, dream, defaultSource, on
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[source])}).</div>
       )}
       <button className="btn" type="submit">Харида шуд</button>
+      {confirmDialog}
     </form>
   );
 }

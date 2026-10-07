@@ -7,6 +7,7 @@ import AccountChips from './AccountChips';
 import AmountEntry from './AmountEntry';
 import CategoryChips from './CategoryChips';
 import Field from './Field';
+import { useConfirm } from './ConfirmSheet';
 
 export default function ExpenseForm({ state, setState, onDone, initialAccount }: Props & {
   onDone: (msg: string) => void;
@@ -24,12 +25,11 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
   const num = parseFloat(amount) || 0;
   const over = num > bal[account] + 0.005;
 
-  const onSubmit = (e: FormEvent) => {
+  const [ask, confirmDialog] = useConfirm();
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (num <= 0) return;
-    if (over && !window.confirm(
-      `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account])} сомонӣ мавҷуд аст. Ба ҳар ҳол харҷ мекунед?`,
-    )) return;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account])} сомонӣ мавҷуд аст. Ба ҳар ҳол харҷ мекунед?`, ok: 'Харҷ кардан' }))) return;
     const expense = { id: uid(), account, title: note.trim() || category || ACCOUNTS[account].name, amount: num, date,
       ...(category ? { category } : {}) };
     setState(s => ({
@@ -56,6 +56,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[account])}).</div>
       )}
       <button className="btn big" type="submit" disabled={num <= 0}>Сабти хароҷот</button>
+      {confirmDialog}
     </form>
   );
 }

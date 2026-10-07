@@ -4,6 +4,7 @@ import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountChips from './AccountChips';
 import AmountEntry from './AmountEntry';
+import { useConfirm } from './ConfirmSheet';
 
 interface Extra {
   from?: AccountId;
@@ -23,12 +24,11 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
   const same = from === to;
   const over = num > bal[from] + 0.005;
 
-  const onSubmit = (e: FormEvent) => {
+  const [ask, confirmDialog] = useConfirm();
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (num <= 0 || same) return;
-    if (over && !window.confirm(
-      `Дар ҳисоби «${ACCOUNTS[from].name}» ҳамагӣ ${fmt(bal[from])} сомонӣ мавҷуд аст. Ба ҳар ҳол мегузаронед?`,
-    )) return;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[from].name}» ҳамагӣ ${fmt(bal[from])} сомонӣ мавҷуд аст. Ба ҳар ҳол мегузаронед?`, ok: 'Гузаронидан' }))) return;
     setState(s => ({
       ...s,
       transfers: [{ id: uid(), from, to, amount: num, date }, ...s.transfers],
@@ -51,6 +51,7 @@ export default function TransferForm({ state, setState, from: f0, to: t0, onDone
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[from])}).</div>
       )}
       <button className="btn big" type="submit" disabled={same || num <= 0}>Гузаронидан</button>
+      {confirmDialog}
     </form>
   );
 }

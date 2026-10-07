@@ -995,3 +995,10 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .pk-item.on { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
 .pk-ok { color: var(--primary); font-weight: 800; }
 .pk-item:active { background: var(--bg); }
+
+/* ---------- Тасдиқи худсохт ---------- */
+.confirm-text { margin: 4px 2px 16px; font-size: 1rem; line-height: 1.45; color: var(--text); }
+.confirm-actions { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; align-items: end; padding-bottom: 6px; }
+.confirm-actions .btn { margin-top: 0; }
+.confirm-actions .btn.secondary { height: 58px; border: 1px solid var(--border); border-radius: 20px; font-size: 1rem; }
+.btn.big.danger-fill { background: var(--danger); color: #fff; }

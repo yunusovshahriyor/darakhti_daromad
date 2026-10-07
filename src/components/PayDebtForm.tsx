@@ -3,6 +3,7 @@ import { ACCOUNTS, balancesOf, fmt, remaining, splitDebts, today, uid } from '..
 import type { Debt } from '../types';
 import type { Props } from '../views/props';
 import AmountEntry from './AmountEntry';
+import { useConfirm } from './ConfirmSheet';
 
 /**
  * Пардохти қарз. Манбаъ ҳамеша танҳо ҳисоби «Пардохти қарз» аст.
@@ -24,12 +25,11 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
   const num = Math.min(parseFloat(amount) || 0, left);
   const over = num > bal + 0.005;
 
-  const submit = (e: FormEvent) => {
+  const [ask, confirmDialog] = useConfirm();
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!current || !(num > 0)) return;
-    if (over && !window.confirm(
-      `Дар ҳисоби «${ACCOUNTS.debt.name}» ҳамагӣ ${fmt(bal)} сомонӣ мавҷуд аст. Ба ҳар ҳол пардохт мекунед?`,
-    )) return;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS.debt.name}» ҳамагӣ ${fmt(bal)} сомонӣ мавҷуд аст. Ба ҳар ҳол пардохт мекунед?`, ok: 'Пардохт кардан' }))) return;
     const id = current.id;
     const name = current.title;
     setState(s => ({
@@ -93,6 +93,7 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal)}).</div>
       )}
       <button className="btn big" type="submit" disabled={!(num > 0)}>Пардохти қарз</button>
+      {confirmDialog}
     </form>
   );
 }

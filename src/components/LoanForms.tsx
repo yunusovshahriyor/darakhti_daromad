@@ -8,6 +8,7 @@ import AccountChips from './AccountChips';
 import AmountEntry from './AmountEntry';
 import Field from './Field';
 import LoanProgress from './LoanProgress';
+import { useConfirm } from './ConfirmSheet';
 
 interface Extra {
   onDone: (msg: string) => void;
@@ -28,12 +29,11 @@ export function LendForm({ state, setState, onDone, afterPad }: Props & Extra) {
   const over = num > (bal[account] ?? 0) + 0.005;
   const ready = num > 0 && person.trim() !== '';
 
-  const submit = (e: FormEvent) => {
+  const [ask, confirmDialog] = useConfirm();
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!ready) return;
-    if (over && !window.confirm(
-      `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account] ?? 0)} сомонӣ мавҷуд аст. Ба ҳар ҳол қарз медиҳед?`,
-    )) return;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account] ?? 0)} сомонӣ мавҷуд аст. Ба ҳар ҳол қарз медиҳед?`, ok: 'Қарз додан' }))) return;
     const loanId = uid();
     const name = person.trim();
     setState(s => ({
@@ -60,6 +60,7 @@ export function LendForm({ state, setState, onDone, afterPad }: Props & Extra) {
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[account] ?? 0)}).</div>
       )}
       <button className="btn big" type="submit" disabled={!ready}>Сабти қарз додан</button>
+      {confirmDialog}
     </form>
   );
 }
