@@ -322,12 +322,12 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
       ))}
 
       {modal === 'transfer' && (
-        <Sheet title="Гузаронидан" onClose={close}>
-          <TransferForm {...common} from={id} onDone={done} />
+        <Sheet title="Гузаронидан" onClose={close} tall>
+          <TransferForm {...common} to={id} onDone={done} />
         </Sheet>
       )}
       {modal === 'expense' && (
-        <Sheet title="Хароҷот" onClose={close}>
+        <Sheet title="Хароҷот" onClose={close} tall>
           <ExpenseForm {...common} initialAccount={id} onDone={done} />
         </Sheet>
       )}

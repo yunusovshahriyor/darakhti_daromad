@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { ACCOUNTS, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
+import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountChips from './AccountChips';
@@ -13,8 +13,15 @@ interface Extra {
 }
 
 export default function TransferForm({ state, setState, from: f0, to: t0, onDone }: Props & Extra) {
-  const [from, setFrom] = useState<AccountId>(f0 ?? 'living');
-  const [to, setTo] = useState<AccountId>(t0 ?? (f0 === 'future' ? 'living' : 'future'));
+  // «Аз ҳисоби»: ҳисоби серамалиёт (ки аз он бештар сарф шудааст), ғайр аз «Ба ҳисоби»
+  const busiest = (skip: AccountId | undefined): AccountId => {
+    const used = spent(state.expenses);
+    const hide = hiddenAccounts(state);
+    const ids = ACCOUNT_ORDER.filter(id => id !== skip && !hide.includes(id));
+    return ids.reduce((a, b) => ((used[b] ?? 0) > (used[a] ?? 0) ? b : a), ids[0] ?? 'living');
+  };
+  const [from, setFrom] = useState<AccountId>(() => f0 ?? busiest(t0));
+  const [to, setTo] = useState<AccountId>(() => t0 ?? (f0 === 'future' ? 'living' : 'future'));
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
 
