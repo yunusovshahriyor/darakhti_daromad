@@ -1044,3 +1044,5 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .dd-buy-t small { color: rgba(255, 255, 255, .75); font-size: .78rem; }
 .dd-buy button { flex: none; height: 44px; padding: 0 20px; border: 0; border-radius: 14px; background: #fff; color: #14231c; font-weight: 800; font-size: .95rem; }
 .dd-buy:not(.ready) button { background: rgba(255, 255, 255, .16); color: #fff; }
+.dr-sub { display: flex; justify-content: space-between; gap: 8px; }
+.dr-sub b { color: var(--primary); }

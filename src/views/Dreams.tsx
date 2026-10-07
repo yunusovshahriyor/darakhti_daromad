@@ -83,6 +83,10 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
                           <b className={ready ? 'pos' : ''}>{ready ? 'Тайёр ✓' : fmt(d.target)}</b>
                         </div>
                         <div className="progress"><i style={{ width: `${(funded / d.target) * 100}%` }} /></div>
+                        <div className="dr-sub">
+                          <small>Ҷамъшуда: {fmt(funded)}</small>
+                          <small><b>{Math.floor((funded / d.target) * 100)}%</b></small>
+                        </div>
                       </div>
                     </div>
                   </SwipeRow>
