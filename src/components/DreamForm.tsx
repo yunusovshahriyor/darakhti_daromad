@@ -122,18 +122,18 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
   return (
     <form id={formId} onSubmit={submit} className="fgs">
       <section className="fg">
-        <label className="fr">
+        <label className="fr stack">
           <span>Ном</span>
           <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, мошин" required />
         </label>
-        <div className="fr">
+        <div className="fr stack">
           <span>Навъ</span>
           <PickerField value={kind} onChange={v => setKind(v as Dream['kind'])} title="Навъи орзу" options={[
             { value: 'big', label: 'Калон', icon: '🏠', note: 'мошин, хона…' },
             { value: 'small', label: 'Хурд', icon: '✈️', note: 'сафар, телефон…' },
           ]} />
         </div>
-        <label className="fr">
+        <label className="fr stack">
           <span>Нарх (сомонӣ)</span>
           <MoneyInput value={target} onChange={setTarget} placeholder="0" required />
         </label>
@@ -173,17 +173,19 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
 
           <section className="fg">
             <h4 className="fg-h">Мақсад</h4>
-            <button type="button" className="fr fr-btn" onClick={() => setPickDeadline(true)}>
+            <div className="fr stack">
               <span>📅 Санаи мақсад</span>
-              <b>{deadline ? dateText(deadline) : 'Муайян нашудааст'}</b>
-              {deadline && <i className="fr-x" role="button" aria-label="Бекор кардани сана"
-                onClick={e => { e.stopPropagation(); setDeadline(''); }}>✕</i>}
-            </button>
-            <label className="fr">
+              <button type="button" className="picker-btn" onClick={() => setPickDeadline(true)}>
+                <span className="pk-t">{deadline ? dateText(deadline) : 'Муайян нашудааст'}</span>
+                {deadline && <i className="fr-x" role="button" aria-label="Бекор кардани сана"
+                  onClick={e => { e.stopPropagation(); setDeadline(''); }}>✕</i>}
+              </button>
+            </div>
+            <label className="fr stack">
               <span>🔗 Истинод</span>
               <input value={link} onChange={e => setLink(e.target.value)} placeholder="https://…" inputMode="url" />
             </label>
-            <label className="fr">
+            <label className="fr stack">
               <span>📝 Эзоҳ</span>
               <input value={note} onChange={e => setNote(e.target.value)} placeholder="Ранги сафед, 2023…" />
             </label>
@@ -194,18 +196,18 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
             {switchRow(autoOn, setAutoOn, '🔁 Мунтазам', 'Ҳар ҳафта ё моҳ маблағ худкор ба орзуҳо мегузарад.')}
             {autoOn && (
               <>
-                <label className="fr">
+                <label className="fr stack">
                   <span>Маблағ</span>
                   <MoneyInput value={autoAmount} onChange={setAutoAmount} placeholder="50" />
                 </label>
-                <div className="fr">
+                <div className="fr stack">
                   <span>Басомад</span>
                   <PickerField value={every} onChange={v => setEvery(v as 'week' | 'month')} title="Басомад" options={[
                     { value: 'week', label: 'Ҳар ҳафта', icon: '📆' },
                     { value: 'month', label: 'Ҳар моҳ', icon: '🗓️' },
                   ]} />
                 </div>
-                <div className="fr">
+                <div className="fr stack">
                   <span>Аз ҳисоби</span>
                   <AccountSelect value={autoFrom} onChange={setAutoFrom} bal={bal} hidden={['bigDream', 'smallDream']} />
                 </div>
@@ -216,11 +218,11 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
             {switchRow(shareOn, setShareOn, '💸 Ҳиссаи ҳар даромад', 'Аз ҳар даромади оддӣ фоизи муайян ба ин орзу меравад.')}
             {shareOn && (
               <>
-                <label className="fr">
+                <label className="fr stack">
                   <span>Фоиз</span>
                   <MoneyInput value={sharePct} onChange={setSharePct} placeholder="10" />
                 </label>
-                <div className="fr">
+                <div className="fr stack">
                   <span>Аз ҳисоби</span>
                   <AccountSelect value={shareFrom} onChange={setShareFrom} bal={bal} hidden={['bigDream', 'smallDream']} />
                 </div>

@@ -1124,3 +1124,12 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .fr > .fr-t { flex: 1; min-width: 0; }
 .fr.sw .switch { margin-left: 4px; }
 .fr > .fr-t:first-child { flex: 1; min-width: 0; color: var(--text); }
+
+/* ---------- Форма орзу: майдонҳо мисли пештара (ном дар боло, майдон дар поён) ---------- */
+.fr.stack { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; min-height: 0; padding: 10px 16px 12px; }
+.fr.stack > span:first-child { font-size: .8rem; color: var(--muted); }
+.fr.stack input:not([type='checkbox']) { flex: none; width: 100%; height: 50px; padding: 0 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); text-align: left; font-size: 1rem; }
+.fr.stack input:not([type='checkbox']):focus { border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 20%, transparent); }
+.fr.stack .picker-btn { flex: none; width: 100%; height: 50px; padding: 0 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); justify-content: flex-start; font-size: 1rem; }
+.fr.stack .picker-btn .pk-t { flex: 1; text-align: left; }
+.fr.stack .picker-btn small { display: inline; }
