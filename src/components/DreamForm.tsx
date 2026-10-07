@@ -1,6 +1,8 @@
 import { FormEvent, useState } from 'react';
 import type { Dream } from '../types';
 import Field from './Field';
+import MoneyInput from './MoneyInput';
+import PickerField from './PickerField';
 
 interface Values {
   title: string;
@@ -35,14 +37,13 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, мошин" required />
       </Field>
       <Field label="Навъ">
-        <select value={kind} onChange={e => setKind(e.target.value as Dream['kind'])}>
-          <option value="big">🏠 Калон</option>
-          <option value="small">✈️ Хурд</option>
-        </select>
+        <PickerField value={kind} onChange={v => setKind(v as Dream['kind'])} title="Навъи орзу" options={[
+          { value: 'big', label: 'Калон', icon: '🏠', note: 'мошин, хона…' },
+          { value: 'small', label: 'Хурд', icon: '✈️', note: 'сафар, телефон…' },
+        ]} />
       </Field>
       <Field label="Нархи орзу (сомонӣ)">
-        <input type="number" inputMode="decimal" min="0" step="0.01" value={target}
-          onChange={e => setTarget(e.target.value)} placeholder="0.00" required />
+        <MoneyInput value={target} onChange={setTarget} placeholder="0" required />
       </Field>
 
       <label className="switch-row">

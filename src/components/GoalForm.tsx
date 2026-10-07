@@ -3,6 +3,7 @@ import { ACCOUNTS } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import Field from './Field';
+import MoneyInput from './MoneyInput';
 
 export default function GoalForm({ state, setState, id, onDone }: Props & {
   id: AccountId;
@@ -27,8 +28,7 @@ export default function GoalForm({ state, setState, id, onDone }: Props & {
     <form onSubmit={onSubmit}>
       <p className="muted">Мақсад барои «{ACCOUNTS[id].name}»: ба кадом маблағ расидан мехоҳед?</p>
       <Field label="Маблағи мақсад (сомонӣ)">
-        <input type="number" inputMode="decimal" min="0" step="0.01" value={value}
-          onChange={e => setValue(e.target.value)} placeholder="Масалан, 10000" />
+        <MoneyInput value={value} onChange={setValue} placeholder="Масалан, 10 000" />
       </Field>
       <button className="btn" type="submit">Нигоҳ доштан</button>
       {current ? <p className="note">Барои бардоштани мақсад, майдонро холӣ гузошта нигоҳ доред.</p> : null}

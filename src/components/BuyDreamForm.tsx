@@ -4,6 +4,7 @@ import type { AccountId, Dream } from '../types';
 import type { Props } from '../views/props';
 import AccountSelect from './AccountSelect';
 import Field from './Field';
+import MoneyInput from './MoneyInput';
 
 /** Харидани орзу аз ҳисоби интихобшуда: хароҷот сабт мешавад ва орзу аз рӯйхат мебарояд. */
 export default function BuyDreamForm({ state, setState, dream, defaultSource, onDone }: Props & {
@@ -43,8 +44,7 @@ export default function BuyDreamForm({ state, setState, dream, defaultSource, on
         <AccountSelect value={source} onChange={setSource} bal={bal} hidden={hiddenAccounts(state)} />
       </Field>
       <Field label="Нархи харид (сомонӣ)">
-        <input type="number" inputMode="decimal" min="0" step="0.01" value={price}
-          onChange={e => setPrice(e.target.value)} required />
+        <MoneyInput value={price} onChange={setPrice} required />
       </Field>
       {over && num > 0 && (
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[source])}).</div>

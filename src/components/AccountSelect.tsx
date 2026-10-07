@@ -1,22 +1,18 @@
 import { ACCOUNTS, ACCOUNT_TREE, fmt, leavesOf } from '../model';
 import type { AccountId, Alloc } from '../types';
+import PickerField from './PickerField';
+import type { PickerOption } from './PickerField';
 
-/** Рӯйхати интихоби ҳисоб, гурӯҳбандӣшуда мувофиқи дарахти ҳисобҳо. */
+/** Интихоби ҳисоб (гурӯҳбандӣшуда мувофиқи дарахти ҳисобҳо) бо варақаи поёнӣ. */
 export default function AccountSelect({ value, onChange, bal, hidden = [] }: {
   value: AccountId;
   onChange: (id: AccountId) => void;
   bal: Alloc;
   hidden?: AccountId[];
 }) {
-  return (
-    <select value={value} onChange={e => onChange(e.target.value as AccountId)}>
-      {ACCOUNT_TREE.map(g => (
-        <optgroup key={g.key} label={g.title}>
-          {leavesOf(g).filter(id => id === value || !hidden.includes(id)).map(id => (
-            <option key={id} value={id}>{ACCOUNTS[id].icon} {ACCOUNTS[id].name} — {fmt(bal[id])}</option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
-  );
+  const options: PickerOption[] = ACCOUNT_TREE.flatMap(g =>
+    leavesOf(g).filter(id => id === value || !hidden.includes(id)).map(id => ({
+      value: id, label: ACCOUNTS[id].name, icon: ACCOUNTS[id].icon, note: fmt(bal[id] ?? 0), group: g.title,
+    })));
+  return <PickerField value={value} options={options} onChange={onChange} title="Интихоби ҳисоб" />;
 }

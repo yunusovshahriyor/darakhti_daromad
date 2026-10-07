@@ -7,6 +7,7 @@ import {
 import type { AccountDef, DistNode } from '../types';
 import type { Props } from '../views/props';
 import AccountSelect from './AccountSelect';
+import PickerField from './PickerField';
 import Field from './Field';
 import Sheet from './Sheet';
 
@@ -219,9 +220,8 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
     <Sheet title="Ҳисоби нав" onClose={onClose}>
       <form onSubmit={save}>
         <Field label="Дар кадом гурӯҳ">
-          <select value={parent} onChange={e => { setParent(e.target.value); setError(''); }}>
-            {groups.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
-          </select>
+          <PickerField value={parent} title="Дар кадом гурӯҳ" onChange={v => { setParent(v); setError(''); }}
+            options={groups.map(g => ({ value: g.id, label: g.label, icon: '📁' }))} />
         </Field>
         <Field label="Номи ҳисоб">
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Масалан, Таҳсил" required />
