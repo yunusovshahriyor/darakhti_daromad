@@ -32,6 +32,7 @@ export default function DreamDetailSheet({ state, setState, dream, info, onClose
 }) {
   const [saving, setSaving] = useState(false);
   const [buying, setBuying] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [ask, confirmDialog] = useConfirm();
 
   const pct = Math.min(100, (info.funded / dream.target) * 100);
@@ -72,6 +73,17 @@ export default function DreamDetailSheet({ state, setState, dream, info, onClose
   return (
     <Sheet title={dream.title} eyebrow={dream.kind === 'big' ? '🏠 Орзуи калон' : '✈️ Орзуи хурд'} onClose={onClose} tall>
       <div className="dd" style={{ '--dc': color } as React.CSSProperties}>
+        <div className="dd-bar-actions">
+          <button type="button" className={editing ? 'on' : ''} onClick={() => setEditing(e => !e)}>
+            {editing ? '← Маълумот' : '✎ Таҳрир'}
+          </button>
+          <button type="button" className="del" onClick={remove}>🗑 Нест кардан</button>
+        </div>
+
+        {editing ? (
+          <DreamForm initial={dream} state={state} onSubmit={save} submitLabel="Нигоҳ доштан" />
+        ) : (
+          <>
         {dream.image && <div className="dd-img" style={{ backgroundImage: `url(${dream.image})` }} />}
         <section className="dd-hero">
           <div className="dd-pct">{Math.floor(pct)}<small>%</small></div>
@@ -177,9 +189,8 @@ export default function DreamDetailSheet({ state, setState, dream, info, onClose
           <button type="button" onClick={() => setBuying(true)}>Харидан</button>
         </section>
 
-        <h3 className="group-title"><span>Таҳрир</span></h3>
-        <DreamForm initial={dream} state={state} onSubmit={save} submitLabel="Нигоҳ доштан" />
-        <button type="button" className="btn danger" onClick={remove}>Нест кардани орзу</button>
+          </>
+        )}
       </div>
 
       {confirmDialog}
