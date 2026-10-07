@@ -811,7 +811,7 @@ input:disabled { opacity: .55; }
 
 /* ---------- Варақаи иловакунӣ: маблағи калон, сана, тугмачаҳои рақамӣ ---------- */
 .sheet.tall { height: 94%; max-height: 94%; }
-.eyebrow { display: block; color: var(--primary); font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 2px; }
+.eyebrow { display: block; color: var(--primary); font-size: .78rem; font-weight: 700; margin-top: 2px; }
 .sheet-head h2 { font-size: 1.35rem; }
 .add-tabs { margin: 8px 0 4px; padding: 5px; border-radius: 18px; }
 .add-tabs button { padding: 11px 6px; border-radius: 14px; font-size: .95rem; font-weight: 700; color: var(--muted); }
@@ -853,7 +853,7 @@ input:disabled { opacity: .55; }
 .sheet.tall .grabber { margin: 2px auto 6px; }
 .sheet.tall .sheet-head { margin-bottom: 6px; }
 .sheet.tall .sheet-head h2 { font-size: 1.15rem; letter-spacing: -.01em; }
-.sheet.tall .eyebrow { font-size: .62rem; margin-bottom: 0; }
+.sheet.tall .eyebrow { font-size: .74rem; margin-top: 0; }
 .sheet.tall .icon-btn { width: 34px; height: 34px; }
 .add-tabs { margin: 4px 0 2px; padding: 3px; border-radius: 14px; gap: 2px; }
 .add-tabs button { padding: 8px 2px; border-radius: 11px; font-size: .8rem; font-weight: 600; }

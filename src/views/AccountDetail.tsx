@@ -145,8 +145,8 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
           first ? (
             <div className="ah-goal">
               <div className="ah-sub">
-                <span>{planLabels.next}</span>
                 <b>{first.priority ? '⭐ ' : ''}{first.title}</b>
+                <span>{planLabels.next}</span>
               </div>
               {bar(
                 firstPct,

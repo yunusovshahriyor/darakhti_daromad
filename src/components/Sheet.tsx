@@ -8,7 +8,7 @@ interface Props {
   children: ReactNode;
   /** Нимкушода кушода мешавад; бо кашидан ба боло пурра мешавад, бо кашидан ба поён кӯтоҳ ё баста мешавад. */
   detents?: boolean;
-  /** Сатри хурд дар болои сарлавҳа. */
+  /** Зерном: сатри хурд дар зери сарлавҳа. */
   eyebrow?: string;
   /** Варақаи баланд (92%). */
   tall?: boolean;
@@ -62,7 +62,7 @@ export default function Sheet({ title, onClose, children, detents = false, eyebr
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}>
         <div className="grabber" onClick={detents ? () => setFull(f => !f) : undefined} />
         <div className="sheet-head">
-          <div>{eyebrow && <small className="eyebrow">{eyebrow}</small>}<h2>{title}</h2></div>
+          <div><h2>{title}</h2>{eyebrow && <small className="eyebrow">{eyebrow}</small>}</div>
           <button className="icon-btn" onClick={onClose} aria-label="Пӯшидан"><CloseIcon /></button>
         </div>
         {detents ? <div className="sheet-scroll" ref={scrollRef}>{children}</div> : children}

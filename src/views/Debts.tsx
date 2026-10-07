@@ -41,8 +41,8 @@ export default function Debts({ state, setState }: Props) {
     <>
       {first && (
         <div className="next-debt">
-          <small>Аввал пардохт кунед</small>
           <b>{first.title}</b>
+          <small>Аввал пардохт кунед</small>
           <span>Бақия: {fmt(remaining(first))} смн{first.priority ? ' · ⭐ афзалиятнок' : ' · хурдтарин қарз'}</span>
         </div>
       )}
