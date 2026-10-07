@@ -83,6 +83,40 @@ export function withNewDebt(s: State, v: { title: string; amount: number; priori
 export const loanLeft = (l: Loan) => Math.max(0, l.amount - l.returned);
 export const openLoans = (loans: Loan[]) => loans.filter(l => loanLeft(l) > 0.005);
 
+/**
+ * Суръати ҷамъшавии ҳисоби орзу дар як моҳ: даромад ва гузаронидани воридшуда дар 90 рӯзи охир
+ * (хароҷот, яъне харид, ҳисоб намешавад).
+ */
+export function monthlyPoolRate(s: State, account: AccountId): number {
+  const now = new Date();
+  const from = new Date(now);
+  from.setDate(from.getDate() - 90);
+  const fromIso = from.toLocaleDateString('sv-SE');
+  let total = 0;
+  let first = '';
+  const note = (d: string) => { if (!first || d < first) first = d; };
+  for (const i of s.incomes) if (i.date >= fromIso) { total += i.alloc[account] ?? 0; note(i.date); }
+  for (const t of s.transfers) {
+    if (t.date < fromIso) continue;
+    if (t.to === account) total += t.amount;
+    if (t.from === account) total -= t.amount;
+    note(t.date);
+  }
+  if (!first || total <= 0) return 0;
+  const days = Math.max(30, Math.min(90, (now.getTime() - new Date(first).getTime()) / 86400000));
+  return (total / days) * 30;
+}
+
+/** «≈ 14 моҳ», «≈ 1 сол 2 моҳ», «камтар аз 1 моҳ». */
+export function formatEta(months: number): string {
+  if (months < 1) return 'камтар аз 1 моҳ';
+  const m = Math.ceil(months);
+  if (m < 12) return `≈ ${m} моҳ`;
+  const y = Math.floor(m / 12);
+  const r = m % 12;
+  return `≈ ${y} сол${r ? ` ${r} моҳ` : ''}`;
+}
+
 export const hasDebt = (debts: Debt[]) => debts.some(d => remaining(d) > 0.005);
 
 /**

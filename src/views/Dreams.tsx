@@ -2,22 +2,24 @@ import { useState } from 'react';
 import BuyDreamForm from '../components/BuyDreamForm';
 import CollapsibleCells from '../components/CollapsibleCells';
 import DreamForm from '../components/DreamForm';
+import DreamSaveSheet from '../components/DreamSaveSheet';
 import Fab from '../components/Fab';
 import { PencilIcon } from '../components/Icons';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { balancesOf, boughtDreams, fmt, fundDreams, uid } from '../model';
+import { balancesOf, boughtDreams, fmt, formatEta, fundDreams, monthlyPoolRate, uid } from '../model';
 import type { AccountId, Dream } from '../types';
 import type { Props } from './props';
 
 type Kind = Dream['kind'];
 type Tab = 'now' | 'done';
 
-export default function Dreams({ state, setState }: Props) {
+export default function Dreams({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
   const [adding, setAdding] = useState(false);
   const [editFor, setEditFor] = useState<Dream | null>(null);
   const [buyFor, setBuyFor] = useState<Dream | null>(null);
+  const [saveFor, setSaveFor] = useState<Dream | null>(null);
   const [tabs, setTabs] = useState<Record<Kind, Tab>>({ big: 'now', small: 'now' });
 
   const bal = balancesOf(state);
@@ -42,6 +44,9 @@ export default function Dreams({ state, setState }: Props) {
   const block = (k: Kind, name: string, account: AccountId) => {
     const pool = bal[account];
     const plan = fundDreams(state.dreams.filter(d => d.kind === k), pool);
+    const rate = monthlyPoolRate(state, account);
+    const extra = Math.max(50, Math.round((rate * 0.25) / 50) * 50);
+    let cum = 0;
     const done = bought.filter(d => d.kind === k);
     const tab = tabs[k];
 
@@ -60,7 +65,12 @@ export default function Dreams({ state, setState }: Props) {
               <div className="empty small">Орзуи фаъол нест.</div>
             ) : (
               <div className="cells">
-                {plan.map(({ dream: d, funded, ready, rank }) => (
+                {plan.map(({ dream: d, funded, ready, rank }) => {
+                  cum += d.target;
+                  const need = Math.max(0, cum - pool);
+                  const months = rate > 0 ? need / rate : 0;
+                  const faster = rate > 0 ? need / (rate + extra) : 0;
+                  return (
                   <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
                     <div className="cell tap" onClick={() => setBuyFor(d)}>
                       <div className={ready || rank === 1 ? 'rank first' : 'rank'}>{rank}</div>
@@ -73,14 +83,26 @@ export default function Dreams({ state, setState }: Props) {
                         <small>
                           {fmt(funded)} аз {fmt(d.target)} · {d.priority ? 'афзалиятнок' : 'аз рӯи нарх'}
                         </small>
+                        {!ready && (
+                          <small className="eta">
+                            {rate > 0
+                              ? `⏳ ${formatEta(months)}${months - faster >= 1 ? ` · бо +${fmt(extra)} дар моҳ: ${formatEta(faster)}` : ''}`
+                              : '⏳ Муддат пас аз аввалин ҷамъкунӣ ҳисоб мешавад'}
+                          </small>
+                        )}
                       </div>
-                      <button className="icon-btn sm" aria-label="Таҳрир"
-                        onClick={e => { e.stopPropagation(); setEditFor(d); }}>
-                        <PencilIcon />
-                      </button>
+                      <div className="row-actions">
+                        <button className="save-btn" aria-label="Ҷамъ кардан"
+                          onClick={e => { e.stopPropagation(); setSaveFor(d); }}>+</button>
+                        <button className="icon-btn sm" aria-label="Таҳрир"
+                          onClick={e => { e.stopPropagation(); setEditFor(d); }}>
+                          <PencilIcon />
+                        </button>
+                      </div>
                     </div>
                   </SwipeRow>
-                ))}
+                  );
+                })}
               </div>
             )
           ) : done.length === 0 ? (
@@ -129,6 +151,11 @@ export default function Dreams({ state, setState }: Props) {
         <Sheet title="Таҳрири орзу" onClose={() => setEditFor(null)}>
           <DreamForm initial={editFor} onSubmit={save} submitLabel="Нигоҳ доштан" />
         </Sheet>
+      )}
+
+      {saveFor && (
+        <DreamSaveSheet state={state} setState={setState} dream={saveFor}
+          onClose={() => setSaveFor(null)} onDone={onToast} />
       )}
 
       {buyFor && (

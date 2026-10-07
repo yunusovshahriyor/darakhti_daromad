@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
+import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
   BackIcon, GridIcon, InfoIcon, ListIcon, MoreIcon, PlusIcon, RefreshIcon, WalletIcon,
@@ -7,6 +8,7 @@ import {
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
 import { loadState, saveState } from './storage';
+import { useDreamMilestones } from './useDreamMilestones';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
 import Accounts from './views/Accounts';
@@ -92,6 +94,7 @@ export default function App() {
   const [adding, setAdding] = useState(false);
   const [info, setInfo] = useState(false);
   const [toast, setToast] = useState('');
+  const [celebration, setCelebration] = useState<{ title: string; text: string } | null>(null);
   const [hidden, setHidden] = useState(readHidden);
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
   const prevBal = useRef<Alloc | null>(null);
@@ -121,6 +124,9 @@ export default function App() {
   useEffect(() => {
     try { localStorage.setItem(HIDE_KEY, hidden ? '1' : '0'); } catch { /* ignore */ }
   }, [hidden]);
+
+  // Ҳавасмандии орзуҳо: марҳилаҳои 25/50/75/100% ва ҷашни харид
+  useDreamMilestones(state, setToast, (title, text) => setCelebration({ title, text }));
 
   // Огоҳӣ ҳангоми расидан ба мақсад
   useEffect(() => {
@@ -221,7 +227,7 @@ export default function App() {
       return <AccountDetail {...props} {...privacy} id={acct} onToast={setToast}
         onManage={page => { setAcct(null); setSub(page); }} />;
     }
-    if (sub === 'dreams') return <Dreams {...props} />;
+    if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
     if (sub === 'debts') return <Debts {...props} />;
     if (sub === 'settings') return <SettingsView {...props} onToast={setToast} />;
     if (tab === 'home') {
@@ -269,6 +275,7 @@ export default function App() {
       </main>
 
       {toast && <div className="toast">{toast}</div>}
+      {celebration && <Celebrate title={celebration.title} text={celebration.text} onClose={() => setCelebration(null)} />}
 
       <nav className="tabbar">
         {LEFT.map(tabButton)}
