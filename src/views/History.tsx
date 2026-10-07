@@ -170,7 +170,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
           <div className="cells">{g.items.map(row)}</div>
         </section>
       ))}
-      {receipt && <ReceiptSheet state={state} refItem={receipt} onClose={() => setReceipt(null)} />}
+      {receipt && <ReceiptSheet state={state} setState={setState} refItem={receipt} onClose={() => setReceipt(null)} />}
     </>
   );
 }

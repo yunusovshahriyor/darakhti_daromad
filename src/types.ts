@@ -36,6 +36,8 @@ export interface Income {
   alloc: Alloc;
   /** «borrow» — қарзи гирифташуда, «loanBack» — баргардонидани қарзи додашуда: бе тақсими фоизӣ. */
   kind?: 'borrow' | 'loanBack';
+  /** Санаи охирин таҳрир. */
+  edited?: string;
   /** Манбаи даромад: «Музд», «Кори иловагӣ»… */
   source?: string;
   loanId?: number;
@@ -53,6 +55,8 @@ export interface Expense {
   loanId?: number;
   /** Категорияи хароҷот: «Транспорт», «Хӯрок»… */
   category?: string;
+  /** Санаи охирин таҳрир. */
+  edited?: string;
 }
 
 /** Қарзи додашуда: дигарон ба шумо қарздоранд. */
@@ -94,6 +98,8 @@ export interface Dream {
 
 export interface Transfer {
   id: number;
+  /** Санаи охирин таҳрир. */
+  edited?: string;
   from: AccountId;
   to: AccountId;
   amount: number;

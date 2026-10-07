@@ -28,7 +28,9 @@ function shown(value: string) {
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'back'];
 
 /** Маблағ бо тугмачаҳои рақамӣ + сана: тарҳи барномаи мобилӣ. */
-export default function AmountEntry({ value, onChange, date, onDate, sign }: {
+export default function AmountEntry({ value, onChange, date, onDate, sign, locked = false }: {
+  /** Маблағ тағйир намеёбад (амалиёти вобаста ба қарз/орзу): тугмачаҳои рақамӣ нест. */
+  locked?: boolean;
   /** «+» барои воридот, «−» барои баромад: ранг ва аломат дар маблағи калон. */
   sign?: '+' | '−';
   value: string;
@@ -54,6 +56,7 @@ export default function AmountEntry({ value, onChange, date, onDate, sign }: {
         {sign && value ? <span className="sg">{sign}</span> : null}{shown(value)} <small>смн</small>
       </div>
 
+      {!locked && (
       <div className="keypad">
         {KEYS.map(k => (
           <button key={k} type="button" className="key" onClick={() => press(k)}
@@ -67,6 +70,7 @@ export default function AmountEntry({ value, onChange, date, onDate, sign }: {
           </button>
         ))}
       </div>
+      )}
 
       <button type="button" className="date-row" onClick={() => setPicking(true)}>
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8"

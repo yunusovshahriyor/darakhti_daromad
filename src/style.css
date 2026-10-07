@@ -978,3 +978,6 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .rc-h { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 0 0; }
 .rc-body .loan-prog { margin-top: 10px; }
 .rc-foot { text-align: center; font-size: .7rem; color: var(--muted); padding: 10px 0 14px; letter-spacing: .04em; }
+.rc-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; align-items: end; }
+.rc-actions .btn { margin-top: 0; }
+.rc-actions .btn.secondary { height: 58px; border: 1px solid var(--border); border-radius: 20px; font-size: 1rem; }

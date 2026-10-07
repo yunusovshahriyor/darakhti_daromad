@@ -1,6 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { ACCOUNTS, ALL_IDS, dayTitle, fmt } from '../model';
 import type { State } from '../types';
+import type { Dispatch, SetStateAction } from 'react';
+import EditOperationSheet from './EditOperationSheet';
+import type { Snapshot } from './EditOperationSheet';
 import LoanProgress from './LoanProgress';
 import Sheet from './Sheet';
 
@@ -16,12 +19,27 @@ const timeOf = (id: number) => {
 };
 
 /** Чеки амалиёт: тарҳи чеки бонкӣ бо тафсилот ва имконияти мубодила. */
-export default function ReceiptSheet({ state, refItem, onClose }: {
+export default function ReceiptSheet({ state, setState, refItem, onClose }: {
   state: State;
+  setState: Dispatch<SetStateAction<State>>;
   refItem: ReceiptRef;
   onClose: () => void;
 }) {
   const [note, setNote] = useState('');
+  const [editing, setEditing] = useState(false);
+  // Нусхаи пеш аз таҳрир: то пӯшидани чек «Бекор кардан» кор мекунад
+  const [undo, setUndo] = useState<Snapshot | null>(null);
+
+  const restore = () => {
+    if (!undo) return;
+    setState(s => undo.kind === 'income'
+      ? { ...s, incomes: s.incomes.map(i => (i.id === undo.item.id ? undo.item : i)).sort((a, b) => b.date.localeCompare(a.date)) }
+      : undo.kind === 'expense'
+        ? { ...s, expenses: s.expenses.map(e => (e.id === undo.item.id ? undo.item : e)).sort((a, b) => b.date.localeCompare(a.date)) }
+        : { ...s, transfers: s.transfers.map(t => (t.id === undo.item.id ? undo.item : t)) });
+    setUndo(null);
+    setNote('Таҳрир бекор шуд ✓');
+  };
 
   let title = '';
   let sign = '';
@@ -33,11 +51,12 @@ export default function ReceiptSheet({ state, refItem, onClose }: {
   const lines: Line[] = [];
   let extra: ReactNode = null;
   let source = '';
+  let edited = '';
 
   if (refItem.kind === 'income') {
     const x = state.incomes.find(i => i.id === refItem.id);
     if (!x) return null;
-    amount = x.amount; date = x.date; sign = '+'; tone = 'pos'; title = x.title;
+    amount = x.amount; date = x.date; sign = '+'; tone = 'pos'; title = x.title; edited = x.edited ?? '';
     const loan = x.kind === 'loanBack' ? state.loans.find(l => l.id === x.loanId) : undefined;
     kindLabel = x.kind === 'loanBack' ? 'Баргардонидани қарз' : x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад';
     icon = x.kind === 'loanBack' ? '↩️' : x.kind === 'borrow' ? '🤝' : '💰';
@@ -68,7 +87,7 @@ export default function ReceiptSheet({ state, refItem, onClose }: {
   } else if (refItem.kind === 'expense') {
     const x = state.expenses.find(e => e.id === refItem.id);
     if (!x) return null;
-    amount = x.amount; date = x.date; sign = '−'; tone = 'neg'; title = x.title;
+    amount = x.amount; date = x.date; sign = '−'; tone = 'neg'; title = x.title; edited = x.edited ?? '';
     const loan = x.loanId ? state.loans.find(l => l.id === x.loanId) : undefined;
     kindLabel = loan ? 'Қарз додам' : x.debtId ? 'Пардохти қарз' : x.dreamId ? 'Харидани орзу' : 'Хароҷот';
     icon = loan ? '📤' : x.debtId ? '✅' : x.dreamId ? '🎁' : '🧾';
@@ -79,7 +98,7 @@ export default function ReceiptSheet({ state, refItem, onClose }: {
   } else {
     const x = state.transfers.find(t => t.id === refItem.id);
     if (!x) return null;
-    amount = x.amount; date = x.date; tone = 'swap'; icon = '🔁'; kindLabel = 'Гузаронидан';
+    amount = x.amount; date = x.date; tone = 'swap'; icon = '🔁'; kindLabel = 'Гузаронидан'; edited = x.edited ?? '';
     title = `${ACCOUNTS[x.from].name} → ${ACCOUNTS[x.to].name}`;
     lines.push({ label: 'Аз ҳисоби', value: `${ACCOUNTS[x.from].icon} ${ACCOUNTS[x.from].name}` });
     lines.push({ label: 'Ба ҳисоби', value: `${ACCOUNTS[x.to].icon} ${ACCOUNTS[x.to].name}` });
@@ -92,6 +111,7 @@ export default function ReceiptSheet({ state, refItem, onClose }: {
     { label: 'Сана', value: `${dayTitle(date)}${time ? `, ${time}` : ''}` },
     ...lines,
     ...(title && title !== source && refItem.kind !== 'transfer' ? [{ label: 'Эзоҳ', value: title }] : []),
+    ...(edited ? [{ label: 'Таҳрир шуд', value: dayTitle(edited) }] : []),
     { label: 'Рақами чек', value: `№ ${number}` },
   ];
 
@@ -129,7 +149,17 @@ export default function ReceiptSheet({ state, refItem, onClose }: {
         <div className="rc-foot">даромад. · содда. устувор.</div>
       </div>
       {note && <p className="note" style={{ textAlign: 'center' }}>{note}</p>}
-      <button type="button" className="btn big" onClick={share}>Мубодила / нусхабардорӣ</button>
+      {undo && (
+        <button type="button" className="btn secondary" onClick={restore}>↩ Бекор кардани таҳрир</button>
+      )}
+      <div className="rc-actions">
+        <button type="button" className="btn secondary" onClick={() => setEditing(true)}>✎ Таҳрир</button>
+        <button type="button" className="btn big" onClick={share}>Мубодила</button>
+      </div>
+      {editing && (
+        <EditOperationSheet state={state} setState={setState} refItem={refItem}
+          onClose={() => setEditing(false)} onSaved={prev => { setUndo(prev); setNote(''); }} />
+      )}
     </Sheet>
   );
 }
