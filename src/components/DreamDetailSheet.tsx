@@ -74,7 +74,7 @@ export default function DreamDetailSheet({ state, setState, dream, info, onClose
     <Sheet title={dream.title} eyebrow={dream.kind === 'big' ? '🏠 Орзуи калон' : '✈️ Орзуи хурд'} onClose={onClose} tall>
       <div className="dd" style={{ '--dc': color } as React.CSSProperties}>
         {editing ? (
-          <DreamForm initial={dream} state={state} onSubmit={save} submitLabel="Нигоҳ доштан" />
+          <DreamForm formId="dream-edit" hideSubmit initial={dream} state={state} onSubmit={save} submitLabel="Нигоҳ доштан" />
         ) : (
           <>
         {dream.image && <div className="dd-img" style={{ backgroundImage: `url(${dream.image})` }} />}
@@ -189,7 +189,9 @@ export default function DreamDetailSheet({ state, setState, dream, info, onClose
           <button type="button" className={editing ? 'on' : ''} onClick={() => setEditing(e => !e)}>
             {editing ? '← Маълумот' : '✎ Таҳрир'}
           </button>
-          <button type="button" className="del" onClick={remove}>🗑 Нест кардан</button>
+          {editing
+            ? <button type="submit" form="dream-edit" className="save">✓ Нигоҳ доштан</button>
+            : <button type="button" className="del" onClick={remove}>🗑 Нест кардан</button>}
         </div>
       </div>
 

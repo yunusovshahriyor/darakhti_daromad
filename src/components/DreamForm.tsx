@@ -40,7 +40,10 @@ const dateText = (iso: string) => {
 };
 
 /** Форма барои илова кардан ва таҳрири орзу. Майдонҳои иловагӣ танҳо ҳангоми таҳрир нишон дода мешаванд. */
-export default function DreamForm({ initial, initialKind = 'big', onSubmit, submitLabel, state }: {
+export default function DreamForm({ initial, initialKind = 'big', onSubmit, submitLabel, state, formId, hideSubmit }: {
+  /** `form`-и тугмаи берунӣ (масалан, дар поёни саҳифа) ба ин id пайваст мешавад. */
+  formId?: string;
+  hideSubmit?: boolean;
   initial?: Dream;
   initialKind?: Dream['kind'];
   onSubmit: (v: DreamValues) => void;
@@ -118,7 +121,7 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
   );
 
   return (
-    <form onSubmit={submit}>
+    <form id={formId} onSubmit={submit}>
       <Field label="Номи орзу">
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, мошин" required />
       </Field>
@@ -210,7 +213,7 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
         </>
       )}
 
-      <button className="btn" type="submit">{submitLabel}</button>
+      {!hideSubmit && <button className="btn" type="submit">{submitLabel}</button>}
 
       {pickDeadline && (
         <DatePickerSheet value={deadline || today()} min={today()} max={`${new Date().getFullYear() + 15}-12-31`}
