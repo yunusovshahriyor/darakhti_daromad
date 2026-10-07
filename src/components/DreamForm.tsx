@@ -147,26 +147,29 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
             </button>
           </Field>
 
-          <div className="field">
-            <span>Акс</span>
-            <div className="img-row">
-              {image ? <img src={image} alt="" /> : <div className="img-ph">🖼️</div>}
-              <button type="button" className="btn-sm" onClick={() => file.current?.click()}>
-                {image ? 'Иваз кардан' : 'Акс интихоб кардан'}
-              </button>
-              {image && <button type="button" className="btn-sm ghost" onClick={() => setImage('')}>Нест кардан</button>}
-              <input ref={file} type="file" accept="image/*" hidden
-                onChange={e => { void pickImage(e.target.files?.[0]); e.target.value = ''; }} />
+          <div className="photo-color">
+            <div className="pc-col">
+              <span>Акс</span>
+              <div className="pc-photo">
+                <button type="button" className="pc-img" onClick={() => file.current?.click()} aria-label="Акс интихоб кардан"
+                  style={image ? { backgroundImage: `url(${image})` } : undefined}>
+                  {!image && '🖼️'}
+                </button>
+                <button type="button" className="pc-badge" onClick={() => file.current?.click()}
+                  aria-label={image ? 'Иваз кардани акс' : 'Илова кардани акс'}>{image ? '✎' : '+'}</button>
+                {image && <button type="button" className="pc-x" onClick={() => setImage('')} aria-label="Нест кардани акс">✕</button>}
+                <input ref={file} type="file" accept="image/*" hidden
+                  onChange={e => { void pickImage(e.target.files?.[0]); e.target.value = ''; }} />
+              </div>
             </div>
-          </div>
-
-          <div className="field">
-            <span>Ранг</span>
-            <div className="swatches colors">
-              {COLORS.map(c => (
-                <button type="button" key={c} className={c === color ? 'on' : ''} style={{ background: c }}
-                  onClick={() => setColor(c === color ? '' : c)} aria-label={c} />
-              ))}
+            <div className="pc-col grow">
+              <span>Ранг</span>
+              <div className="pc-colors">
+                {COLORS.map(c => (
+                  <button type="button" key={c} className={c === color ? 'on' : ''} style={{ background: c }}
+                    onClick={() => setColor(c === color ? '' : c)} aria-label={c} />
+                ))}
+              </div>
             </div>
           </div>
 
