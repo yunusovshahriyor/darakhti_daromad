@@ -2,6 +2,7 @@ import { CSSProperties, ReactNode, useState } from 'react';
 import BuyDreamForm from '../components/BuyDreamForm';
 import CollapsibleCells from '../components/CollapsibleCells';
 import DreamForm from '../components/DreamForm';
+import type { DreamValues } from '../components/DreamForm';
 import ExpenseForm from '../components/ExpenseForm';
 import GoalForm from '../components/GoalForm';
 import { EyeIcon, EyeOffIcon, MinusIcon, PlusIcon, SwapIcon, TargetIcon } from '../components/Icons';
@@ -104,7 +105,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   };
   const common = { state, setState };
 
-  const addDream = (v: { title: string; target: number; kind: Dream['kind']; priority: boolean }) => {
+  const addDream = (v: DreamValues) => {
     setState(s => ({ ...s, dreams: [...s.dreams, { id: uid(), ...v }] }));
     done('Орзу илова шуд ✨');
   };
@@ -347,8 +348,8 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
         </Sheet>
       )}
       {modal === 'addDream' && (
-        <Sheet title="Орзуи нав" onClose={close}>
-          <DreamForm initialKind={kind} onSubmit={addDream} submitLabel="Илова кардан" />
+        <Sheet title="Орзуи нав" onClose={close} tall>
+          <DreamForm state={state} initialKind={kind} onSubmit={addDream} submitLabel="Илова кардан" />
         </Sheet>
       )}
     </>

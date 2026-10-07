@@ -39,7 +39,7 @@ const dateText = (iso: string) => {
   return `${d}.${m}.${y}`;
 };
 
-/** Форма барои илова кардан ва таҳрири орзу. Майдонҳои иловагӣ танҳо ҳангоми таҳрир нишон дода мешаванд. */
+/** Форма барои илова кардан ва таҳрири орзу (ҳамон майдонҳо дар ҳарду ҳолат). */
 export default function DreamForm({ initial, initialKind = 'big', onSubmit, submitLabel, state, formId, hideSubmit }: {
   /** `form`-и тугмаи берунӣ (масалан, дар поёни саҳифа) ба ин id пайваст мешавад. */
   formId?: string;
@@ -48,7 +48,7 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
   initialKind?: Dream['kind'];
   onSubmit: (v: DreamValues) => void;
   submitLabel: string;
-  /** Барои интихоби ҳисоб дар ҷамъкунии худкор (танҳо ҳангоми таҳрир). */
+  /** Барои интихоби ҳисоб дар ҷамъкунии худкор. */
   state?: State;
 }) {
   const [title, setTitle] = useState(initial?.title ?? '');
@@ -77,7 +77,7 @@ export default function DreamForm({ initial, initialKind = 'big', onSubmit, subm
 
   const num = parseFloat(target) || 0;
   const bal = state ? balancesOf(state) : {};
-  const extras = !!initial;
+  const extras = true;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();

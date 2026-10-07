@@ -3,6 +3,7 @@ import CollapsibleCells from '../components/CollapsibleCells';
 import DreamForm from '../components/DreamForm';
 import DreamDetailSheet from '../components/DreamDetailSheet';
 import type { DreamInfo } from '../components/DreamDetailSheet';
+import type { DreamValues } from '../components/DreamForm';
 import Fab from '../components/Fab';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
@@ -23,7 +24,7 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
   const bal = balancesOf(state);
   const bought = boughtDreams(state.dreams);
 
-  const add = (v: { title: string; target: number; kind: Kind; priority: boolean }) => {
+  const add = (v: DreamValues) => {
     setState(s => ({ ...s, dreams: [...s.dreams, { id: uid(), ...v }] }));
     setAdding(false);
   };
@@ -176,8 +177,8 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
       <Fab onClick={() => setAdding(true)} label="Орзуи нав" />
 
       {adding && (
-        <Sheet title="Орзуи нав" onClose={() => setAdding(false)}>
-          <DreamForm onSubmit={add} submitLabel="Илова кардан" />
+        <Sheet title="Орзуи нав" onClose={() => setAdding(false)} tall>
+          <DreamForm state={state} onSubmit={add} submitLabel="Илова кардан" />
         </Sheet>
       )}
 
