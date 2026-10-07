@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import BuyDreamForm from '../components/BuyDreamForm';
 import CollapsibleCells from '../components/CollapsibleCells';
 import DreamForm from '../components/DreamForm';
-import DreamSaveSheet from '../components/DreamSaveSheet';
+import DreamDetailSheet from '../components/DreamDetailSheet';
+import type { DreamInfo } from '../components/DreamDetailSheet';
 import Fab from '../components/Fab';
-import { PencilIcon } from '../components/Icons';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { balancesOf, boughtDreams, fmt, formatEta, fundDreams, monthlyPoolRate, uid } from '../model';
+import { balancesOf, boughtDreams, fmt, fundDreams, monthlyPoolRate, uid } from '../model';
 import type { AccountId, Dream } from '../types';
 import type { Props } from './props';
 
@@ -17,9 +16,7 @@ type Tab = 'now' | 'done';
 
 export default function Dreams({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
   const [adding, setAdding] = useState(false);
-  const [editFor, setEditFor] = useState<Dream | null>(null);
-  const [buyFor, setBuyFor] = useState<Dream | null>(null);
-  const [saveFor, setSaveFor] = useState<Dream | null>(null);
+  const [detailId, setDetailId] = useState<number | null>(null);
   const [tabs, setTabs] = useState<Record<Kind, Tab>>({ big: 'now', small: 'now' });
 
   const bal = balancesOf(state);
@@ -30,23 +27,34 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
     setAdding(false);
   };
 
-  const save = (v: { title: string; target: number; kind: Kind; priority: boolean }) => {
-    if (!editFor) return;
-    const id = editFor.id;
-    setState(s => ({ ...s, dreams: s.dreams.map(d => (d.id === id ? { ...d, ...v } : d)) }));
-    setEditFor(null);
-  };
-
   const remove = (id: number) =>
     setState(s => ({ ...s, dreams: s.dreams.filter(d => d.id !== id) }));
+
+  /** Маълумоти як орзу барои саҳифаи он: ҷамъшуда, навбат, муддати расидан. */
+  const infoFor = (d: Dream): DreamInfo => {
+    const account: AccountId = d.kind === 'big' ? 'bigDream' : 'smallDream';
+    const pool = bal[account];
+    const plan = fundDreams(state.dreams.filter(x => x.kind === d.kind), pool);
+    const rate = monthlyPoolRate(state, account);
+    const extra = Math.max(50, Math.round((rate * 0.25) / 50) * 50);
+    let cum = 0;
+    for (const p of plan) {
+      cum += p.dream.target;
+      if (p.dream.id === d.id) {
+        const need = Math.max(0, cum - pool);
+        return {
+          funded: p.funded, ready: p.ready, rank: p.rank, rate, extra,
+          months: rate > 0 ? need / rate : 0, faster: rate > 0 ? need / (rate + extra) : 0,
+        };
+      }
+    }
+    return { funded: 0, ready: false, rank: 1, rate, extra, months: 0, faster: 0 };
+  };
 
   /** Ҳар навъ (калон / хурд) блоки алоҳида бо табҳои худ дорад. */
   const block = (k: Kind, name: string, account: AccountId) => {
     const pool = bal[account];
     const plan = fundDreams(state.dreams.filter(d => d.kind === k), pool);
-    const rate = monthlyPoolRate(state, account);
-    const extra = Math.max(50, Math.round((rate * 0.25) / 50) * 50);
-    let cum = 0;
     const done = bought.filter(d => d.kind === k);
     const tab = tabs[k];
 
@@ -65,14 +73,9 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
               <div className="empty small">Орзуи фаъол нест.</div>
             ) : (
               <div className="cells">
-                {plan.map(({ dream: d, funded, ready, rank }) => {
-                  cum += d.target;
-                  const need = Math.max(0, cum - pool);
-                  const months = rate > 0 ? need / rate : 0;
-                  const faster = rate > 0 ? need / (rate + extra) : 0;
-                  return (
+                {plan.map(({ dream: d, funded, ready, rank }) => (
                   <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
-                    <div className="cell tap" onClick={() => setBuyFor(d)}>
+                    <div className="cell tap" onClick={() => setDetailId(d.id)}>
                       <div className={ready || rank === 1 ? 'rank first' : 'rank'}>{rank}</div>
                       <div className="grow">
                         <div className="r1">
@@ -80,29 +83,10 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
                           <b className={ready ? 'pos' : ''}>{ready ? 'Тайёр ✓' : fmt(d.target)}</b>
                         </div>
                         <div className="progress"><i style={{ width: `${(funded / d.target) * 100}%` }} /></div>
-                        <small>
-                          {fmt(funded)} аз {fmt(d.target)} · {d.priority ? 'афзалиятнок' : 'аз рӯи нарх'}
-                        </small>
-                        {!ready && (
-                          <small className="eta">
-                            {rate > 0
-                              ? `⏳ ${formatEta(months)}${months - faster >= 1 ? ` · бо +${fmt(extra)} дар моҳ: ${formatEta(faster)}` : ''}`
-                              : '⏳ Муддат пас аз аввалин ҷамъкунӣ ҳисоб мешавад'}
-                          </small>
-                        )}
-                      </div>
-                      <div className="row-actions">
-                        <button className="save-btn" aria-label="Ҷамъ кардан"
-                          onClick={e => { e.stopPropagation(); setSaveFor(d); }}>+</button>
-                        <button className="icon-btn sm" aria-label="Таҳрир"
-                          onClick={e => { e.stopPropagation(); setEditFor(d); }}>
-                          <PencilIcon />
-                        </button>
                       </div>
                     </div>
                   </SwipeRow>
-                  );
-                })}
+                ))}
               </div>
             )
           ) : done.length === 0 ? (
@@ -147,24 +131,13 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
         </Sheet>
       )}
 
-      {editFor && (
-        <Sheet title="Таҳрири орзу" onClose={() => setEditFor(null)}>
-          <DreamForm initial={editFor} onSubmit={save} submitLabel="Нигоҳ доштан" />
-        </Sheet>
-      )}
-
-      {saveFor && (
-        <DreamSaveSheet state={state} setState={setState} dream={saveFor}
-          onClose={() => setSaveFor(null)} onDone={onToast} />
-      )}
-
-      {buyFor && (
-        <Sheet title={`Харид: ${buyFor.title}`} onClose={() => setBuyFor(null)}>
-          <BuyDreamForm state={state} setState={setState} dream={buyFor}
-            defaultSource={buyFor.kind === 'big' ? 'bigDream' : 'smallDream'}
-            onDone={() => setBuyFor(null)} />
-        </Sheet>
-      )}
+      {detailId !== null && (() => {
+        const d = state.dreams.find(x => x.id === detailId && !x.boughtAt);
+        return d ? (
+          <DreamDetailSheet state={state} setState={setState} dream={d} info={infoFor(d)}
+            onClose={() => setDetailId(null)} onToast={onToast} />
+        ) : null;
+      })()}
     </>
   );
 }

@@ -1021,3 +1021,26 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .cel-card p { margin: 0 0 12px; color: var(--muted); line-height: 1.4; }
 .cel-card small { color: var(--muted); font-size: .72rem; }
 @keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- Саҳифаи орзу ---------- */
+.dd { display: grid; gap: 12px; padding-bottom: 8px; }
+.dd-hero { padding: 18px 16px 12px; border-radius: 22px; background: var(--bg); display: grid; gap: 6px; }
+.dd-pct { font-size: 3rem; font-weight: 800; letter-spacing: -.03em; color: var(--primary); line-height: 1; }
+.dd-pct small { font-size: 1.4rem; margin-left: 2px; }
+.dd-bar { height: 12px; border-radius: 99px; background: var(--border); overflow: hidden; margin: 6px 0 8px; }
+.dd-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary), var(--primary-2)); transition: width .4s; }
+.dd-line { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; padding: 3px 0; }
+.dd-line span { color: var(--muted); }
+.dd-eta { display: grid; gap: 3px; padding: 12px 16px; border-radius: 18px; border: 1px dashed var(--border); }
+.dd-eta small { color: var(--muted); }
+.dd-eta small.hl { color: var(--primary); font-weight: 600; }
+.dd-eta-main { font-size: 1.3rem; font-weight: 800; }
+.dd-ready { font-weight: 700; color: var(--primary); }
+.dd-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; border: 1.5px solid var(--primary); border-radius: 16px; background: none; color: var(--primary); font-size: 1rem; font-weight: 700; }
+.dd-add span { font-size: 1.3rem; line-height: 1; }
+.dd-buy { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 20px; background: linear-gradient(140deg, #1f2a26, #2c3a34); color: #fff; }
+.dd-buy.ready { background: linear-gradient(140deg, #14805b, #2fbf8b); box-shadow: 0 8px 22px color-mix(in srgb, var(--primary) 35%, transparent); }
+.dd-buy-t { display: grid; gap: 2px; }
+.dd-buy-t small { color: rgba(255, 255, 255, .75); font-size: .78rem; }
+.dd-buy button { flex: none; height: 44px; padding: 0 20px; border: 0; border-radius: 14px; background: #fff; color: #14231c; font-weight: 800; font-size: .95rem; }
+.dd-buy:not(.ready) button { background: rgba(255, 255, 255, .16); color: #fff; }
