@@ -537,10 +537,10 @@ input[type='date'] { min-height: 50px; }
 .icon-btn.sm { width: 34px; height: 34px; flex: none; color: var(--muted); }
 
 .switch-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px;
-  border: 1px solid var(--border); border-radius: 14px; background: var(--bg); margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: 16px; background: var(--bg); margin-bottom: 12px;
 }
-.switch-row > span:first-child { display: grid; gap: 3px; min-width: 0; }
+.switch-row > span:first-child { display: grid; gap: 4px; min-width: 0; }
 .switch-row small { color: var(--muted); font-size: .76rem; line-height: 1.35; }
 .switch { position: relative; flex: none; width: 52px; height: 32px; }
 .switch input {
@@ -875,7 +875,7 @@ input:disabled { opacity: .55; }
 .sheet.tall input:not([type='date']):not([type='checkbox']), .sheet.tall select { height: 42px; border-radius: 12px; font-size: .92rem; }
 .sheet.tall .preview { padding: 8px 12px; margin: 8px 0 0; font-size: .8rem; border-radius: 12px; }
 .sheet.tall .alert { padding: 8px 12px; font-size: .78rem; margin-top: 8px; border-radius: 12px; }
-.sheet.tall .switch-row { padding: 8px 2px; }
+.sheet.tall .switch-row { padding: 12px 16px; }
 .sheet.tall .btn.big { height: 48px; border-radius: 15px; font-size: .98rem; margin-top: 8px; }
 .sheet.tall .loan-prog { margin: 3px 0; }
 
