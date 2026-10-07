@@ -16,8 +16,8 @@ const ICONS = [
   '☕', '👶', '🐾', '🎮', '🎬', '📚', '🧾', '💡', '🌍', '🤲', '🌱', '💰',
 ];
 const COLORS = [
-  '#b7791f', '#b24a6c', '#2f857b', '#7a5bb8', '#b3453b', '#1f6fa3',
-  '#2f7d55', '#2f8fb5', '#46688f', '#8a5a2b', '#5b7f2a', '#a0522d',
+  '#a07f4f', '#8a5a4a', '#4b6b55', '#8c6d8f', '#9a4a3c', '#2f4a6b',
+  '#5f6f3f', '#4f7c86', '#3b4a66', '#6b4f3a', '#7a6a3a', '#5a3d2e',
 ];
 
 const parsePercent = (v: string) => Math.max(0, Math.min(100, parseFloat(v) || 0));
@@ -60,7 +60,7 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
 
   const [name, setName] = useState(def?.name ?? group?.title ?? '');
   const [icon, setIcon] = useState(def?.icon ?? group?.icon ?? '💰');
-  const [color, setColor] = useState(def?.color ?? '#46688f');
+  const [color, setColor] = useState(def?.color ?? '#3b4a66');
   const [percent, setPercent] = useState(String(node ? Math.round(node.percent * 100) / 100 : 0));
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);

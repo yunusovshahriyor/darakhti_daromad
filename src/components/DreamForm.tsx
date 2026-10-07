@@ -20,7 +20,7 @@ export interface DreamValues {
   autoSave?: Dream['autoSave'];
 }
 
-const COLORS = ['#1d8a63', '#3b82f6', '#e59a1b', '#d94b4b', '#8b5cf6', '#ec4899', '#0ea5a5', '#64748b'];
+const COLORS = ['#3f6b4e', '#2f4a6b', '#c4a070', '#9a4a3c', '#8c6d8f', '#8a5a4a', '#4f7c86', '#6b4f3a'];
 
 /** Акс: хурд карда мешавад (то 480px, JPEG), то хотира пур нашавад. */
 async function shrink(file: File): Promise<string> {

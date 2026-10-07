@@ -454,15 +454,15 @@ export function pickItems(kind: PeriodKind, anchorYear: number, anchorMonth: num
 
 /** Ҳисобҳои пешфарз. */
 export const DEFAULT_ACCOUNTS: AccountDef[] = [
-  { id: 'charity', name: 'Садақа', icon: '🤲', color: '#b7791f' },
-  { id: 'parents', name: 'Волидон', icon: '👨‍👩‍👧', color: '#b24a6c' },
-  { id: 'future', name: 'Барои оянда', icon: '🌱', color: '#2f857b' },
-  { id: 'fun', name: 'Вақтхушӣ', icon: '🎉', color: '#7a5bb8' },
-  { id: 'debt', name: 'Пардохти қарз', icon: '💳', color: '#b3453b' },
-  { id: 'capital', name: 'Сармоя', icon: '📈', color: '#1f6fa3' },
-  { id: 'bigDream', name: 'Орзуи калон', icon: '🏠', color: '#2f7d55' },
-  { id: 'smallDream', name: 'Орзуи хурд', icon: '✈️', color: '#2f8fb5' },
-  { id: 'living', name: 'Хароҷоти зиндагӣ', icon: '🛒', color: '#46688f' },
+  { id: 'charity', name: 'Садақа', icon: '🤲', color: '#a07f4f' },
+  { id: 'parents', name: 'Волидон', icon: '👨‍👩‍👧', color: '#8a5a4a' },
+  { id: 'future', name: 'Барои оянда', icon: '🌱', color: '#4b6b55' },
+  { id: 'fun', name: 'Вақтхушӣ', icon: '🎉', color: '#8c6d8f' },
+  { id: 'debt', name: 'Пардохти қарз', icon: '💳', color: '#9a4a3c' },
+  { id: 'capital', name: 'Сармоя', icon: '📈', color: '#2f4a6b' },
+  { id: 'bigDream', name: 'Орзуи калон', icon: '🏠', color: '#5f6f3f' },
+  { id: 'smallDream', name: 'Орзуи хурд', icon: '✈️', color: '#4f7c86' },
+  { id: 'living', name: 'Хароҷоти зиндагӣ', icon: '🛒', color: '#3b4a66' },
 ];
 
 /** Ҳисобҳое, ки бо хусусиятҳои барнома пайваст аст ва нест намешаванд (таҳрир мешаванд). */
