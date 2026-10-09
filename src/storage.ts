@@ -24,11 +24,11 @@ export function loadState(): State {
   return state;
 }
 
-/** Рангҳои пешфарзи кӯҳна (пеш аз тарҳи Old Money) → рангҳои нав. Рангҳои дастӣ тағйир намеёбанд. */
-const OLD_COLORS: Record<string, [string, string]> = {
-  charity: ['#b7791f', '#a07f4f'], parents: ['#b24a6c', '#8a5a4a'], future: ['#2f857b', '#4b6b55'],
-  fun: ['#7a5bb8', '#8c6d8f'], debt: ['#b3453b', '#9a4a3c'], capital: ['#1f6fa3', '#2f4a6b'],
-  bigDream: ['#2f7d55', '#5f6f3f'], smallDream: ['#2f8fb5', '#4f7c86'], living: ['#46688f', '#3b4a66'],
+/** Рангҳои «Old Money» (агар пештар захира шуда бошанд) → рангҳои пешфарзи пештара. */
+const NEW_TO_OLD: Record<string, [string, string]> = {
+  charity: ['#a07f4f', '#b7791f'], parents: ['#8a5a4a', '#b24a6c'], future: ['#4b6b55', '#2f857b'],
+  fun: ['#8c6d8f', '#7a5bb8'], debt: ['#9a4a3c', '#b3453b'], capital: ['#2f4a6b', '#1f6fa3'],
+  bigDream: ['#5f6f3f', '#2f7d55'], smallDream: ['#4f7c86', '#2f8fb5'], living: ['#3b4a66', '#46688f'],
 };
 
 function readState(): State {
@@ -40,7 +40,7 @@ function readState(): State {
       // Версияи кӯҳна: ҳисобҳо ва дарахт бо фоизҳои сабтшуда сохта мешаванд
       let tree = s.tree ?? defaultTree({ ...DEFAULT_SETTINGS, ...(s.settings ?? {}) });
       const accounts = (s.accounts ?? base.accounts).map(a =>
-        (OLD_COLORS[a.id] && a.color === OLD_COLORS[a.id][0] ? { ...a, color: OLD_COLORS[a.id][1] } : a));
+        (NEW_TO_OLD[a.id] && a.color === NEW_TO_OLD[a.id][0] ? { ...a, color: NEW_TO_OLD[a.id][1] } : a));
       // «Пардохти қарз» ҳиссаи худро (10%) дар дарахт дорад
       if (!findAccountNode(tree, 'debt') && accounts.some(a => a.id === 'debt' && !a.archived)) {
         tree = addAccountNode(tree, 'root', 'debt', 10);
