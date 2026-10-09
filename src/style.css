@@ -1157,3 +1157,21 @@ h1, h2, .logo, .bh-total, .ah-bal, .amount-big, .dd-pct, .dd-eta-main, .rc-amoun
 h1, h2 { font-weight: 700; letter-spacing: -.01em; }
 .logo { font-weight: 800; }
 .logo i { color: var(--accent); font-style: normal; }
+
+/* ---------- Саҳифаи орзуҳо: тоза ва ихчам ---------- */
+.dr-top { display: grid; gap: 6px; margin-bottom: 6px; }
+.dr-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.dr-pill { padding: 6px 12px; border-radius: 999px; font-size: .78rem; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); }
+.dr-pill.hot { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+.dr-pill.warn { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
+.dr-top > .dr-warn { display: grid; gap: 1px; padding: 2px 4px 2px 12px; border-radius: 0; background: none; border-left: 3px solid var(--danger); font-size: .85rem; }
+.dr-warn b { font-size: .9rem; }
+.dr-warn small { color: var(--muted); }
+.medals { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 8px; scrollbar-width: none; scroll-padding-inline: 16px; }
+.medals::-webkit-scrollbar { display: none; }
+.medal { flex: none; width: 84px; display: grid; justify-items: center; gap: 4px; padding: 12px 6px 10px; border-radius: 18px; text-align: center; background: var(--surface); border: 1px solid var(--border); opacity: .5; filter: grayscale(1); }
+.medal.on { opacity: 1; filter: none; border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.medal span { font-size: 1.7rem; line-height: 1; }
+.medal b { font-size: .68rem; font-weight: 600; line-height: 1.25; }
+.medal small { display: none; }
+.dr-top > .dr-pills { padding: 0; }

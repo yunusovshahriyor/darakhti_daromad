@@ -148,13 +148,15 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
     <>
       {(streak > 0 || nudge || behind.length > 0) && (
         <section className="dr-top">
-          {streak > 0 && (
-            <div className="dr-streak">🔥 <b>{streak}</b> ҳафта пай дар пай ба орзуҳо маблағ мегузоред</div>
-          )}
-          {nudge && <div className="dr-nudge">💡 Ин ҳафта ба орзуҳо ҳанӯз чизе нагузоштаед. Ҳатто 50 смн ҳам мешавад!</div>}
+          <div className="dr-pills">
+            {streak > 0 && <span className="dr-pill hot">🔥 {streak} ҳафта пай дар пай</span>}
+            {nudge && <span className="dr-pill">💡 Ин ҳафта чизе нагузоштаед</span>}
+            {behind.length > 0 && <span className="dr-pill warn">⚠️ {behind.length} аз реҷа мондааст</span>}
+          </div>
           {behind.map(p => (
             <div className="dr-warn" key={p.dream.id}>
-              ⚠️ «{p.dream.title}» аз реҷа мондааст: ҳар моҳ {fmt(Math.ceil(p.perMonth))} лозим, ҳозир {fmt(Math.round(p.rate))}
+              <b>{p.dream.title}</b>
+              <small>Ҳар моҳ {fmt(Math.ceil(p.perMonth))} лозим · ҳозир {fmt(Math.round(p.rate))}</small>
             </div>
           ))}
         </section>
@@ -169,7 +171,6 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
           <div key={m.id} className={m.done ? 'medal on' : 'medal'} title={m.text}>
             <span>{m.icon}</span>
             <b>{m.title}</b>
-            <small>{m.text}</small>
           </div>
         ))}
       </div>
