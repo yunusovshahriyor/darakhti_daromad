@@ -145,7 +145,7 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
   const medals = badges(state, bestPct);
 
   return (
-    <>
+    <div className="dreams-page">
       {(streak > 0 || nudge || behind.length > 0) && (
         <section className="dr-top">
           <div className="dr-pills">
@@ -190,6 +190,6 @@ export default function Dreams({ state, setState, onToast }: Props & { onToast: 
             onClose={() => setDetailId(null)} onToast={onToast} />
         ) : null;
       })()}
-    </>
+    </div>
   );
 }
