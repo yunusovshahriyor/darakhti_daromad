@@ -11,7 +11,15 @@ const readName = (): string => {
   try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; }
 };
 
-export default function Profile({ state, open }: Props & { open: (s: Sub) => void }) {
+interface ProfileProps extends Props {
+  open: (s: Sub) => void;
+  canInstall: boolean;
+  install: () => void;
+  standalone: boolean;
+  ios: boolean;
+}
+
+export default function Profile({ state, open, canInstall, install, standalone, ios }: ProfileProps) {
   const [name, setName] = useState(readName);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -92,6 +100,34 @@ export default function Profile({ state, open }: Props & { open: (s: Sub) => voi
           <ChevronIcon />
         </button>
       </div>
+
+      {!standalone && (
+        <>
+          <h3 className="group-title"><span>Барнома</span></h3>
+          <div className="cells">
+            {canInstall ? (
+              <button className="cell tap link" onClick={install}>
+                <div className="ic">📲</div>
+                <div className="grow">
+                  <b>Ҳамчун барнома насб кардан</b>
+                  <small>Ба экрани асосӣ илова кунед</small>
+                </div>
+                <ChevronIcon />
+              </button>
+            ) : (
+              <div className="cell">
+                <div className="ic">📲</div>
+                <div className="grow">
+                  <b>Ҳамчун барнома насб кардан</b>
+                  <small>{ios
+                    ? 'Тугмаи «Мубодила» (↑) → «Add to Home Screen»'
+                    : 'Менюи браузер (⋮) → «Install app» / «Add to Home screen»'}</small>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {editing && (
         <Sheet title="Номи шумо" onClose={() => setEditing(false)}>

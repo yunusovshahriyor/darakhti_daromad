@@ -70,6 +70,10 @@ function readNav(): Nav {
   return nav;
 }
 
+interface InstallEvent extends Event {
+  prompt: () => Promise<void>;
+}
+
 const readHidden = () => {
   try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; }
 };
@@ -93,6 +97,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; text: string } | null>(null);
   const [hidden, setHidden] = useState(readHidden);
+  const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
   const prevBal = useRef<Alloc | null>(null);
 
   useEffect(() => saveState(state), [state]);
@@ -168,6 +173,20 @@ export default function App() {
   }, [state]);
 
   useEffect(() => {
+    const h = (e: Event) => {
+      e.preventDefault();
+      setInstallEvent(e as InstallEvent);
+    };
+    const done = () => setInstallEvent(null);
+    window.addEventListener('beforeinstallprompt', h);
+    window.addEventListener('appinstalled', done);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', h);
+      window.removeEventListener('appinstalled', done);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(''), 2400);
     return () => clearTimeout(t);
@@ -218,6 +237,11 @@ export default function App() {
     }
   };
 
+  const standalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
   const infoKind = !acct && (sub === 'debts' || sub === 'dreams' || sub === 'settings') ? sub : null;
   const home = tab === 'home' && !sub && !acct;
   const title = acct ? ACCOUNTS[acct].name : sub ? SUB_TITLES[sub] : TITLES[tab];
@@ -247,7 +271,11 @@ export default function App() {
     }
     if (tab === 'accounts') return <Accounts {...props} {...privacy} onOpenAccount={openAccount} />;
     if (tab === 'history') return <History {...props} filter={filter} onFilter={setFilter} />;
-    return <Profile {...props} open={setSub} />;
+    return (
+      <Profile {...props} open={setSub} standalone={standalone} ios={ios}
+        canInstall={installEvent !== null}
+        install={() => installEvent?.prompt().then(() => setInstallEvent(null))} />
+    );
   };
 
   return (
