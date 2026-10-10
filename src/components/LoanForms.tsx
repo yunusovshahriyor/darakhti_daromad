@@ -66,9 +66,9 @@ export function LendForm({ state, setState, onDone, afterPad }: Props & Extra) {
 }
 
 /** Қарзро баргардониданд: маблағ ба ҳамон ҳисобе бармегардад, ки аз он дода шуда буд. */
-export function ReturnLoanForm({ state, setState, onDone, afterPad }: Props & Extra) {
+export function ReturnLoanForm({ state, setState, onDone, afterPad, loanId }: Props & Extra & { loanId?: number }) {
   const open = openLoans(state.loans);
-  const [pick, setPick] = useState<number | undefined>(open[0]?.id);
+  const [pick, setPick] = useState<number | undefined>(loanId ?? open[0]?.id);
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
 

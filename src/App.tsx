@@ -261,7 +261,7 @@ export default function App() {
         onManage={page => { setAcct(null); setSub(page); }} />;
     }
     if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
-    if (sub === 'debts') return <Debts {...props} />;
+    if (sub === 'debts') return <Debts {...props} onToast={setToast} />;
     if (sub === 'settings') return <SettingsView {...props} onToast={setToast} />;
     if (tab === 'home') {
       return (

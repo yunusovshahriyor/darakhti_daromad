@@ -3,17 +3,21 @@ import CollapsibleCells from '../components/CollapsibleCells';
 import DebtForm from '../components/DebtForm';
 import Empty from '../components/Empty';
 import Fab from '../components/Fab';
+import LoanEditForm from '../components/LoanEditForm';
+import { ReturnLoanForm } from '../components/LoanForms';
 import LoanProgress from '../components/LoanProgress';
 import PayDebtForm from '../components/PayDebtForm';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
 import { fmt, loanLeft, openLoans, remaining, splitDebts, withNewDebt } from '../model';
-import type { Debt } from '../types';
+import type { Debt, Loan } from '../types';
 import type { Props } from './props';
 
-export default function Debts({ state, setState }: Props) {
+export default function Debts({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
   const [adding, setAdding] = useState(false);
+  const [loanFor, setLoanFor] = useState<Loan | null>(null);
+  const [loanMode, setLoanMode] = useState<'return' | 'edit'>('return');
   const [mode, setMode] = useState<'pay' | 'edit'>('pay');
   const [payFor, setPayFor] = useState<Debt | null>(null);
   const [tab, setTab] = useState<'now' | 'done'>('now');
@@ -29,7 +33,18 @@ export default function Debts({ state, setState }: Props) {
   const save = (v: { title: string; amount: number; priority: boolean; date?: string }) => {
     if (!payFor) return;
     const id = payFor.id;
-    setState(s => ({ ...s, debts: s.debts.map(d => (d.id === id ? { ...d, ...v } : d)) }));
+    setState(s => ({
+      ...s,
+      debts: s.debts.map(d => {
+        if (d.id !== id) return d;
+        const { paidAt, ...rest } = d;
+        const next = { ...rest, ...v };
+        // Маблағ зиёд шуд: қарз боз кушода мешавад; пардохтшуда бошад, санаи пардохт мемонад
+        return next.paid >= next.amount - 0.005 && paidAt ? { ...next, paidAt } : next;
+      }),
+      expenses: s.expenses.map(x => (x.debtId === id ? { ...x, title: `Қарз: ${v.title}` } : x)),
+      incomes: s.incomes.map(i => (i.kind === 'borrow' && i.debtId === id ? { ...i, title: `Қарз гирифтам: ${v.title}` } : i)),
+    }));
     setPayFor(null);
   };
 
@@ -94,7 +109,7 @@ export default function Debts({ state, setState }: Props) {
             <CollapsibleCells>
               {paid.map(d => (
                 <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
-                  <div className="cell">
+                  <div className="cell tap" onClick={() => { setMode('edit'); setPayFor(d); }}>
                     <div className="rank sm done">✓</div>
                     <div className="grow">
                       <div className="r1">
@@ -117,7 +132,7 @@ export default function Debts({ state, setState }: Props) {
           {openLoans(state.loans).length > 0 && (
             <div className="cells">
               {openLoans(state.loans).map(l => (
-                <div className="cell" key={l.id}>
+                <div className="cell tap" key={l.id} onClick={() => { setLoanMode('return'); setLoanFor(l); }}>
                   <div className="ic">{l.person.charAt(0).toUpperCase()}</div>
                   <div className="grow">
                     <div className="r1"><b>{l.person}</b><b className="pos">{fmt(loanLeft(l))}</b></div>
@@ -133,7 +148,7 @@ export default function Debts({ state, setState }: Props) {
               <h3 className="group-title"><span>Баргардонидашуда</span></h3>
               <CollapsibleCells>
                 {state.loans.filter(l => loanLeft(l) <= 0.005).map(l => (
-                  <div className="cell" key={l.id}>
+                  <div className="cell tap" key={l.id} onClick={() => { setLoanMode('edit'); setLoanFor(l); }}>
                     <div className="rank sm done">✓</div>
                     <div className="grow">
                       <div className="r1"><b>{l.person}</b><b className="pos">{fmt(l.amount)} смн</b></div>
@@ -144,7 +159,7 @@ export default function Debts({ state, setState }: Props) {
               </CollapsibleCells>
             </>
           )}
-          <p className="note">Баргардонидан: «Илова» → «Қарз» → «Қарзро баргардонданд». Қисман баргардонидан низ мумкин аст.</p>
+          <p className="note">Қарздорро пахш кунед: баргардонидан (қисман ҳам) ё таҳрир.</p>
         </>
       )}
 
@@ -158,9 +173,11 @@ export default function Debts({ state, setState }: Props) {
 
       {payFor && (
         <Sheet title={payFor.title} onClose={() => setPayFor(null)}>
-          <SegTabs value={mode} onChange={id => setMode(id as 'pay' | 'edit')}
-            tabs={[{ id: 'pay', label: 'Пардохт' }, { id: 'edit', label: 'Таҳрир' }]} />
-          {mode === 'pay' ? (
+          {remaining(payFor) > 0.005 && (
+            <SegTabs value={mode} onChange={id => setMode(id as 'pay' | 'edit')}
+              tabs={[{ id: 'pay', label: 'Пардохт' }, { id: 'edit', label: 'Таҳрир' }]} />
+          )}
+          {mode === 'pay' && remaining(payFor) > 0.005 ? (
             <PayDebtForm state={state} setState={setState} debt={payFor}
               onDone={() => setPayFor(null)} />
           ) : (
@@ -168,6 +185,25 @@ export default function Debts({ state, setState }: Props) {
           )}
         </Sheet>
       )}
+
+      {loanFor && (() => {
+        const live = state.loans.find(l => l.id === loanFor.id) ?? loanFor;
+        const canReturn = loanLeft(live) > 0.005;
+        return (
+          <Sheet title={live.person} onClose={() => setLoanFor(null)}>
+            {canReturn && (
+              <SegTabs value={loanMode} onChange={id => setLoanMode(id as 'return' | 'edit')}
+                tabs={[{ id: 'return', label: 'Баргардонидан' }, { id: 'edit', label: 'Таҳрир' }]} />
+            )}
+            {loanMode === 'return' && canReturn ? (
+              <ReturnLoanForm state={state} setState={setState} loanId={live.id}
+                onDone={m => { setLoanFor(null); onToast(m); }} />
+            ) : (
+              <LoanEditForm loan={live} setState={setState} onDone={() => setLoanFor(null)} />
+            )}
+          </Sheet>
+        );
+      })()}
     </>
   );
 }
