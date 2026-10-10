@@ -1201,3 +1201,32 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .dreams-page .medal { width: 84px; padding: 12px 6px 10px; border-radius: 16px; }
 .dreams-page .medal span { font-size: 1.6rem; }
 .dreams-page .medal b { font-size: .68rem; }
+
+/* ===== Профил ===== */
+.profile-page .pf-hero {
+  display: flex; align-items: center; gap: 14px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+}
+.pf-avatar {
+  width: 64px; height: 64px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  background: var(--primary); color: #fff; font-size: 1.7rem; font-weight: 700;
+}
+.pf-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pf-who b { font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-who small { color: var(--muted); }
+.pf-income {
+  padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.pf-big small { color: var(--muted); display: block; }
+.pf-big b { font-size: 1.9rem; }
+.pf-big i { font-size: 1rem; font-style: normal; color: var(--muted); font-weight: 600; }
+.pf-bars { display: flex; gap: 8px; height: 84px; align-items: flex-end; }
+.pf-bar { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.pf-bar span { width: 100%; max-width: 28px; border-radius: 6px; background: var(--primary); min-height: 4px; }
+.pf-bar span.zero { background: var(--border); }
+.pf-bar small { color: var(--muted); font-size: .68rem; }
+.pf-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pf-stats div { background: var(--bg); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.pf-stats small { color: var(--muted); font-size: .75rem; }
+.pf-stats b { font-size: 1.02rem; }

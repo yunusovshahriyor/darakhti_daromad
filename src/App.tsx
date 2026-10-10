@@ -19,6 +19,7 @@ import Dreams from './views/Dreams';
 import History, { HistoryFilter } from './views/History';
 import More, { Sub } from './views/More';
 import type { Tab } from './views/props';
+import Profile from './views/Profile';
 import SettingsView from './views/SettingsView';
 
 const LEFT: { id: Tab; label: string; icon: ReactNode }[] = [
@@ -31,13 +32,13 @@ const RIGHT: { id: Tab; label: string; icon: ReactNode }[] = [
 ];
 
 const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисобҳо', history: 'Таърих', more: 'Бештар' };
-const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
+const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот', profile: 'Профил' };
 const HIDE_KEY = 'darakhti:hide';
 const NAV_KEY = 'darakhti:nav';
 const FILTER_KEY = 'darakhti:hfilter';
 
 const TAB_IDS: Tab[] = ['home', 'accounts', 'history', 'more'];
-const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings'];
+const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings', 'profile'];
 const FILTER_IDS: HistoryFilter[] = ['all', 'income', 'expense', 'transfer'];
 
 interface Nav {
@@ -257,10 +258,11 @@ export default function App() {
     }
     if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
     if (sub === 'debts') return <Debts {...props} />;
+    if (sub === 'profile') return <Profile {...props} open={setSub} />;
     if (sub === 'settings') return <SettingsView {...props} onToast={setToast} />;
     if (tab === 'home') {
       return (
-        <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => setSub('settings')}
+        <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => setSub('profile')}
           onOpenAccount={openAccount} />
       );
     }

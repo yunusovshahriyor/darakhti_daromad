@@ -2,7 +2,7 @@ import { ChevronIcon } from '../components/Icons';
 import { fmt, hasDebt, remaining } from '../model';
 import type { Props } from './props';
 
-export type Sub = 'dreams' | 'debts' | 'settings';
+export type Sub = 'dreams' | 'debts' | 'settings' | 'profile';
 
 interface MoreProps extends Props {
   open: (s: Sub) => void;

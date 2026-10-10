@@ -104,7 +104,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
           <div className="logo">даромад<i>.</i></div>
           <small>содда. устувор.</small>
         </div>
-        <button className="avatar-btn" onClick={onProfile} aria-label="Танзимот"><PersonIcon /></button>
+        <button className="avatar-btn" onClick={onProfile} aria-label="Профил"><PersonIcon /></button>
       </header>
 
       <div className="period-nav">
