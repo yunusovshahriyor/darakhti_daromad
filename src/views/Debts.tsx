@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
+import AmountEntry from '../components/AmountEntry';
 import CollapsibleCells from '../components/CollapsibleCells';
 import DebtForm from '../components/DebtForm';
 import Empty from '../components/Empty';
@@ -15,7 +16,34 @@ import { dayTitle, fmt, loanLeft, today, openLoans, remaining, splitDebts, withN
 import type { Debt, DebtPlan, Loan } from '../types';
 import type { Props } from './props';
 
-function Schedule({ debt }: { debt: Debt }) {
+function RowEdit({ row, last, edited, onSave, onReset }: {
+  row: { n: number; due: string; payment: number; principal: number; interest: number };
+  last: boolean;
+  edited: boolean;
+  onSave: (v: { due: string; payment?: number }) => void;
+  onReset: () => void;
+}) {
+  const [amount, setAmount] = useState(String(row.payment));
+  const [date, setDate] = useState(row.due);
+  const num = parseFloat(amount) || 0;
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (last) onSave({ due: date });
+    else if (num > 0) onSave({ due: date, payment: num });
+  };
+  return (
+    <form onSubmit={submit}>
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <p className="muted" style={{ margin: '4px 2px 0' }}>
+        {last ? 'Қисти охирин боқимондаро мепӯшонад: танҳо санаро иваз кунед.' : 'Фоизи қистҳои баъдӣ аз санаи нав ҳисоб мешавад.'}
+      </p>
+      <button className="btn big" type="submit" disabled={!last && !(num > 0)}>Нигоҳ доштан</button>
+      {edited && <button type="button" className="btn ghost" onClick={onReset}>Ба ҳисоби аввал баргардонидан</button>}
+    </form>
+  );
+}
+
+function Schedule({ debt, onEdit }: { debt: Debt; onEdit: (n: number) => void }) {
   const plan = debt.plan!;
   const rows = buildSchedule(plan, debt.date ?? today());
   const t = planTotals(rows);
@@ -34,15 +62,17 @@ function Schedule({ debt }: { debt: Debt }) {
           const done = cum <= debt.paid + 0.005;
           const late = !done && r.due < now;
           return (
-            <div key={r.n} className={`sched-row${done ? ' done' : ''}${late ? ' late' : ''}`}>
+            <button key={r.n} type="button" className={`sched-row${done ? ' done' : ''}${late ? ' late' : ''}`}
+              onClick={() => onEdit(r.n)}>
               <span className="sn">{done ? '✓' : r.n}</span>
-              <span><b className="sd">{dayTitle(r.due)}</b>
+              <span><b className="sd">{dayTitle(r.due)}{r.edited ? ' ✎' : ''}</b>
                 <small>асосӣ {fmt(r.principal)} · фоиз {fmt(r.interest)}</small></span>
               <span className="sp">{fmt(r.payment)}</span>
-            </div>
+            </button>
           );
         })}
       </div>
+      <p className="muted" style={{ margin: '8px 2px 0' }}>Барои тағйири сана ё маблағи қист онро пахш кунед.</p>
     </>
   );
 }
@@ -54,16 +84,19 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
   const [mode, setMode] = useState<'pay' | 'schedule' | 'edit'>('pay');
   const [payFor, setPayFor] = useState<Debt | null>(null);
   const [tab, setTab] = useState<'now' | 'done'>('now');
+  const [rowEdit, setRowEdit] = useState<number | null>(null);
 
+  const live = payFor ? state.debts.find(d => d.id === payFor.id) ?? payFor : null;
+  const cur = live;
   const { open, paid } = splitDebts(state.debts);
   const first = open[0];
 
-  const add = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan }) => {
+  const add = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan; paid?: number }) => {
     setState(s => withNewDebt(s, v));
     setAdding(false);
   };
 
-  const save = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan }) => {
+  const save = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan; paid?: number }) => {
     if (!payFor) return;
     const id = payFor.id;
     setState(s => ({
@@ -79,6 +112,26 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
       incomes: s.incomes.map(i => (i.kind === 'borrow' && i.debtId === id ? { ...i, title: `Қарз гирифтам: ${v.title}` } : i)),
     }));
     setPayFor(null);
+  };
+
+  const saveRow = (n: number, v: { due: string; payment?: number } | null) => {
+    if (!live?.plan) return;
+    const id = live.id;
+    setState(s => ({
+      ...s,
+      debts: s.debts.map(d => {
+        if (d.id !== id || !d.plan) return d;
+        const overrides = { ...(d.plan.overrides ?? {}) };
+        if (v) overrides[n] = v;
+        else delete overrides[n];
+        const plan = { ...d.plan, overrides };
+        const total = planTotals(buildSchedule(plan, d.date ?? today())).total;
+        const { paidAt, ...rest } = d;
+        const next = { ...rest, plan, amount: total };
+        return next.paid >= next.amount - 0.005 ? { ...next, paidAt: paidAt ?? today() } : next;
+      }),
+    }));
+    setRowEdit(null);
   };
 
   const remove = (id: number) =>
@@ -230,23 +283,23 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
         </Sheet>
       )}
 
-      {payFor && (
-        <Sheet title={payFor.title} onClose={() => setPayFor(null)}>
-          {remaining(payFor) > 0.005 && (
+      {cur && (
+        <Sheet title={cur.title} onClose={() => setPayFor(null)}>
+          {remaining(cur) > 0.005 && (
             <SegTabs value={mode} onChange={id => setMode(id as 'pay' | 'schedule' | 'edit')}
               tabs={[
                 { id: 'pay', label: 'Пардохт' },
-                ...(payFor.plan ? [{ id: 'schedule', label: 'Ҷадвал' }] : []),
+                ...(cur.plan ? [{ id: 'schedule', label: 'Ҷадвал' }] : []),
                 { id: 'edit', label: 'Таҳрир' },
               ]} />
           )}
-          {mode === 'schedule' && payFor.plan ? (
-            <Schedule debt={payFor} />
-          ) : mode === 'pay' && remaining(payFor) > 0.005 ? (
-            <PayDebtForm state={state} setState={setState} debt={payFor}
+          {mode === 'schedule' && cur.plan ? (
+            <Schedule debt={cur} onEdit={n => setRowEdit(n)} />
+          ) : mode === 'pay' && remaining(cur) > 0.005 ? (
+            <PayDebtForm state={state} setState={setState} debt={cur}
               onDone={() => setPayFor(null)} />
           ) : (
-            <DebtForm initial={payFor} onSubmit={save} submitLabel="Нигоҳ доштан" />
+            <DebtForm initial={cur} onSubmit={save} submitLabel="Нигоҳ доштан" />
           )}
         </Sheet>
       )}
@@ -266,6 +319,18 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
             ) : (
               <LoanEditForm loan={live} setState={setState} onDone={() => setLoanFor(null)} />
             )}
+          </Sheet>
+        );
+      })()}
+
+      {rowEdit !== null && live?.plan && (() => {
+        const rows = buildSchedule(live.plan, live.date ?? today());
+        const row = rows.find(r => r.n === rowEdit);
+        if (!row) return null;
+        return (
+          <Sheet title={`Қисти ${row.n}-ум`} onClose={() => setRowEdit(null)}>
+            <RowEdit row={row} last={row.n === rows.length} edited={!!row.edited}
+              onSave={v => saveRow(row.n, v)} onReset={() => saveRow(row.n, null)} />
           </Sheet>
         );
       })()}

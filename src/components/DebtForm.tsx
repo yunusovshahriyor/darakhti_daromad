@@ -1,6 +1,6 @@
 import { FormEvent, ReactNode, useState } from 'react';
 import { fmt, today } from '../model';
-import { buildSchedule, planTotals } from '../loanPlan';
+import { buildSchedule, paidThrough, planTotals } from '../loanPlan';
 import type { Debt, DebtPlan } from '../types';
 import AmountEntry from './AmountEntry';
 import Field from './Field';
@@ -11,6 +11,8 @@ interface Values {
   priority: boolean;
   date: string;
   plan?: DebtPlan;
+  /** Қистҳои то имрӯз аллакай супоридашуда (барои қарзи кӯҳнаи бонкӣ). */
+  paid?: number;
 }
 
 /** Форма барои илова кардан ва таҳрири қарз: маблағи калон, сана, тугмачаҳои рақамӣ. */
@@ -27,6 +29,10 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   const [rate, setRate] = useState(initial?.plan ? String(initial.plan.rate) : '');
   const [months, setMonths] = useState(initial?.plan ? String(initial.plan.months) : '');
   const [method, setMethod] = useState<DebtPlan['method']>(initial?.plan?.method ?? 'annuity');
+  const [fixedPay, setFixedPay] = useState(initial?.plan?.payment ? String(initial.plan.payment) : '');
+  const [payDay, setPayDay] = useState(initial?.plan?.payDay ? String(initial.plan.payDay) : '');
+  const [shift, setShift] = useState(initial?.plan?.shiftWeekend ?? false);
+  const [catchUp, setCatchUp] = useState(false);
   const [priority, setPriority] = useState(initial?.priority ?? false);
   const [date, setDate] = useState(initial?.date ?? today());
 
@@ -34,18 +40,33 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   const principal = parseFloat(amount) || 0;
   const rateNum = parseFloat(rate.replace(',', '.')) || 0;
   const monthsNum = Math.round(parseFloat(months) || 0);
-  const plan: DebtPlan | undefined = bank && principal > 0 && monthsNum >= 1 && monthsNum <= 600
-    ? { principal, rate: Math.max(0, rateNum), months: monthsNum, method } : undefined;
+  const payNum = parseFloat(fixedPay.replace(',', '.').replace(/\s/g, '')) || 0;
+  const dayNum = Math.min(31, Math.max(1, Math.round(parseFloat(payDay) || 0)));
+  const validBase = bank && principal > 0 && monthsNum >= 1 && monthsNum <= 600 && (method !== 'actual' || payNum > 0);
+  const plan: DebtPlan | undefined = validBase
+    ? {
+        principal, rate: Math.max(0, rateNum), months: monthsNum, method,
+        ...(method === 'actual' ? { payment: payNum } : {}),
+        ...(payDay.trim() !== '' ? { payDay: dayNum } : {}),
+        ...(shift ? { shiftWeekend: true } : {}),
+        ...(initial?.plan?.overrides ? { overrides: initial.plan.overrides } : {}),
+      } : undefined;
   const rows = plan ? buildSchedule(plan, date) : [];
   const totals = planTotals(rows);
   const num = plan ? totals.total : principal;
   const tooLow = initial !== undefined && num > 0 && num < paid - 0.005;
-  const ready = principal > 0 && !tooLow && title.trim() !== '' && (!bank || plan !== undefined);
+  const noCover = plan !== undefined && rows.length > 0 && rows[0].principal <= 0;
+  const ready = principal > 0 && !tooLow && !noCover && title.trim() !== '' && (!bank || plan !== undefined);
+  const pastPaid = plan ? paidThrough(rows, today()) : 0;
+  const pastCount = plan ? rows.filter(x => x.due <= today()).length : 0;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!ready) return;
-    onSubmit({ title: title.trim(), amount: num, priority, date, plan });
+    onSubmit({
+      title: title.trim(), amount: num, priority, date, plan,
+      ...(plan && catchUp ? { paid: Math.min(pastPaid, num) } : {}),
+    });
   };
 
   return (
@@ -78,21 +99,59 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
           <div className="chips-block">
             <div className="chips-label">Усули супоридан</div>
             <div className="chips">
+              <button type="button" className={method === 'actual' ? 'chip on' : 'chip'} onClick={() => setMethod('actual')}>
+                <span className="chip-t"><b>Қисти собити бонк</b><small>фоиз аз рӯзҳои воқеӣ ÷ 365</small></span>
+              </button>
               <button type="button" className={method === 'annuity' ? 'chip on' : 'chip'} onClick={() => setMethod('annuity')}>
-                <span className="chip-t"><b>Аннуитетӣ</b><small>қисти ҳармоҳа баробар</small></span>
+                <span className="chip-t"><b>Аннуитетӣ</b><small>қисти баробар, фоиз ÷ 12</small></span>
               </button>
               <button type="button" className={method === 'diff' ? 'chip on' : 'chip'} onClick={() => setMethod('diff')}>
                 <span className="chip-t"><b>Дифференсиалӣ</b><small>қист тадриҷан кам мешавад</small></span>
               </button>
             </div>
           </div>
+          {method === 'actual' && (
+            <Field label="Қисти ҳармоҳа аз ҷадвали бонк, смн">
+              <input inputMode="decimal" value={fixedPay} onChange={e => setFixedPay(e.target.value)} placeholder="Масалан, 4192" />
+            </Field>
+          )}
+          <Field label="Рӯзи супоридан дар моҳ (холӣ = рӯзи оғоз)">
+            <input inputMode="numeric" value={payDay} onChange={e => setPayDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              placeholder={`Масалан, ${date.split('-')[2] ? Number(date.split('-')[2]) : 12}`} />
+          </Field>
+          <label className="switch-row">
+            <span>
+              <b>Рӯзи истироҳат → душанбе</b>
+              <small>Агар рӯзи супоридан шанбе ё якшанбе афтад, ба душанбе мегузарад.</small>
+            </span>
+            <span className="switch">
+              <input type="checkbox" checked={shift} onChange={e => setShift(e.target.checked)} />
+              <i />
+            </span>
+          </label>
           {plan && (
             <div className="loan-info">
-              <div><span>{method === 'annuity' ? 'Қисти ҳармоҳа' : 'Қисти аввал → охир'}</span>
-                <b>{method === 'annuity' ? fmt(rows[0].payment) : `${fmt(rows[0].payment)} → ${fmt(rows[rows.length - 1].payment)}`} смн</b></div>
+              <div><span>{method === 'diff' ? 'Қисти аввал → охир' : 'Қисти ҳармоҳа → охирин'}</span>
+                <b>{method === 'diff' || method === 'actual' ? `${fmt(rows[0].payment)} → ${fmt(rows[rows.length - 1].payment)}` : fmt(rows[0].payment)} смн</b></div>
               <div><span>Фоиз дар ҷамъ</span><b>{fmt(totals.interest)} смн</b></div>
               <div><span>Ҷамъи супоридан</span><b>{fmt(totals.total)} смн</b></div>
+              <div><span>Қистҳо</span><b>{rows.length} · то {rows[rows.length - 1].due}</b></div>
             </div>
+          )}
+          {noCover && (
+            <div className="alert danger">Қист аз фоизи моҳи аввал кам аст ({fmt(rows[0].interest)}): қарз кам намешавад.</div>
+          )}
+          {plan && pastCount > 0 && (
+            <label className="switch-row">
+              <span>
+                <b>Қистҳои гузашта аллакай супорида шудаанд</b>
+                <small>{pastCount} қист то имрӯз ({fmt(pastPaid)} смн) супорида ҳисоб мешавад, бе хароҷоти нав.</small>
+              </span>
+              <span className="switch">
+                <input type="checkbox" checked={catchUp} onChange={e => setCatchUp(e.target.checked)} />
+                <i />
+              </span>
+            </label>
           )}
         </>
       )}

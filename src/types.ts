@@ -76,7 +76,16 @@ export interface DebtPlan {
   principal: number;
   rate: number;
   months: number;
-  method: 'annuity' | 'diff';
+  /** annuity — қисти баробар; diff — дифференсиалӣ; actual — қисти собити бонк, фоиз аз рӯзҳои воқеӣ ÷ 365. */
+  method: 'annuity' | 'diff' | 'actual';
+  /** Қисти собити бонк (барои method = 'actual'). */
+  payment?: number;
+  /** Рӯзи супоридан дар моҳ (1–31). */
+  payDay?: number;
+  /** Агар рӯзи истироҳат афтад, ба душанбе гузаронида мешавад. */
+  shiftWeekend?: boolean;
+  /** Қистҳои дастӣ тағйирёфта (аз рӯи рақами қист): сана ва/ё маблағ. */
+  overrides?: Record<number, { due?: string; payment?: number }>;
 }
 
 export interface Debt {

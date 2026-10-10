@@ -1262,3 +1262,5 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .due-card.late b { color: var(--danger); }
 .due-line { color: var(--muted); font-size: .78rem; }
 .due-line.late { color: var(--danger); font-weight: 600; }
+button.sched-row { background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; text-align: left; color: inherit; font: inherit; }
+.btn.ghost { background: none; color: var(--muted); box-shadow: none; margin-top: 6px; }
