@@ -67,3 +67,15 @@ export function orderedSources(
     .sort((a, b) => b.v - a.v || a.i - b.i)
     .map(x => x.c);
 }
+
+/** Иконкаи категорияи хароҷот (аз рӯи ном, бо категорияҳои худи корбар). */
+export function categoryIcon(name: string | undefined, custom: { name: string; icon: string }[] = []): string | null {
+  if (!name) return null;
+  return custom.find(c => c.name === name)?.icon ?? EXPENSE_CATEGORIES.find(c => c.name === name)?.icon ?? null;
+}
+
+/** Иконкаи манбаи даромад. */
+export function sourceIcon(name: string | undefined, custom: { name: string; icon: string }[] = []): string | null {
+  if (!name) return null;
+  return custom.find(c => c.name === name)?.icon ?? INCOME_SOURCES.find(c => c.name === name)?.icon ?? null;
+}

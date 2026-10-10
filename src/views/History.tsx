@@ -4,6 +4,7 @@ import ReceiptSheet from '../components/ReceiptSheet';
 import type { ReceiptRef } from '../components/ReceiptSheet';
 import Empty from '../components/Empty';
 import SwipeRow from '../components/SwipeRow';
+import { categoryIcon, sourceIcon } from '../categories';
 import { ACCOUNTS, ALL_IDS, fmt, dayTitle, groupByDay } from '../model';
 import type { Props } from './props';
 
@@ -112,7 +113,7 @@ export default function History({ state, setState, filter, onFilter }: Props & {
       return (
         <SwipeRow key={`i${it.id}`} onDelete={() => removeIncome(it.id)}>
           <div className="cell tap" onClick={() => setReceipt({ kind: 'income', id: it.id })}>
-            <div className="ic">{x.title.charAt(0).toUpperCase()}</div>
+            <div className="ic">{x.kind === 'borrow' ? '🤝' : sourceIcon(x.source, state.incomeSources) ?? '💰'}</div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="pos">+{fmt(x.amount)}</b></div>
               <small>{x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад'}</small>
@@ -126,7 +127,9 @@ export default function History({ state, setState, filter, onFilter }: Props & {
       return (
         <SwipeRow key={`e${it.id}`} onDelete={() => removeExpense(it.id)}>
           <div className="cell tap" onClick={() => setReceipt({ kind: 'expense', id: it.id })}>
-            <div className="ic neg-bg">{ACCOUNTS[x.account].icon}</div>
+            <div className="ic neg-bg">
+              {x.loanId ? '📤' : x.debtId ? '✅' : x.dreamId ? '🎁' : categoryIcon(x.category, state.categories) ?? '🧾'}
+            </div>
             <div className="grow">
               <div className="r1"><b>{x.title}</b><b className="neg">−{fmt(x.amount)}</b></div>
               <small>{x.loanId ? 'Қарз додам · ' : ''}{x.category ? `${x.category} · ` : ''}{ACCOUNTS[x.account].name}</small>

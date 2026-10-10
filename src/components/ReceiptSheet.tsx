@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { categoryIcon, sourceIcon } from '../categories';
 import { ACCOUNTS, ALL_IDS, dayTitle, fmt } from '../model';
 import type { State } from '../types';
 import type { Dispatch, SetStateAction } from 'react';
@@ -59,7 +60,7 @@ export default function ReceiptSheet({ state, setState, refItem, onClose }: {
     amount = x.amount; date = x.date; sign = '+'; tone = 'pos'; title = x.title; edited = x.edited ?? '';
     const loan = x.kind === 'loanBack' ? state.loans.find(l => l.id === x.loanId) : undefined;
     kindLabel = x.kind === 'loanBack' ? 'Баргардонидани қарз' : x.kind === 'borrow' ? 'Қарз гирифтам' : 'Даромад';
-    icon = x.kind === 'loanBack' ? '↩️' : x.kind === 'borrow' ? '🤝' : '💰';
+    icon = x.kind === 'loanBack' ? '↩️' : x.kind === 'borrow' ? '🤝' : sourceIcon(x.source, state.incomeSources) ?? '💰';
     if (x.source) { lines.push({ label: 'Манбаъ', value: x.source }); source = x.source; }
     if (loan) lines.push({ label: 'Қарздор', value: loan.person });
     const parts = ALL_IDS.filter(id => (x.alloc[id] ?? 0) > 0);
@@ -90,7 +91,7 @@ export default function ReceiptSheet({ state, setState, refItem, onClose }: {
     amount = x.amount; date = x.date; sign = '−'; tone = 'neg'; title = x.title; edited = x.edited ?? '';
     const loan = x.loanId ? state.loans.find(l => l.id === x.loanId) : undefined;
     kindLabel = loan ? 'Қарз додам' : x.debtId ? 'Пардохти қарз' : x.dreamId ? 'Харидани орзу' : 'Хароҷот';
-    icon = loan ? '📤' : x.debtId ? '✅' : x.dreamId ? '🎁' : '🧾';
+    icon = loan ? '📤' : x.debtId ? '✅' : x.dreamId ? '🎁' : categoryIcon(x.category, state.categories) ?? '🧾';
     lines.push({ label: 'Аз ҳисоби', value: `${ACCOUNTS[x.account].icon} ${ACCOUNTS[x.account].name}` });
     if (x.category) lines.push({ label: 'Категория', value: x.category });
     if (loan) lines.push({ label: 'Қарздор', value: loan.person });
