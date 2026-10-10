@@ -3,7 +3,7 @@ import AddSheet from './components/AddSheet';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
-  BackIcon, GridIcon, InfoIcon, ListIcon, MoreIcon, PlusIcon, RefreshIcon, WalletIcon,
+  BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
@@ -17,8 +17,7 @@ import Dashboard from './views/Dashboard';
 import Debts from './views/Debts';
 import Dreams from './views/Dreams';
 import History, { HistoryFilter } from './views/History';
-import More, { Sub } from './views/More';
-import type { Tab } from './views/props';
+import type { Sub, Tab } from './views/props';
 import Profile from './views/Profile';
 import SettingsView from './views/SettingsView';
 
@@ -28,17 +27,17 @@ const LEFT: { id: Tab; label: string; icon: ReactNode }[] = [
 ];
 const RIGHT: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: 'history', label: 'Таърих', icon: <ListIcon /> },
-  { id: 'more', label: 'Бештар', icon: <MoreIcon /> },
+  { id: 'profile', label: 'Профил', icon: <PersonIcon /> },
 ];
 
-const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисобҳо', history: 'Таърих', more: 'Бештар' };
-const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот', profile: 'Профил' };
+const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисобҳо', history: 'Таърих', profile: 'Профил' };
+const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
 const HIDE_KEY = 'darakhti:hide';
 const NAV_KEY = 'darakhti:nav';
 const FILTER_KEY = 'darakhti:hfilter';
 
-const TAB_IDS: Tab[] = ['home', 'accounts', 'history', 'more'];
-const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings', 'profile'];
+const TAB_IDS: Tab[] = ['home', 'accounts', 'history', 'profile'];
+const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings'];
 const FILTER_IDS: HistoryFilter[] = ['all', 'income', 'expense', 'transfer'];
 
 interface Nav {
@@ -71,10 +70,6 @@ function readNav(): Nav {
   return nav;
 }
 
-interface InstallEvent extends Event {
-  prompt: () => Promise<void>;
-}
-
 const readHidden = () => {
   try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; }
 };
@@ -98,7 +93,6 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; text: string } | null>(null);
   const [hidden, setHidden] = useState(readHidden);
-  const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
   const prevBal = useRef<Alloc | null>(null);
 
   useEffect(() => saveState(state), [state]);
@@ -174,15 +168,6 @@ export default function App() {
   }, [state]);
 
   useEffect(() => {
-    const h = (e: Event) => {
-      e.preventDefault();
-      setInstallEvent(e as InstallEvent);
-    };
-    window.addEventListener('beforeinstallprompt', h);
-    return () => window.removeEventListener('beforeinstallprompt', h);
-  }, []);
-
-  useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(''), 2400);
     return () => clearTimeout(t);
@@ -190,11 +175,6 @@ export default function App() {
 
   useHistoryLayer(sub !== null, () => setSub(null), reuseSub);
   useHistoryLayer(acct !== null, () => setAcct(null), reuseAcct);
-
-  const standalone =
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true;
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   const go = (t: Tab, f?: HistoryFilter) => {
     if (t !== tab) navigator.vibrate?.(8);
@@ -258,21 +238,16 @@ export default function App() {
     }
     if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
     if (sub === 'debts') return <Debts {...props} />;
-    if (sub === 'profile') return <Profile {...props} open={setSub} />;
     if (sub === 'settings') return <SettingsView {...props} onToast={setToast} />;
     if (tab === 'home') {
       return (
-        <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => setSub('profile')}
+        <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => go('profile')}
           onOpenAccount={openAccount} />
       );
     }
     if (tab === 'accounts') return <Accounts {...props} {...privacy} onOpenAccount={openAccount} />;
     if (tab === 'history') return <History {...props} filter={filter} onFilter={setFilter} />;
-    return (
-      <More {...props} open={setSub} standalone={standalone} ios={ios}
-        canInstall={installEvent !== null}
-        install={() => installEvent?.prompt().then(() => setInstallEvent(null))} />
-    );
+    return <Profile {...props} open={setSub} />;
   };
 
   return (

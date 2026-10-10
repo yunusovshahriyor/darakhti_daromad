@@ -3,8 +3,7 @@ import Field from '../components/Field';
 import { ChevronIcon, PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
 import { balancesOf, fmt, inPeriod, monthlyIncome, periodAt } from '../model';
-import type { Props } from './props';
-import type { Sub } from './More';
+import type { Props, Sub } from './props';
 
 const NAME_KEY = 'darakhti:profile';
 
