@@ -3,7 +3,6 @@ import CollapsibleCells from '../components/CollapsibleCells';
 import DebtForm from '../components/DebtForm';
 import Empty from '../components/Empty';
 import Fab from '../components/Fab';
-import { PencilIcon } from '../components/Icons';
 import LoanProgress from '../components/LoanProgress';
 import PayDebtForm from '../components/PayDebtForm';
 import SegTabs from '../components/SegTabs';
@@ -15,7 +14,7 @@ import type { Props } from './props';
 
 export default function Debts({ state, setState }: Props) {
   const [adding, setAdding] = useState(false);
-  const [editFor, setEditFor] = useState<Debt | null>(null);
+  const [mode, setMode] = useState<'pay' | 'edit'>('pay');
   const [payFor, setPayFor] = useState<Debt | null>(null);
   const [tab, setTab] = useState<'now' | 'done'>('now');
 
@@ -28,10 +27,10 @@ export default function Debts({ state, setState }: Props) {
   };
 
   const save = (v: { title: string; amount: number; priority: boolean; date?: string }) => {
-    if (!editFor) return;
-    const id = editFor.id;
+    if (!payFor) return;
+    const id = payFor.id;
     setState(s => ({ ...s, debts: s.debts.map(d => (d.id === id ? { ...d, ...v } : d)) }));
-    setEditFor(null);
+    setPayFor(null);
   };
 
   const remove = (id: number) =>
@@ -70,7 +69,7 @@ export default function Debts({ state, setState }: Props) {
                     const pct = Math.min(100, (d.paid / d.amount) * 100);
                     return (
                       <SwipeRow key={d.id} onDelete={() => remove(d.id)}>
-                        <div className="cell tap" onClick={() => setPayFor(d)}>
+                        <div className="cell tap" onClick={() => { setMode('pay'); setPayFor(d); }}>
                           <div className={i === 0 ? 'rank first' : 'rank'}>{i + 1}</div>
                           <div className="grow">
                             <div className="r1">
@@ -82,10 +81,6 @@ export default function Debts({ state, setState }: Props) {
                               Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
                             </small>
                           </div>
-                          <button className="icon-btn sm" aria-label="Таҳрир"
-                            onClick={e => { e.stopPropagation(); setEditFor(d); }}>
-                            <PencilIcon />
-                          </button>
                         </div>
                       </SwipeRow>
                     );
@@ -161,16 +156,16 @@ export default function Debts({ state, setState }: Props) {
         </Sheet>
       )}
 
-      {editFor && (
-        <Sheet title="Таҳрири қарз" onClose={() => setEditFor(null)}>
-          <DebtForm initial={editFor} onSubmit={save} submitLabel="Нигоҳ доштан" />
-        </Sheet>
-      )}
-
       {payFor && (
-        <Sheet title={`Пардохт: ${payFor.title}`} onClose={() => setPayFor(null)}>
-          <PayDebtForm state={state} setState={setState} debt={payFor}
-            onDone={() => setPayFor(null)} />
+        <Sheet title={payFor.title} onClose={() => setPayFor(null)}>
+          <SegTabs value={mode} onChange={id => setMode(id as 'pay' | 'edit')}
+            tabs={[{ id: 'pay', label: 'Пардохт' }, { id: 'edit', label: 'Таҳрир' }]} />
+          {mode === 'pay' ? (
+            <PayDebtForm state={state} setState={setState} debt={payFor}
+              onDone={() => setPayFor(null)} />
+          ) : (
+            <DebtForm initial={payFor} onSubmit={save} submitLabel="Нигоҳ доштан" />
+          )}
         </Sheet>
       )}
     </>
