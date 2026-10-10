@@ -10,27 +10,60 @@ import PayDebtForm from '../components/PayDebtForm';
 import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
-import { fmt, loanLeft, openLoans, remaining, splitDebts, withNewDebt } from '../model';
-import type { Debt, Loan } from '../types';
+import { buildSchedule, nextInstallment, planTotals } from '../loanPlan';
+import { dayTitle, fmt, loanLeft, today, openLoans, remaining, splitDebts, withNewDebt } from '../model';
+import type { Debt, DebtPlan, Loan } from '../types';
 import type { Props } from './props';
+
+function Schedule({ debt }: { debt: Debt }) {
+  const plan = debt.plan!;
+  const rows = buildSchedule(plan, debt.date ?? today());
+  const t = planTotals(rows);
+  const now = today();
+  let cum = 0;
+  return (
+    <>
+      <div className="loan-info">
+        <div><span>Гирифташуда</span><b>{fmt(plan.principal)} смн</b></div>
+        <div><span>Фоиз дар ҷамъ ({plan.rate}% дар сол)</span><b>{fmt(t.interest)} смн</b></div>
+        <div><span>Ҷамъи супоридан</span><b>{fmt(t.total)} смн</b></div>
+      </div>
+      <div className="sched">
+        {rows.map(r => {
+          cum += r.payment;
+          const done = cum <= debt.paid + 0.005;
+          const late = !done && r.due < now;
+          return (
+            <div key={r.n} className={`sched-row${done ? ' done' : ''}${late ? ' late' : ''}`}>
+              <span className="sn">{done ? '✓' : r.n}</span>
+              <span><b className="sd">{dayTitle(r.due)}</b>
+                <small>асосӣ {fmt(r.principal)} · фоиз {fmt(r.interest)}</small></span>
+              <span className="sp">{fmt(r.payment)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
 
 export default function Debts({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
   const [adding, setAdding] = useState(false);
   const [loanFor, setLoanFor] = useState<Loan | null>(null);
   const [loanMode, setLoanMode] = useState<'return' | 'edit'>('return');
-  const [mode, setMode] = useState<'pay' | 'edit'>('pay');
+  const [mode, setMode] = useState<'pay' | 'schedule' | 'edit'>('pay');
   const [payFor, setPayFor] = useState<Debt | null>(null);
   const [tab, setTab] = useState<'now' | 'done'>('now');
 
   const { open, paid } = splitDebts(state.debts);
   const first = open[0];
 
-  const add = (v: { title: string; amount: number; priority: boolean; date?: string }) => {
+  const add = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan }) => {
     setState(s => withNewDebt(s, v));
     setAdding(false);
   };
 
-  const save = (v: { title: string; amount: number; priority: boolean; date?: string }) => {
+  const save = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan }) => {
     if (!payFor) return;
     const id = payFor.id;
     setState(s => ({
@@ -60,6 +93,25 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
           <span>Бақия: {fmt(remaining(first))} смн{first.priority ? ' · ⭐ афзалиятнок' : ' · хурдтарин қарз'}</span>
         </div>
       )}
+
+      {(() => {
+        const t = today();
+        const monthEnd = `${t.slice(0, 7)}-31`;
+        let sum = 0;
+        let late = false;
+        let count = 0;
+        for (const d of open) {
+          const n = nextInstallment(d, t);
+          if (n && n.row.due <= monthEnd) { sum += n.toPay; count += 1; late = late || n.overdue; }
+        }
+        if (count === 0) return null;
+        return (
+          <div className={late ? 'due-card late' : 'due-card'}>
+            <small>{late ? '⚠️ Қистҳои мӯҳлаташ гузашта ва ин моҳ' : 'Ин моҳ супоридан лозим'} · {count} қарз</small>
+            <b>{fmt(sum)} смн</b>
+          </div>
+        );
+      })()}
 
       {state.debts.length === 0 && (
         <Empty icon="🎉" text="Қарз нест — 10%-и вақтхушӣ ба «Вақтхушӣ» меравад." />
@@ -93,8 +145,16 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
                             </div>
                             <div className="progress"><i style={{ width: `${pct}%` }} /></div>
                             <small>
-                              Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
+                              Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.plan ? `🏦 ${d.plan.rate}% · ${d.plan.months} моҳ` : d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
                             </small>
+                            {(() => {
+                              const n = nextInstallment(d, today());
+                              return n ? (
+                                <span className={n.overdue ? 'due-line late' : 'due-line'}>
+                                  {n.overdue ? 'Мӯҳлат гузашт' : 'Қисти навбатӣ'}: {fmt(n.toPay)} · {dayTitle(n.row.due)}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                       </SwipeRow>
@@ -173,10 +233,16 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
       {payFor && (
         <Sheet title={payFor.title} onClose={() => setPayFor(null)}>
           {remaining(payFor) > 0.005 && (
-            <SegTabs value={mode} onChange={id => setMode(id as 'pay' | 'edit')}
-              tabs={[{ id: 'pay', label: 'Пардохт' }, { id: 'edit', label: 'Таҳрир' }]} />
+            <SegTabs value={mode} onChange={id => setMode(id as 'pay' | 'schedule' | 'edit')}
+              tabs={[
+                { id: 'pay', label: 'Пардохт' },
+                ...(payFor.plan ? [{ id: 'schedule', label: 'Ҷадвал' }] : []),
+                { id: 'edit', label: 'Таҳрир' },
+              ]} />
           )}
-          {mode === 'pay' && remaining(payFor) > 0.005 ? (
+          {mode === 'schedule' && payFor.plan ? (
+            <Schedule debt={payFor} />
+          ) : mode === 'pay' && remaining(payFor) > 0.005 ? (
             <PayDebtForm state={state} setState={setState} debt={payFor}
               onDone={() => setPayFor(null)} />
           ) : (

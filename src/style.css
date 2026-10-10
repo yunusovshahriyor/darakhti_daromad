@@ -1238,3 +1238,27 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .loan-info div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .loan-info span { color: var(--muted); font-size: .85rem; }
 .loan-info b { font-size: .92rem; text-align: right; }
+
+.two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sched { display: flex; flex-direction: column; margin-top: 8px; }
+.sched-row {
+  display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center;
+  padding: 9px 4px; border-bottom: 1px solid var(--border);
+}
+.sched-row:last-child { border-bottom: 0; }
+.sched-row.done { opacity: .55; }
+.sched-row.late b.sd { color: var(--danger); }
+.sched-row .sn { color: var(--muted); font-size: .8rem; text-align: center; }
+.sched-row .sd { font-size: .92rem; }
+.sched-row small { display: block; color: var(--muted); font-size: .72rem; }
+.sched-row .sp { text-align: right; font-weight: 700; font-size: .95rem; }
+.due-card {
+  margin: 0 0 12px; padding: 13px 15px; border-radius: 18px; background: var(--surface);
+  border: 1px solid var(--border); display: flex; flex-direction: column; gap: 3px;
+}
+.due-card small { color: var(--muted); }
+.due-card b { font-size: 1.25rem; }
+.due-card.late { border-color: var(--danger); }
+.due-card.late b { color: var(--danger); }
+.due-line { color: var(--muted); font-size: .78rem; }
+.due-line.late { color: var(--danger); font-weight: 600; }

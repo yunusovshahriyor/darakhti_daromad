@@ -9,6 +9,7 @@ import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
 import { loadState, saveState } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
+import { nextInstallment } from './loanPlan';
 import { useDreamMilestones } from './useDreamMilestones';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
@@ -148,6 +149,30 @@ export default function App() {
         }
       } catch { /* ignore */ }
     }, 2500);
+    return () => clearTimeout(t);
+    // танҳо ҳангоми кушодани барнома
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Хотиррасонии қисти бонкӣ: мӯҳлат гузашт ё дар 3 рӯзи наздик мерасад (як маротиба дар як рӯз)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const day = today();
+        if (localStorage.getItem('darakhti:duenudge') === day) return;
+        const soon = new Date();
+        soon.setDate(soon.getDate() + 3);
+        const limit = soon.toLocaleDateString('sv-SE');
+        for (const d of state.debts) {
+          const n = nextInstallment(d, day);
+          if (n && n.row.due <= limit) {
+            localStorage.setItem('darakhti:duenudge', day);
+            setToast(n.overdue ? `⚠️ «${d.title}»: мӯҳлати қист гузашт` : `🏦 «${d.title}»: қисти ${n.row.due} наздик аст`);
+            break;
+          }
+        }
+      } catch { /* ignore */ }
+    }, 3500);
     return () => clearTimeout(t);
     // танҳо ҳангоми кушодани барнома
     // eslint-disable-next-line react-hooks/exhaustive-deps

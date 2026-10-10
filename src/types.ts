@@ -71,6 +71,14 @@ export interface Loan {
   returnedAt?: string;
 }
 
+/** Қарзи бонкӣ: маблағи гирифташуда, фоизи солона, мӯҳлат (моҳ) ва усули ҳисоб. `Debt.amount` = ҷамъи супоридан. */
+export interface DebtPlan {
+  principal: number;
+  rate: number;
+  months: number;
+  method: 'annuity' | 'diff';
+}
+
 export interface Debt {
   id: number;
   title: string;
@@ -82,6 +90,8 @@ export interface Debt {
   paidAt?: string;
   /** Санаи гирифтани қарз. */
   date?: string;
+  /** Агар қарз бонкӣ бошад: супоридани ҳармоҳа бо фоиз. */
+  plan?: DebtPlan;
 }
 
 export interface Dream {

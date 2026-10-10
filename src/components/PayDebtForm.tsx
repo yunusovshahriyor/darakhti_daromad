@@ -1,5 +1,6 @@
 import { FormEvent, ReactNode, useState } from 'react';
-import { ACCOUNTS, balancesOf, fmt, remaining, splitDebts, today, uid } from '../model';
+import { nextInstallment } from '../loanPlan';
+import { ACCOUNTS, balancesOf, dayTitle, fmt, remaining, splitDebts, today, uid } from '../model';
 import type { Debt } from '../types';
 import type { Props } from '../views/props';
 import AmountEntry from './AmountEntry';
@@ -86,6 +87,21 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
         </div>
       </div>
 
+      {(() => {
+        const due = nextInstallment(current, today());
+        if (!due) return null;
+        return (
+          <div className="chips-block">
+            <div className="chips-label">Қисти {due.row.n}-ум · {dayTitle(due.row.due)}</div>
+            <div className="chips">
+              <button type="button" className={Math.abs(num - due.toPay) < 0.005 ? 'chip on' : 'chip'}
+                onClick={() => setAmount(String(due.toPay))}>
+                <span className="chip-t"><b>{fmt(due.toPay)}</b><small>{due.overdue ? 'мӯҳлат гузашт' : 'қисти моҳ'}</small></span>
+              </button>
+            </div>
+          </div>
+        );
+      })()}
       <p className="muted" style={{ margin: '4px 2px 0' }}>
         {current.title}: боқӣ {fmt(left)} сомонӣ{num > 0 ? ` → пас аз пардохт ${fmt(left - num)}` : ''}
       </p>

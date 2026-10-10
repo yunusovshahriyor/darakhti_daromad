@@ -1,4 +1,4 @@
-import type { AccountDef, AccountId, Alloc, Debt, DistNode, Loan, Dream, Expense, Income, Settings, State, Transfer } from './types';
+import type { AccountDef, AccountId, Alloc, Debt, DebtPlan, DistNode, Loan, Dream, Expense, Income, Settings, State, Transfer } from './types';
 
 export const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
 
@@ -71,7 +71,7 @@ export function fundDreams(dreams: Dream[], pool: number): FundedDream[] {
 }
 
 /** Қарзи нав: агар аввалин қарз бошад, боқимондаи «Вақтхушӣ» худкор ба «Пардохти қарз» мегузарад. */
-export function withNewDebt(s: State, v: { title: string; amount: number; priority: boolean; date?: string }): State {
+export function withNewDebt(s: State, v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan }): State {
   const next: State = { ...s, debts: [...s.debts, { id: uid(), paid: 0, ...v }] };
   const fun = balancesOf(s).fun ?? 0;
   if (!hasDebt(s.debts) && fun > 0.005) {
