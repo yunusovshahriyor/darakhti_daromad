@@ -128,7 +128,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
 
       {state.loans.length > 0 && (
         <>
-          <h3 className="group-title"><span>Ба шумо қарздоранд</span></h3>
+          <h3 className="group-title"><span>Аз ман қарздоранд</span></h3>
           {openLoans(state.loans).length > 0 && (
             <div className="cells">
               {openLoans(state.loans).map(l => (
@@ -137,7 +137,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
                   <div className="grow">
                     <div className="r1"><b>{l.person}</b><b className="pos">{fmt(loanLeft(l))}</b></div>
                     <LoanProgress loan={l} />
-                    <small>Дода шуд {l.date}{l.returned > 0 ? '' : ' · ҳанӯз чизе нагашт'}</small>
+                    {l.returned <= 0 && <small>Ҳанӯз чизе нагашт</small>}
                   </div>
                 </div>
               ))}
@@ -159,7 +159,6 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
               </CollapsibleCells>
             </>
           )}
-          <p className="note">Қарздорро пахш кунед: баргардонидан (қисман ҳам) ё таҳрир.</p>
         </>
       )}
 

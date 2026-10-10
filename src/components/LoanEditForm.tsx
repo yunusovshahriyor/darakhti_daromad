@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { fmt, today } from '../model';
+import { ACCOUNTS, dayTitle, fmt, today } from '../model';
 import type { Loan } from '../types';
 import type { Props } from '../views/props';
 import AmountEntry from './AmountEntry';
@@ -39,6 +39,12 @@ export default function LoanEditForm({ loan, setState, onDone }: Pick<Props, 'se
 
   return (
     <form onSubmit={submit}>
+      <div className="loan-info">
+        <div><span>Санаи додани қарз</span><b>{dayTitle(loan.date)}</b></div>
+        <div><span>Аз ҳисоби</span><b>{ACCOUNTS[loan.account] ? `${ACCOUNTS[loan.account].icon} ${ACCOUNTS[loan.account].name}` : '—'}</b></div>
+        <div><span>Баргашт</span><b>{fmt(loan.returned)} аз {fmt(loan.amount)}</b></div>
+        {loan.returnedAt && <div><span>Пурра баргашт</span><b>{dayTitle(loan.returnedAt)}</b></div>}
+      </div>
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
       <Field label="Ба кӣ қарз додед">
         <input value={person} onChange={e => setPerson(e.target.value)} placeholder="Масалан, Алӣ" />
