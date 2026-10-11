@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TELEGRAM_BOT_USERNAME } from '../firebaseConfig';
-import { telegramCreateCode, telegramStatus, telegramUnlink, useSync } from '../sync';
+import { telegramCreateCode, telegramStatus, useSync } from '../sync';
 import type { TelegramLink } from '../sync';
 import Sheet from './Sheet';
 
@@ -53,12 +53,6 @@ export default function TelegramSheet({ onClose, onOpenAuth }: { onClose: () => 
     return () => clearInterval(t);
   }, [code, link, refresh]);
 
-  const run = async (fn: () => Promise<void>) => {
-    setBusy(true);
-    setErr('');
-    try { await fn(); } catch (e) { setErr(e instanceof Error ? e.message : 'Хатои номаълум'); } finally { setBusy(false); }
-  };
-
   const url = code && TELEGRAM_BOT_USERNAME ? `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${code}` : '';
 
   return (
@@ -71,14 +65,8 @@ export default function TelegramSheet({ onClose, onOpenAuth }: { onClose: () => 
       ) : link === undefined ? (
         <p className="note">Бор мешавад…</p>
       ) : link ? (
-        <>
-          <p className="note">✅ Бот пайваст аст. Ҳар рӯз соати 09:00 дар бораи пардохтҳои қарз ёдрас мекунад, рӯзи душанбе хулоса мефиристад.
-            Фармонҳо: /xulosa, /qarzho, /yodovari.</p>
-          <button className="btn danger" disabled={busy}
-            onClick={() => run(async () => { await telegramUnlink(); setCode(''); await refresh(); })}>
-            Ҷудо кардани бот
-          </button>
-        </>
+        <p className="note">✅ Бот пайваст аст. Ҳар рӯз соати 09:00 дар бораи пардохтҳои қарз ёдрас мекунад, рӯзи душанбе хулоса мефиристад.
+          Фармонҳо: /xulosa, /qarzho, /yodovari.</p>
       ) : (
         <>
           <p className="note">Бот ёдоварии пардохтҳои қарз ва хулосаи молиявиро ба Telegram мефиристад.</p>
