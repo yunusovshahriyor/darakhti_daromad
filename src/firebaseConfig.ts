@@ -5,4 +5,11 @@ import type { FirebaseOptions } from 'firebase/app';
  * Ин қиматҳо оммавӣ ҳастанд ва хавфнок нестанд: амният аз қоидаҳои `firestore.rules` меояд.
  * Агар `null` бошад, корбар дар «Профил» дастӣ ворид мекунад (барои санҷиш).
  */
-export const EMBEDDED_CONFIG: FirebaseOptions | null = null;
+export const EMBEDDED_CONFIG: FirebaseOptions | null = {
+  apiKey: 'AIzaSyCTUYdfwV5KxJGnIyPGpJ9DzovbStplcs8',
+  authDomain: 'darakhti-daromad.firebaseapp.com',
+  projectId: 'darakhti-daromad',
+  storageBucket: 'darakhti-daromad.firebasestorage.app',
+  messagingSenderId: '21659404718',
+  appId: '1:21659404718:web:0edaba49f6e89bc943a03f',
+};
