@@ -23,8 +23,19 @@ jobs:
     steps:
       # То вақте ки сирриҳои Cloudflare илова нашудаанд, ин workflow бе хато гузашта меравад
       - name: Check secrets
-        if: env.CF_TOKEN == ''
-        run: echo "CLOUDFLARE_API_TOKEN not set - skipping bot deploy"
+        env:
+          S_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          S_CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+          S_TG: ${{ secrets.TELEGRAM_TOKEN != '' }}
+          S_HOOK: ${{ secrets.WEBHOOK_SECRET != '' }}
+          S_FB: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+        run: |
+          echo "CLOUDFLARE_API_TOKEN set: $S_CF_TOKEN"
+          echo "CLOUDFLARE_ACCOUNT_ID set: $S_CF_ACCOUNT"
+          echo "TELEGRAM_TOKEN set: $S_TG"
+          echo "WEBHOOK_SECRET set: $S_HOOK"
+          echo "FIREBASE_SERVICE_ACCOUNT set: $S_FB"
+          [ "$S_CF_TOKEN" = "true" ] || echo "::warning::CLOUDFLARE_API_TOKEN is empty - skipping bot deploy"
 
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
