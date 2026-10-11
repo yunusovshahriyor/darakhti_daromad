@@ -13,3 +13,10 @@ export const EMBEDDED_CONFIG: FirebaseOptions | null = {
   messagingSenderId: '21659404718',
   appId: '1:21659404718:web:0edaba49f6e89bc943a03f',
 };
+
+/**
+ * Google «Web client ID» (Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration).
+ * Оммавӣ аст. Бо он «Google One Tap» (равзанаи интихоби ҳисоб дар болои барнома) фаъол мешавад.
+ * Агар холӣ бошад, воридшавӣ бо равзанаи оддии Google (popup) кор мекунад.
+ */
+export const GOOGLE_CLIENT_ID = '';

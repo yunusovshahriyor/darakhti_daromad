@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { FirebaseOptions } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
-import { EMBEDDED_CONFIG } from './firebaseConfig';
+import { EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
 import {
   addSnapshot, localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, summarize,
 } from './storage';
@@ -140,6 +140,7 @@ async function load(): Promise<Fb | null> {
         fsM.connectFirestoreEmulator(db, '127.0.0.1', 8080);
       }
       authM.onAuthStateChanged(auth, onAuth);
+      authM.getRedirectResult(auth).catch(e => set('error', { error: authMessage(e) }));
       return { auth, db, authM, fsM };
     })().catch(e => { fb = null; throw e; });
   }
@@ -183,6 +184,7 @@ const authMessage = (e: unknown): string => {
     'auth/operation-not-allowed': 'Ин усули воридшавӣ дар Firebase фаъол нест (Authentication → Sign-in method)',
     'auth/requires-recent-login': 'Барои ин амал аз нав ворид шавед ва такрор кунед',
     'auth/invalid-api-key': 'apiKey нодуруст аст',
+    'auth/internal-error': 'Хатои дохилии Firebase: интернетро санҷед ва аз нав кӯшиш кунед',
   };
   return map[code] ?? (e instanceof Error ? e.message : 'Хатои номаълум');
 };
@@ -202,9 +204,36 @@ export async function signUp(email: string, password: string): Promise<void> {
   } catch (e) { throw new Error(authMessage(e)); }
 }
 
-export async function signInGoogle(): Promise<void> {
-  const f = await load();
-  if (!f) throw new Error('Аввал Firebase-ро танзим кунед');
+interface GoogleId {
+  initialize: (o: Record<string, unknown>) => void;
+  prompt: (cb?: (n: { isNotDisplayed?: () => boolean; isSkippedMoment?: () => boolean; isDismissedMoment?: () => boolean; getDismissedReason?: () => string }) => void) => void;
+  cancel: () => void;
+}
+declare global {
+  interface Window { google?: { accounts?: { id?: GoogleId } } }
+}
+
+const clientId = () => GOOGLE_CLIENT_ID || (location.hostname === 'localhost' ? ls.get('darakhti:cloud-gid') ?? '' : '');
+
+let gisLoad: Promise<GoogleId> | null = null;
+function loadGis(): Promise<GoogleId> {
+  if (!gisLoad) {
+    gisLoad = new Promise<GoogleId>((resolve, reject) => {
+      const ready = () => (window.google?.accounts?.id ? resolve(window.google.accounts.id) : reject(new Error('gis')));
+      if (window.google?.accounts?.id) return ready();
+      const el = document.createElement('script');
+      el.src = 'https://accounts.google.com/gsi/client';
+      el.async = true;
+      el.onload = ready;
+      el.onerror = () => reject(new Error('gis'));
+      document.head.appendChild(el);
+      setTimeout(() => reject(new Error('gis timeout')), 8000);
+    }).catch(e => { gisLoad = null; throw e; });
+  }
+  return gisLoad;
+}
+
+async function popupGoogle(f: Fb): Promise<void> {
   const provider = new f.authM.GoogleAuthProvider();
   try {
     await f.authM.signInWithPopup(f.auth, provider);
@@ -216,6 +245,45 @@ export async function signInGoogle(): Promise<void> {
     }
     throw new Error(authMessage(e));
   }
+}
+
+/**
+ * Воридшавӣ бо Google. Агар Client ID дода шуда бошад: «One Tap» (FedCM): равзанаи интихоби ҳисоб дар болои барнома.
+ * Агар One Tap нишон дода нашуд (масалан, ҳисобҳо нест ё корбар чанд бор пӯшид), равзанаи оддии Google кушода мешавад.
+ */
+export async function signInGoogle(): Promise<void> {
+  const f = await load();
+  if (!f) throw new Error('Аввал Firebase-ро танзим кунед');
+  const id = clientId();
+  if (!id) return popupGoogle(f);
+
+  let gis: GoogleId;
+  try { gis = await loadGis(); } catch { return popupGoogle(f); }
+
+  await new Promise<void>((resolve, reject) => {
+    let done = false;
+    const finish = (fn: () => void) => { if (!done) { done = true; fn(); } };
+    gis.initialize({
+      client_id: id,
+      use_fedcm_for_prompt: true,
+      auto_select: false,
+      cancel_on_tap_outside: false,
+      callback: (resp: { credential?: string }) => {
+        if (!resp.credential) return finish(() => reject(new Error('Google ҷавоб надод')));
+        const cred = f.authM.GoogleAuthProvider.credential(resp.credential);
+        f.authM.signInWithCredential(f.auth, cred)
+          .then(() => finish(resolve))
+          .catch(e => finish(() => reject(new Error(authMessage(e)))));
+      },
+    });
+    gis.prompt(n => {
+      try {
+        if (n.isNotDisplayed?.() || n.isSkippedMoment?.()) finish(() => { popupGoogle(f).then(resolve, reject); });
+        else if (n.isDismissedMoment?.() && n.getDismissedReason?.() !== 'credential_returned') finish(() => reject(new Error('Равзанаи Google пӯшида шуд')));
+      } catch { /* усули кӯҳна: интизор мешавем */ }
+    });
+    setTimeout(() => finish(() => { gis.cancel(); popupGoogle(f).then(resolve, reject); }), 45_000);
+  });
 }
 
 export async function resetPassword(email: string): Promise<void> {
