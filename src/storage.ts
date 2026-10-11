@@ -1,5 +1,5 @@
 import { DEFAULT_ACCOUNTS, DEFAULT_SETTINGS, addAccountNode, allocate, defaultTree, findAccountNode, syncCatalog } from './model';
-import { idbGet, idbSet, snapshotAdd, snapshotDelete, snapshotList } from './idb';
+import { idbClearAll, idbGet, idbSet, snapshotAdd, snapshotDelete, snapshotList } from './idb';
 import type { Snapshot } from './idb';
 import type { Income, State } from './types';
 
@@ -241,3 +241,24 @@ export const localRaw = (): string | null => {
   try { return localStorage.getItem(KEY); } catch { return null; }
 };
 export const makeBackupText = () => JSON.stringify(makeBackup().file);
+
+
+/**
+ * Ҳамаи маълумоти корбар аз ин дастгоҳ нест мешавад (ҳолат, нусхаҳои худкор, танзимот): то корбари дигар
+ * маълумоти аккаунти пештараро набинад. Танҳо `keep` (танзимоти техникии дастгоҳ) мемонад.
+ */
+export async function wipeAllLocal(keep: string[] = []): Promise<void> {
+  pending = null; // навиштани таъхирдодашуда маълумоти кӯҳнаро бозгардонида наметавонад
+  if (idbTimer) clearTimeout(idbTimer);
+  idbTimer = undefined;
+  try {
+    const drop: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('darakhti:') || k === OLD_KEY) && !keep.includes(k)) drop.push(k);
+    }
+    drop.forEach(k => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+  try { sessionStorage.clear(); } catch { /* ignore */ }
+  await idbClearAll().catch(() => {});
+}

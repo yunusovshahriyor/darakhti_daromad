@@ -3,7 +3,7 @@ import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { useHistoryLayer } from '../components/useHistoryLayer';
-import { signOut, useSync } from '../sync';
+import { hasUnsynced, signOutAndWipe, syncNow, useSync } from '../sync';
 import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isRemainderNode } from '../model';
 import { emptyState } from '../storage';
 import type { DistNode } from '../types';
@@ -49,12 +49,23 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
   const logout = async () => {
     const ok = await ask({
       title: 'Баромад аз аккаунт',
-      text: 'Шумо аз аккаунт мебароед. Маълумот дар сервер мемонад ва бо ворид шудан дубора пайдо мешавад.',
+      text: 'Шумо аз аккаунт мебароед ва ҳамаи маълумоти ин дастгоҳ нест мешавад. Дар сервер маълумот мемонад ва бо ворид шудан дубора пайдо мешавад.',
       ok: 'Баромадан',
       danger: true,
     });
     if (!ok) return;
-    try { await signOut(); onToast('Аз аккаунт баромадед'); } catch { onToast('Баромад нашуд: аз нав кӯшиш кунед'); }
+    // Пеш аз пок кардан тағйироти охиринро ба сервер мефиристем
+    try { await syncNow(); } catch { /* санҷиш дар поён */ }
+    if (hasUnsynced()) {
+      const force = await ask({
+        title: 'Маълумот сабт нашудааст',
+        text: 'Тағйироти охирин ба сервер нарасид (интернет нест?). Агар ҳоло бароед, он гум мешавад.',
+        ok: 'Ҳамоно баромадан',
+        danger: true,
+      });
+      if (!force) return;
+    }
+    try { await signOutAndWipe(); } catch { onToast('Баромад нашуд: аз нав кӯшиш кунед'); }
   };
 
   const n2 = (v: number) => fmt(Math.round(v * 100) / 100);

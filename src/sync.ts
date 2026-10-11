@@ -4,7 +4,7 @@ import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { BOT_API, EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
 import {
-  emptyState, localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData,
+  localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, wipeAllLocal,
 } from './storage';
 
 /**
@@ -310,6 +310,19 @@ export async function deleteAccount(): Promise<void> {
     await batch.commit();
     await f.authM.deleteUser(u);
   } catch (e) { throw new Error(authMessage(e)); }
+}
+
+/** Тағйироти маҳаллие ҳаст, ки ҳанӯз ба сервер сабт нашудааст? */
+export const hasUnsynced = (): boolean => !!curUser && stateHasData() && localHash() !== ls.get(SYNCED_KEY);
+
+/**
+ * Баромад аз аккаунт + пок кардани ҳамаи маълумоти ин дастгоҳ (то корбари дигар маълумоти пештараро набинад),
+ * баъд барнома аз нав боз мешавад. Танзимоти техникӣ (DEVICE/CFG) мемонад.
+ */
+export async function signOutAndWipe(): Promise<void> {
+  await signOut();
+  await wipeAllLocal([CFG_KEY, DEVICE_KEY, EMU_KEY]);
+  location.reload();
 }
 
 // ---------- Маълумот (Firestore) ----------
@@ -637,8 +650,7 @@ export async function telegramAutoLogin(initData: string): Promise<void> {
   if (curUser?.uid === r.uid) { if (tgId) ls.set(TG_ID_KEY, tgId); return; }
   if (curUser) {
     // Аккаунти дигар: баромад, маълумоти маҳаллии кӯҳна ба нусхаҳои худкор меравад, барнома аз нав боз мешавад ва ворид мешавад
-    await signOut();
-    await restoreRaw(JSON.stringify(emptyState()));
+    await signOutAndWipe();
     return;
   }
   await signInWithToken(r.token, r.name);

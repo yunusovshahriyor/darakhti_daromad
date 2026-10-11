@@ -45,3 +45,13 @@ export interface Snapshot {
 export const snapshotAdd = (snap: Snapshot) => tx(SNAP, 'readwrite', s => s.put(snap));
 export const snapshotList = () => tx<Snapshot[]>(SNAP, 'readonly', s => s.getAll()).then(l => l.sort((a, b) => b.ts - a.ts));
 export const snapshotDelete = (ts: number) => tx(SNAP, 'readwrite', s => s.delete(ts));
+
+/** Ҳамаи маълумотро (ҳолат ва нусхаҳои худкор) пок мекунад. */
+export const idbClearAll = () => open().then(db => new Promise<void>((resolve, reject) => {
+  const t = db.transaction([KV, SNAP], 'readwrite');
+  t.objectStore(KV).clear();
+  t.objectStore(SNAP).clear();
+  t.oncomplete = () => resolve();
+  t.onerror = () => reject(t.error);
+  t.onabort = () => reject(t.error);
+}));
