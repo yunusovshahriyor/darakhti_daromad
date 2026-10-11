@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import {
-  clearConfig, deleteAccount, preload, resetPassword, resolveConflict, saveConfig, signIn, signInGoogle, signOut, signUp,
-  syncNow, useSync,
+  clearConfig, deleteAccount, preload, saveConfig, signOut, syncNow, useSync,
 } from '../sync';
 import type { SyncStatus } from '../sync';
 import rules from '../../firestore.rules?raw';
@@ -25,7 +24,6 @@ export const statusText = (st: SyncStatus, last: number, error: string) => {
     case 'syncing': return 'Синхронизатсия…';
     case 'offline': return 'Бе интернет: баъдтар худкор мефиристад';
     case 'error': return `Хато: ${error}`;
-    case 'conflict': return '⚠️ Ихтилофи маълумот: интихоб лозим аст';
     default: return `Синхронизатсия шуд · ${minutes(last)}`;
   }
 };
@@ -33,11 +31,8 @@ export const statusText = (st: SyncStatus, last: number, error: string) => {
 export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: () => void; onToast: (m: string) => void; onOpenAuth: () => void }) {
   const sync = useSync();
   const [cfgText, setCfgText] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [info, setInfo] = useState('');
   const [help, setHelp] = useState(false);
   const [ask, confirmDialog] = useConfirm();
 
@@ -46,7 +41,6 @@ export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: (
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     setErr('');
-    setInfo('');
     try { await fn(); } catch (e) { setErr(e instanceof Error ? e.message : 'Хатои номаълум'); } finally { setBusy(false); }
   };
 
@@ -55,14 +49,6 @@ export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: (
   };
 
   const onConfig = (e: FormEvent) => { e.preventDefault(); void run(async () => saveConfig(cfgText)); };
-  const onSignIn = (e: FormEvent) => { e.preventDefault(); void run(() => signIn(email.trim(), password)); };
-  const valid = email.trim() !== '' && password.length >= 6;
-
-  const forgot = () => run(async () => {
-    if (!email.trim()) throw new Error('Аввал почтаро ворид кунед');
-    await resetPassword(email.trim());
-    setInfo('Паёми баркашидани рамз ба почта фиристода шуд.');
-  });
 
   const off = async () => {
     if (await ask({
@@ -82,8 +68,6 @@ export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: (
     }))) return;
     await run(async () => { await deleteAccount(); onToast('Ҳисоб нест шуд'); onClose(); });
   };
-
-  const c = sync.conflict;
 
   return (
     <Sheet title="Синхронизатсияи абрӣ" onClose={onClose} tall>
@@ -134,23 +118,10 @@ export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: (
             <div><span>Охирин синхронизатсия</span><b>{minutes(sync.lastSyncAt)}</b></div>
           </div>
 
-          {c && (
-            <div className="conflict">
-              <b>Дар ду ҷо тағйирот шудааст</b>
-              <p>Ин дастгоҳ: {c.localCounts.incomes} даромад, {c.localCounts.expenses} хароҷот, {c.localCounts.debts} қарз, {c.localCounts.dreams} орзу.</p>
-              <p>Сервер: {c.remoteCounts.incomes} даромад, {c.remoteCounts.expenses} хароҷот, {c.remoteCounts.debts} қарз, {c.remoteCounts.dreams} орзу.</p>
-              <p className="muted">Яке интихоб мешавад, дигаре ҷойгузин мешавад. Нусхаи ҷойгузиншуда дар «Нусхаҳои худкор» (Профил) мемонад.</p>
-              <button className="btn big" onClick={() => void resolveConflict('remote')}>Аз сервер гирифтан</button>
-              <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => void resolveConflict('local')}>Маълумоти ин дастгоҳро фиристодан</button>
-            </div>
-          )}
-
           {err && <div className="alert danger">{err}</div>}
-          {!c && (
-            <button className="btn big" disabled={sync.status === 'syncing'} onClick={() => void syncNow()}>
-              {sync.status === 'syncing' ? 'Синхронизатсия…' : 'Ҳозир синхронизатсия кардан'}
-            </button>
-          )}
+          <button className="btn big" disabled={sync.status === 'syncing'} onClick={() => void syncNow()}>
+            {sync.status === 'syncing' ? 'Синхронизатсия…' : 'Ҳозир синхронизатсия кардан'}
+          </button>
           <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => void signOut()}>Аз ҳисоб баромадан</button>
           <button className="btn ghost" disabled={busy} onClick={() => void del()}>Нест кардани ҳисоб ва маълумоти сервер</button>
           {!sync.embedded && <button className="btn ghost" onClick={off}>Ҷудо кардани Firebase</button>}

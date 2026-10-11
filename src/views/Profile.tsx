@@ -199,7 +199,7 @@ export default function Profile({ state, open, canInstall, install, standalone, 
       <h3 className="group-title"><span>Маълумот ва нусхаи эҳтиётӣ</span></h3>
       <div className="cells">
         <button className="cell tap link" onClick={() => setSyncOpen(true)}>
-          <div className="ic">{sync.status === 'conflict' ? '⚠️' : '☁️'}</div>
+          <div className="ic">☁️</div>
           <div className="grow">
             <b>Синхронизатсияи абрӣ{sync.email ? ` · ${sync.email}` : ''}</b>
             <small>{statusText(sync.status, sync.lastSyncAt, sync.error)}</small>

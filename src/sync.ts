@@ -4,7 +4,7 @@ import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
 import {
-  addSnapshot, localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, summarize,
+  localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData,
 } from './storage';
 
 /**
@@ -12,7 +12,8 @@ import {
  * Модел: `users/{uid}/sync/meta` {rev, chunks, size, updatedAt, device} + `users/{uid}/sync/chunk_N` {i, part}.
  * Ҳолат (нусхаи пурраи JSON) ба порчаҳои ≤ 250 000 аломат тақсим мешавад (ҳудуди ҳуҷҷат 1 МБ).
  * Навсозӣ танҳо тавассути транзаксия бо санҷиши `rev` (ҳифз аз навиштани ихтилофӣ).
- * Ихтилоф: агар ҳам сервер ва ҳам ин дастгоҳ аз синхронизатсияи охирин тағйир ёфта бошанд, корбар интихоб мекунад.
+ * Қоида: маълумоти ҳисоб (сервер) ҳамеша афзалият дорад. Ҳангоми воридшавӣ ва ҳангоми тағйироти дастгоҳи дигар
+ * маълумоти сервер бор мешавад; нусхаи маълумоти ин дастгоҳ пеш аз иваз дар «Нусхаҳои худкор» нигоҳ дошта мешавад.
  */
 const CFG_KEY = 'darakhti:cloud-cfg'; // танзимоти дастӣ (агар дар код нест)
 const FLAG_KEY = 'darakhti:cloud-on'; // корбар пештар ворид шуда буд: SDK-ро ҳангоми кушодан бор мекунем
@@ -22,19 +23,13 @@ const PHOTO_KEY = 'darakhti:cloud-photo';
 const BASE_KEY = 'darakhti:cloud-base'; // rev-и сервер дар синхронизатсияи охирин
 const SYNCED_KEY = 'darakhti:cloud-synced'; // ҳэши мазмуни маҳаллӣ дар синхронизатсияи охирин
 const LAST_KEY = 'darakhti:cloud-last';
+const NOTICE_KEY = 'darakhti:cloud-notice'; // паём, ки пас аз бор шудани маълумоти сервер нишон дода мешавад
 const EMU_KEY = 'darakhti:cloud-emu'; // танҳо дар localhost: Firebase Emulator барои санҷиш
 const DEVICE_KEY = 'darakhti:cloud-device';
 const CHUNK = 250_000;
 const PUSH_DELAY = 3000;
 
-export type SyncStatus = 'off' | 'signedout' | 'idle' | 'syncing' | 'offline' | 'error' | 'conflict';
-export interface Conflict {
-  remoteRaw: string;
-  remotePrefs: Record<string, string>;
-  remoteRev: number;
-  remoteCounts: ReturnType<typeof summarize>;
-  localCounts: ReturnType<typeof summarize>;
-}
+export type SyncStatus = 'off' | 'signedout' | 'idle' | 'syncing' | 'offline' | 'error';
 export interface SyncSnap {
   status: SyncStatus;
   email: string;
@@ -44,7 +39,6 @@ export interface SyncSnap {
   photo: string;
   lastSyncAt: number;
   error: string;
-  conflict: Conflict | null;
   configured: boolean;
   /** Танзимот дар код (оммавӣ) ё дастӣ. */
   embedded: boolean;
@@ -77,7 +71,7 @@ function build(status?: SyncStatus, extra: Partial<SyncSnap> = {}): SyncSnap {
     name: loggedIn ? curUser?.name ?? ls.get(NAME_KEY) ?? '' : '',
     photo: loggedIn ? curUser?.photo ?? ls.get(PHOTO_KEY) ?? '' : '',
     lastSyncAt: Number(ls.get(LAST_KEY) ?? 0),
-    error: '', conflict: null, configured: !!cfg, embedded: !!EMBEDDED_CONFIG, ...extra,
+    error: '', configured: !!cfg, embedded: !!EMBEDDED_CONFIG, ...extra,
   };
 }
 function set(status?: SyncStatus, extra: Partial<SyncSnap> = {}) {
@@ -387,10 +381,26 @@ function remoteInfo(remote: Remote) {
   return parsed ? { raw: parsed.raw, prefs: parsed.prefs } : null;
 }
 
-async function applyRemote(remote: Remote) {
+/** Маълумоти сервер ҷои маълумоти маҳаллиро мегирад (нусхаи маҳаллӣ худкор ба «Нусхаҳои худкор» меравад). */
+async function applyRemote(remote: Remote, firstLogin: boolean) {
   const info = remoteInfo(remote);
   if (!info) throw new Error('Маълумоти сервер хонда нашуд');
-  await restoreRaw(info.raw, info.prefs, () => markSynced(remote.rev, hash(info.raw)));
+  const hadLocal = stateHasData() && localHash() !== hash(info.raw);
+  await restoreRaw(info.raw, info.prefs, () => {
+    markSynced(remote.rev, hash(info.raw));
+    ls.set(NOTICE_KEY, firstLogin
+      ? (hadLocal
+        ? '☁️ Маълумоти ҳисоби шумо бор шуд. Маълумоти пештараи ин дастгоҳ дар «Нусхаҳои худкор» нигоҳ дошта шуд.'
+        : '☁️ Маълумоти ҳисоби шумо бор шуд')
+      : '☁️ Маълумот аз дастгоҳи дигар навсозӣ шуд');
+  });
+}
+
+/** Паёми дар боло сабтшударо як маротиба мегирад (аз App.tsx пас аз кушодани барнома). */
+export function takeNotice(): string {
+  const m = ls.get(NOTICE_KEY) ?? '';
+  if (m) ls.del(NOTICE_KEY);
+  return m;
 }
 
 let busy = false;
@@ -414,7 +424,7 @@ async function startWatch() {
     s => {
       if (s.metadata.hasPendingWrites || busy) return;
       const rev = s.exists() ? (s.data().rev as number) : 0;
-      if (String(rev) !== (ls.get(BASE_KEY) ?? '0') && snap.status !== 'conflict') schedule(400);
+      if (String(rev) !== (ls.get(BASE_KEY) ?? '0')) schedule(400);
     },
     () => { /* бе интернет ё иҷозат: syncNow ҳолатро нишон медиҳад */ },
   );
@@ -456,20 +466,8 @@ export async function syncNow(): Promise<void> {
       set('idle');
       return;
     }
-    // Сервер аз синхронизатсияи охирин тағйир ёфтааст (ё ин аввалин пайвастшавист)
-    if (!hasLocal || (base !== null && !dirty)) {
-      await applyRemote(remote);
-      return;
-    }
-    const info = remoteInfo(remote);
-    if (!info) throw new Error('Маълумоти сервер хонда нашуд');
-    set('conflict', {
-      conflict: {
-        remoteRaw: info.raw, remotePrefs: info.prefs, remoteRev: remote.rev,
-        remoteCounts: summarize(info.raw), localCounts: summarize(localRaw() ?? '{}'),
-      },
-    });
-    notifier?.('☁️ Ихтилофи маълумот: Профил → Синхронизатсия');
+    // Сервер аз синхронизатсияи охирин тағйир ёфтааст (ё ин аввалин воридшавӣ): маълумоти ҳисоб бор мешавад
+    await applyRemote(remote, base === null);
   } catch (e) {
     if (isOffline(e)) set('offline');
     else {
@@ -485,35 +483,11 @@ export async function syncNow(): Promise<void> {
   }
 }
 
-/** Ихтилофро ҳал мекунем: 'remote' — аз сервер гирифтан, 'local' — маълумоти ин дастгоҳро фиристодан. */
-export async function resolveConflict(choice: 'remote' | 'local'): Promise<void> {
-  const c = snap.conflict;
-  if (!c || !curUser) return;
-  busy = true;
-  set('syncing');
-  try {
-    const f = await load();
-    if (!f) return;
-    if (choice === 'remote') {
-      await applyRemote({ rev: c.remoteRev, data: { app: 'darakhti', version: 1, state: JSON.parse(c.remoteRaw), prefs: c.remotePrefs } });
-      return;
-    }
-    await addSnapshot(c.remoteRaw); // нусхаи сервер дар дастгоҳ мемонад
-    await push(f, curUser.uid, c.remoteRev);
-    set('idle');
-  } catch (e) {
-    if (e instanceof ConflictError) { busy = false; void syncNow(); return; }
-    set(isOffline(e) ? 'offline' : 'error', { error: e instanceof Error ? e.message : 'Хатои номаълум' });
-  } finally {
-    busy = false;
-  }
-}
-
 /** Аз main.tsx пеш аз рендер: гӯш кардани тағйирот, баргашт ба барнома ва шабака. */
 export function initSync() {
   // Тозакунии калидҳои Supabase-и кӯҳна
   ['darakhti:sbcfg', 'darakhti:sbsess', 'darakhti:sbbase', 'darakhti:sbsynced', 'darakhti:sblast'].forEach(ls.del);
-  savedListeners.add(() => { if (getConfig() && curUser && snap.status !== 'conflict') schedule(PUSH_DELAY); });
+  savedListeners.add(() => { if (getConfig() && curUser) schedule(PUSH_DELAY); });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && curUser) schedule(800); });
   window.addEventListener('online', () => { if (curUser) schedule(500); });
   snap = build('idle');

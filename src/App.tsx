@@ -11,7 +11,7 @@ import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, tod
 import { lastBackupAt, loadState, saveState, stateHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
-import { setSyncNotifier } from './sync';
+import { setSyncNotifier, takeNotice } from './sync';
 import { useDreamMilestones } from './useDreamMilestones';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
@@ -182,6 +182,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const m = takeNotice();
+    if (m) setTimeout(() => setToast(m), 600);
     setSyncNotifier(setToast);
     return () => setSyncNotifier(null);
   }, []);
