@@ -142,8 +142,17 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
       {first && (
         <div className="next-debt">
           <b>{first.title}</b>
-          <small>Аввал пардохт кунед</small>
-          <span>Бақия: {fmt(remaining(first))} смн{first.priority ? ' · ⭐ афзалиятнок' : ' · хурдтарин қарз'}</span>
+          <small>{nextInstallment(first, today()) ? 'Наздиктарин пардохт' : 'Аввал пардохт кунед'}</small>
+          {(() => {
+            const n = nextInstallment(first, today());
+            return n ? (
+              <span>
+                {n.overdue ? 'Мӯҳлат гузашт' : 'Пардохти навбатӣ'}: {fmt(n.toPay)} смн · {dayTitle(n.row.due)}
+              </span>
+            ) : (
+              <span>Бақия: {fmt(remaining(first))} смн{first.priority ? ' · ⭐ афзалиятнок' : ' · хурдтарин қарз'}</span>
+            );
+          })()}
         </div>
       )}
 

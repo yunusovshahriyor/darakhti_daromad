@@ -1,3 +1,4 @@
+import { nextInstallment } from './loanPlan';
 import type { AccountDef, AccountId, Alloc, Debt, DebtPlan, DistNode, Loan, Dream, Expense, Income, Settings, State, Transfer } from './types';
 
 export const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
@@ -34,7 +35,15 @@ export function sortDebts(debts: Debt[]): Debt[] {
 
 /** Қарзҳо ба кушода ва пардохтшуда ҷудо мешаванд; пардохтшудаҳо аз нав ба кӯҳна. */
 export function splitDebts(debts: Debt[]) {
-  const open = sortDebts(debts.filter(d => remaining(d) > 0.005));
+  // Қарзҳои бо пардохти моҳона: аввал онҳое, ки санаи пардохти навбатиашон наздиктар (ё гузаштааст);
+  // баъд қарзҳои оддӣ бо тартиби пештара (афзалиятнок, хурдтарин).
+  const now = today();
+  const dueOf = (d: Debt) => nextInstallment(d, now)?.row.due;
+  const base = sortDebts(debts.filter(d => remaining(d) > 0.005));
+  const open = [
+    ...base.filter(d => dueOf(d)).sort((a, b) => dueOf(a)!.localeCompare(dueOf(b)!)),
+    ...base.filter(d => !dueOf(d)),
+  ];
   const paid = debts
     .filter(d => remaining(d) <= 0.005)
     .sort((a, b) => (b.paidAt ?? '').localeCompare(a.paidAt ?? '') || b.id - a.id);
