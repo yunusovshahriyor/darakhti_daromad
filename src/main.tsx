@@ -3,10 +3,12 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { initStorage } from './storage';
 import { initSync } from './sync';
+import { initTelegram } from './tg';
 import './style.css';
 
 // Аввал маълумотро аз IndexedDB мехонем, баъд барномаро мекушем
 initStorage().finally(() => {
+  initTelegram();
   initSync();
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

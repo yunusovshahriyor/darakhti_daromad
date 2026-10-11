@@ -89,7 +89,8 @@ export default function App() {
   const [state, setState] = useState(loadState);
   syncCatalog(state);
   const [nav0] = useState(readNav);
-  const [tab, setTab] = useState<Tab>(nav0.tab);
+  const [wantTg, setWantTg] = useState(() => new URLSearchParams(location.search).get('tg') === 'link');
+  const [tab, setTab] = useState<Tab>(wantTg ? 'profile' : nav0.tab);
   const [sub, setSub] = useState<Sub | null>(nav0.sub);
   const [acct, setAcct] = useState<AccountId | null>(nav0.acct);
   const [filter, setFilter] = useState<HistoryFilter>(readFilter);
@@ -349,7 +350,11 @@ export default function App() {
     if (tab === 'accounts') return <Accounts {...props} {...privacy} onOpenAccount={openAccount} />;
     if (tab === 'history') return <History {...props} filter={filter} onFilter={setFilter} />;
     return (
-      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onOpenAuth={() => setAuthOpen(true)}
+      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onOpenAuth={() => setAuthOpen(true)} autoTelegram={wantTg}
+        onTelegramShown={() => {
+          setWantTg(false);
+          try { history.replaceState(history.state, '', location.pathname + location.hash); } catch { /* ignore */ }
+        }}
         canInstall={installEvent !== null}
         install={() => installEvent?.prompt().then(() => setInstallEvent(null))} />
     );

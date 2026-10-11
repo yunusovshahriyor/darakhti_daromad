@@ -6,6 +6,7 @@ export interface Env {
   FIREBASE_SERVICE_ACCOUNT: string;
   FIREBASE_PROJECT_ID: string;
   TIMEZONE?: string;
+  APP_URL: string;
 }
 
 type Json = Record<string, unknown>;

@@ -3,12 +3,17 @@ import * as fs from './firestore';
 import type { Env } from './firestore';
 import type { State } from '../../src/types';
 
+interface TgUser { first_name?: string }
 interface Update {
-  message?: { chat: { id: number; type: string }; text?: string; from?: { first_name?: string } };
+  message?: { chat: { id: number; type: string }; text?: string; from?: TgUser };
+  callback_query?: { id: string; from: TgUser; data?: string; message?: { chat: { id: number; type: string }; message_id: number } };
 }
 
 interface ScheduledController { scheduledTime: number }
 interface Ctx { waitUntil(p: Promise<unknown>): void }
+
+type Button = { text: string; callback_data?: string; web_app?: { url: string }; url?: string };
+type Keyboard = { inline_keyboard: Button[][] };
 
 const tg = async (env: Env, method: string, body: Record<string, unknown>) => {
   const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/${method}`, {
@@ -20,28 +25,78 @@ const tg = async (env: Env, method: string, body: Record<string, unknown>) => {
   return res.ok;
 };
 
-const send = (env: Env, chat: number | string, text: string) =>
-  tg(env, 'sendMessage', { chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true } });
+const send = (env: Env, chat: number | string, text: string, markup?: Keyboard) =>
+  tg(env, 'sendMessage', { chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...(markup ? { reply_markup: markup } : {}) });
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const appUrl = (env: Env, query = '') => `${env.APP_URL}${query}`;
 
 const HELP =
   '🌳 <b>Дарахти даромад</b>\n\n' +
   'Ман дар бораи пардохтҳои қарз ёдрас мекунам ва хулосаи молиявии шуморо мефиристам.\n\n' +
+  '/start — менюи асосӣ\n' +
   '/xulosa — хулосаи моҳ\n' +
   '/qarzho — қарзҳо ва пардохтҳои навбатӣ\n' +
   '/yodovari — ёдоварии имрӯз\n' +
   '/stop — ҷудо кардани бот аз аккаунт\n\n' +
-  'Ёдоварӣ ҳар рӯз соати 09:00 меояд (имрӯз, пагоҳ, пас аз 3 рӯз ва пардохтҳои гузашта), хулоса — рӯзи душанбе.';
+  'Ёдоварӣ ҳар рӯз дар соати интихобшуда меояд (имрӯз, пагоҳ, пас аз 3 рӯз ва пардохтҳои гузашта). Соат ва хулосаи ҳафтаина дар ⚙️ Танзимот.';
 
 const NOT_LINKED =
   'Ин бот ҳанӯз ба аккаунти шумо пайваст нест.\n\n' +
-  'Дар барнома: Профил → «Telegram-бот» → «Гирифтани код». Кодро ба ин ҷо фиристед (ё тугмаи пайвандро пахш кунед).';
+  'Тугмаи «🔗 Пайваст кардани аккаунт»-ро дар менюи /start пахш кунед.';
 
 const CODE_RE = /^[A-Z2-9]{10}$/;
 const LINK_TTL_MS = 15 * 60_000;
 
+// ---------- Танзимот (дар botChats/{chat}) ----------
+interface Prefs { remindOn: boolean; hour: number; weeklyOn: boolean }
+const HOURS = [7, 9, 12, 18, 21];
+
+const prefsOf = (c: Record<string, unknown> | null): Prefs => ({
+  remindOn: c?.remindOn !== '0',
+  hour: typeof c?.hour === 'number' ? c.hour : 9,
+  weeklyOn: c?.weeklyOn !== '0',
+});
+
+async function savePrefs(env: Env, chat: number, patch: Partial<Prefs>): Promise<Prefs | null> {
+  const c = await fs.get(env, `botChats/${chat}`);
+  if (!c) return null;
+  const p = { ...prefsOf(c), ...patch };
+  await fs.set(env, `botChats/${chat}`, {
+    uid: String(c.uid),
+    linkedAt: String(c.linkedAt ?? new Date().toISOString()),
+    remindOn: p.remindOn ? '1' : '0',
+    hour: p.hour,
+    weeklyOn: p.weeklyOn ? '1' : '0',
+  });
+  return p;
+}
+
+const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
+const onoff = (v: boolean) => (v ? 'фаъол ✅' : 'хомӯш ⛔');
+
+function settingsView(p: Prefs): { text: string; markup: Keyboard } {
+  return {
+    text:
+      '⚙️ <b>Танзимот</b>\n\n' +
+      `⏰ Ёдоварии пардохтҳо: ${onoff(p.remindOn)}\n` +
+      `🕘 Соати ёдоварӣ: <b>${hh(p.hour)}</b> (вақти Тоҷикистон)\n` +
+      `📊 Хулосаи ҳафтаина (рӯзи душанбе): ${onoff(p.weeklyOn)}`,
+    markup: {
+      inline_keyboard: [
+        [{ text: `⏰ Ёдоварӣ: ${p.remindOn ? 'хомӯш кардан' : 'фаъол кардан'}`, callback_data: 'tg_rem' }],
+        HOURS.map(h => ({ text: h === p.hour ? `• ${hh(h)} •` : hh(h), callback_data: `h:${h}` })),
+        [{ text: `📊 Хулосаи ҳафтаина: ${p.weeklyOn ? 'хомӯш кардан' : 'фаъол кардан'}`, callback_data: 'tg_week' }],
+        [{ text: '✖️ Пӯшидан', callback_data: 'close' }],
+      ],
+    },
+  };
+}
+
+// ---------- Пайвастшавӣ ----------
 async function link(env: Env, chat: number, raw: string): Promise<string> {
   const code = raw.trim().toUpperCase();
-  if (!CODE_RE.test(code)) return '❌ Код нодуруст аст. Аз барнома коди 10-аломатаро гиред.';
+  if (!CODE_RE.test(code)) return '❌ Код нодуруст аст. Дар барнома (Профил → Telegram-бот) дубора кӯшиш кунед.';
   const doc = await fs.get(env, `botLinks/${code}`);
   if (!doc) return '❌ Код ёфт нашуд ё истифода шудааст. Дар барнома коди нав гиред.';
   await fs.del(env, `botLinks/${code}`);
@@ -51,9 +106,10 @@ async function link(env: Env, chat: number, raw: string): Promise<string> {
   // як чат — як аккаунт: пайвастшавии кӯҳнаи ҳамин аккаунт иваз мешавад
   const old = await fs.get(env, `users/${uid}/bot/link`);
   if (old && String(old.chatId) !== String(chat)) await fs.del(env, `botChats/${old.chatId}`);
-  await fs.set(env, `users/${uid}/bot/link`, { chatId: String(chat), linkedAt: new Date().toISOString() });
-  await fs.set(env, `botChats/${chat}`, { uid, linkedAt: new Date().toISOString() });
-  return '✅ <b>Бот пайваст шуд!</b>\n\nҲар рӯз соати 09:00 дар бораи пардохтҳо ёдрас мекунам. /help — фармонҳо.';
+  const now = new Date().toISOString();
+  await fs.set(env, `users/${uid}/bot/link`, { chatId: String(chat), linkedAt: now });
+  await fs.set(env, `botChats/${chat}`, { uid, linkedAt: now });
+  return '✅ <b>Бот пайваст шуд!</b>\n\nҲар рӯз соати 09:00 дар бораи пардохтҳо ёдрас мекунам. Соатро дар /start → ⚙️ Танзимот иваз кардан мумкин аст.';
 }
 
 async function stateOf(env: Env, chat: number): Promise<{ uid: string; state: State } | string> {
@@ -67,46 +123,130 @@ async function stateOf(env: Env, chat: number): Promise<{ uid: string; state: St
   return { uid, state };
 }
 
-async function onMessage(env: Env, chat: number, text: string) {
+const isLinked = async (env: Env, chat: number) => {
+  const c = await fs.get(env, `botChats/${chat}`);
+  if (!c) return false;
+  const l = await fs.get(env, `users/${c.uid}/bot/link`);
+  return !!l && String(l.chatId) === String(chat);
+};
+
+// ---------- Менюи асосӣ ----------
+function menu(env: Env, linked: boolean): Keyboard {
+  return {
+    inline_keyboard: [
+      [{ text: '🌳 Кушодани барнома', web_app: { url: appUrl(env) } }],
+      [{ text: '📊 Хулоса', callback_data: 'sum' }, { text: '💳 Қарзҳо', callback_data: 'debts' }],
+      [{ text: '⏰ Ёдоварӣ', callback_data: 'rem' }, { text: '⚙️ Танзимот', callback_data: 'set' }],
+      [linked
+        ? { text: '✅ Аккаунт пайваст аст', callback_data: 'linked' }
+        : { text: '🔗 Пайваст кардани аккаунт', callback_data: 'link' }],
+      [{ text: '❓ Кӯмак', callback_data: 'help' }],
+    ],
+  };
+}
+
+async function sendMenu(env: Env, chat: number, name: string) {
+  const caption =
+    `👋 Салом, <b>${esc(name || 'дӯст')}</b>!\n\n` +
+    '🌳 Ман ёрдамчии барномаи <b>«Дарахти даромад»</b> ҳастам: даромад, хароҷот ва қарзҳои шуморо назорат мекунам, ' +
+    'дар бораи пардохтҳо ёдрас менамоям ва хулосаи молиявиро мефиристам.\n\n' +
+    'Аз менюи поён интихоб кунед 👇';
+  const markup = menu(env, await isLinked(env, chat));
+  const ok = await tg(env, 'sendPhoto', { chat_id: chat, photo: appUrl(env, 'bot-banner.png'), caption, parse_mode: 'HTML', reply_markup: markup });
+  if (!ok) await send(env, chat, caption, markup);
+}
+
+const linkHelp = (env: Env): [string, Keyboard] => [
+  '🔗 <b>Пайваст кардани аккаунт</b>\n\n' +
+  'Тугмаи поёнро пахш кунед: барнома кушода мешавад, ба ҳисоби худ ворид шавед (агар ворид нашудаед) ва «Telegram-бот»-ро дар Профил интихоб кунед. ' +
+  'Бот худаш пайваст мешавад.',
+  { inline_keyboard: [[{ text: '🌳 Кушодани барнома', web_app: { url: appUrl(env, '?tg=link') } }]] },
+];
+
+async function report(env: Env, chat: number, kind: 'sum' | 'debts' | 'rem') {
+  const r = await stateOf(env, chat);
+  if (typeof r === 'string') return send(env, chat, r, r === NOT_LINKED ? { inline_keyboard: linkHelp(env)[1].inline_keyboard } : undefined);
+  const today = dateOf(env.TIMEZONE ?? 'Asia/Dushanbe');
+  if (kind === 'sum') return send(env, chat, summaryText(r.state, today));
+  if (kind === 'debts') return send(env, chat, debtsText(r.state, today));
+  return send(env, chat, reminderText(r.state, today) ?? '✅ Имрӯз ва дар 3 рӯзи наздик пардохт нест.');
+}
+
+async function onMessage(env: Env, chat: number, text: string, name: string) {
   const [cmdRaw, ...rest] = text.trim().split(/\s+/);
   const cmd = cmdRaw.split('@')[0].toLowerCase();
-  const tz = env.TIMEZONE ?? 'Asia/Dushanbe';
 
-  if (cmd === '/start' || cmd === '/help') {
-    if (cmd === '/start' && rest[0]) return send(env, chat, await link(env, chat, rest[0]));
-    return send(env, chat, HELP);
+  if (cmd === '/start') {
+    if (rest[0]) await send(env, chat, await link(env, chat, rest[0]));
+    return sendMenu(env, chat, name);
   }
+  if (cmd === '/menu') return sendMenu(env, chat, name);
+  if (cmd === '/help') return send(env, chat, HELP);
   if (!cmd.startsWith('/') && CODE_RE.test(cmdRaw.toUpperCase()) && rest.length === 0) return send(env, chat, await link(env, chat, cmdRaw));
 
   if (cmd === '/stop') {
     const c = await fs.get(env, `botChats/${chat}`);
     if (c) { await fs.del(env, `users/${c.uid}/bot/link`); await fs.del(env, `botChats/${chat}`); }
-    return send(env, chat, '👋 Бот аз аккаунт ҷудо шуд. Барои пайвастани дубора дар барнома коди нав гиред.');
+    return send(env, chat, '👋 Бот аз аккаунт ҷудо шуд. Барои пайвастани дубора /start-ро пахш кунед.');
   }
-
-  if (cmd === '/xulosa' || cmd === '/qarzho' || cmd === '/yodovari') {
-    const r = await stateOf(env, chat);
-    if (typeof r === 'string') return send(env, chat, r);
-    const today = dateOf(tz);
-    if (cmd === '/xulosa') return send(env, chat, summaryText(r.state, today));
-    if (cmd === '/qarzho') return send(env, chat, debtsText(r.state, today));
-    return send(env, chat, reminderText(r.state, today) ?? '✅ Имрӯз ва дар 3 рӯзи наздик пардохт нест.');
-  }
-  return send(env, chat, 'Фармон нофаҳмо аст. /help');
+  if (cmd === '/xulosa') return report(env, chat, 'sum');
+  if (cmd === '/qarzho') return report(env, chat, 'debts');
+  if (cmd === '/yodovari') return report(env, chat, 'rem');
+  return send(env, chat, 'Фармон нофаҳмо аст. /help ё /start');
 }
 
-async function daily(env: Env) {
+async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
+  const data = q.data ?? '';
+  const chat = q.message?.chat.id;
+  const mid = q.message?.message_id;
+  const answer = (text?: string) => tg(env, 'answerCallbackQuery', { callback_query_id: q.id, ...(text ? { text } : {}) });
+  if (!chat) return answer();
+
+  if (data === 'linked') return answer('Аккаунт пайваст аст ✅');
+  await answer();
+  if (data === 'sum' || data === 'debts' || data === 'rem') return report(env, chat, data);
+  if (data === 'help') return send(env, chat, HELP);
+  if (data === 'link') {
+    if (await isLinked(env, chat)) return send(env, chat, '✅ Аккаунт аллакай пайваст аст.');
+    const [text, markup] = linkHelp(env);
+    return send(env, chat, text, markup);
+  }
+  if (data === 'close') return mid ? tg(env, 'deleteMessage', { chat_id: chat, message_id: mid }) : undefined;
+
+  if (data === 'set' || data === 'tg_rem' || data === 'tg_week' || data.startsWith('h:')) {
+    const c = await fs.get(env, `botChats/${chat}`);
+    if (!c) return send(env, chat, NOT_LINKED, { inline_keyboard: linkHelp(env)[1].inline_keyboard });
+    let p = prefsOf(c);
+    if (data === 'tg_rem') p = (await savePrefs(env, chat, { remindOn: !p.remindOn })) ?? p;
+    else if (data === 'tg_week') p = (await savePrefs(env, chat, { weeklyOn: !p.weeklyOn })) ?? p;
+    else if (data.startsWith('h:')) {
+      const h = Number(data.slice(2));
+      if (HOURS.includes(h)) p = (await savePrefs(env, chat, { hour: h })) ?? p;
+    }
+    const v = settingsView(p);
+    if (data === 'set' || !mid) return send(env, chat, v.text, v.markup);
+    return tg(env, 'editMessageText', { chat_id: chat, message_id: mid, text: v.text, parse_mode: 'HTML', reply_markup: v.markup });
+  }
+}
+
+// ---------- Ёдоварии ҳаррӯза (cron ҳар соат) ----------
+async function daily(env: Env, when = new Date()) {
   const tz = env.TIMEZONE ?? 'Asia/Dushanbe';
-  const today = dateOf(tz);
+  const today = dateOf(tz, when);
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }).format(when));
   const monday = new Date(`${today}T12:00:00Z`).getUTCDay() === 1;
   for (const c of await fs.list(env, 'botChats')) {
     try {
+      const p = prefsOf(c.data);
+      if (p.hour !== hour) continue;
       const chat = Number(c.id);
       const r = await stateOf(env, chat);
       if (typeof r === 'string') continue;
-      const rem = reminderText(r.state, today);
-      if (rem) await send(env, chat, rem);
-      if (monday) await send(env, chat, summaryText(r.state, today));
+      if (p.remindOn) {
+        const rem = reminderText(r.state, today);
+        if (rem) await send(env, chat, rem);
+      }
+      if (monday && p.weeklyOn) await send(env, chat, summaryText(r.state, today));
     } catch (e) {
       console.log(`daily ${c.id}: ${e instanceof Error ? e.message : e}`);
     }
@@ -120,16 +260,22 @@ export default {
     if (req.headers.get('x-telegram-bot-api-secret-token') !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });
     const u = (await req.json()) as Update;
     const m = u.message;
+    const q = u.callback_query;
     if (m?.text && m.chat.type === 'private') {
-      ctx.waitUntil(onMessage(env, m.chat.id, m.text).catch(e => {
+      ctx.waitUntil(onMessage(env, m.chat.id, m.text, m.from?.first_name ?? '').catch(e => {
         console.log(`message: ${e instanceof Error ? e.stack : e}`);
         return send(env, m.chat.id, '⚠️ Хатои муваққатӣ. Баъдтар кӯшиш кунед.');
+      }));
+    } else if (q && q.message?.chat.type === 'private') {
+      ctx.waitUntil(onCallback(env, q).catch(e => {
+        console.log(`callback: ${e instanceof Error ? e.stack : e}`);
+        return send(env, q.message!.chat.id, '⚠️ Хатои муваққатӣ. Баъдтар кӯшиш кунед.');
       }));
     }
     return new Response('ok');
   },
 
-  async scheduled(_c: ScheduledController, env: Env, ctx: Ctx) {
-    ctx.waitUntil(daily(env));
+  async scheduled(c: ScheduledController, env: Env, ctx: Ctx) {
+    ctx.waitUntil(daily(env, new Date(c.scheduledTime)));
   },
 };

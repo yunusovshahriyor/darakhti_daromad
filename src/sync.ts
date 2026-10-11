@@ -565,8 +565,16 @@ const makeCode = () => {
   return Array.from(b, x => A[x % A.length]).join('');
 };
 
-export async function telegramStatus(): Promise<TelegramLink | null> {
+/** Firebase бор мешавад ва мунтазир мешавем, то воридшавии захирашуда барқарор шавад (то 10 сония). */
+async function loadAuthed(): Promise<Fb | null> {
   const f = await load();
+  if (!f) return null;
+  for (let i = 0; i < 100 && !authReady; i++) await new Promise(r => setTimeout(r, 100));
+  return f;
+}
+
+export async function telegramStatus(): Promise<TelegramLink | null> {
+  const f = await loadAuthed();
   if (!f || !curUser) return null;
   const { doc, getDoc } = f.fsM;
   const s = await getDoc(doc(f.db, 'users', curUser.uid, 'bot', 'link'));
@@ -575,7 +583,7 @@ export async function telegramStatus(): Promise<TelegramLink | null> {
 
 /** Рамзи нав месозад; ба бот фиристода мешавад ва то 15 дақиқа эътибор дорад. */
 export async function telegramCreateCode(): Promise<string> {
-  const f = await load();
+  const f = await loadAuthed();
   if (!f || !curUser) throw new Error('Аввал ба аккаунт ворид шавед');
   const { doc, setDoc, serverTimestamp } = f.fsM;
   const code = makeCode();

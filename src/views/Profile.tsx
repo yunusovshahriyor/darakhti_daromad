@@ -21,12 +21,16 @@ interface ProfileProps extends Props {
   standalone: boolean;
   ios: boolean;
   onOpenAuth: () => void;
+  /** Бо `?tg=link` (аз тугмаи бот): равзанаи Telegram худкор кушода мешавад. */
+  autoTelegram?: boolean;
+  onTelegramShown?: () => void;
 }
 
-export default function Profile({ state, open, canInstall, install, standalone, ios, onOpenAuth }: ProfileProps) {
+export default function Profile({ state, open, canInstall, install, standalone, ios, onOpenAuth, autoTelegram, onTelegramShown }: ProfileProps) {
   const [name, setName] = useState(readName);
   const [editing, setEditing] = useState(false);
-  const [tgOpen, setTgOpen] = useState(false);
+  const [tgOpen, setTgOpen] = useState(!!autoTelegram);
+  useEffect(() => { if (autoTelegram) onTelegramShown?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [draft, setDraft] = useState('');
   const sync = useSync();
   // Таҳрири акс: `pick` — аксҳои нави интихобшуда (ҳанӯз бор нашудааст), `removePhoto` — нест кардан

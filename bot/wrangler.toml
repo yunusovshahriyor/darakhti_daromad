@@ -2,13 +2,14 @@ name = "darakhti-bot"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
-# Ҳар рӯз соати 09:00 бо вақти Тоҷикистон (UTC+5) = 04:00 UTC
+# Ҳар соат: ёдоварӣ ба соати интихобшудаи ҳар корбар (вақти Тоҷикистон) мерасад
 [triggers]
-crons = ["0 4 * * *"]
+crons = ["0 * * * *"]
 
 [vars]
 FIREBASE_PROJECT_ID = "darakhti-daromad"
 TIMEZONE = "Asia/Dushanbe"
+APP_URL = "https://yunusovshahriyor.github.io/darakhti_daromad/"
 
 # Сирриҳо (дар GitHub Secrets ва тавассути workflow ба Cloudflare мераванд):
 #   TELEGRAM_TOKEN, WEBHOOK_SECRET, FIREBASE_SERVICE_ACCOUNT

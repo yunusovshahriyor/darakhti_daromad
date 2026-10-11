@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { TELEGRAM_BOT_USERNAME } from '../firebaseConfig';
 import { telegramCreateCode, telegramStatus, useSync } from '../sync';
 import type { TelegramLink } from '../sync';
+import { openTelegramLink } from '../tg';
 import Sheet from './Sheet';
 
 export default function TelegramSheet({ onClose, onOpenAuth }: { onClose: () => void; onOpenAuth: () => void }) {
@@ -37,7 +38,7 @@ export default function TelegramSheet({ onClose, onOpenAuth }: { onClose: () => 
       try {
         const c = await telegramCreateCode();
         setCode(c);
-        if (TELEGRAM_BOT_USERNAME) window.location.href = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${c}`;
+        if (TELEGRAM_BOT_USERNAME) openTelegramLink(`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${c}`);
       } catch (e) {
         setErr(e instanceof Error ? e.message : 'Хатои номаълум');
       } finally {
@@ -75,7 +76,7 @@ export default function TelegramSheet({ onClose, onOpenAuth }: { onClose: () => 
           ) : (
             <>
               <p className="note">Агар Telegram худкор кушода нашуд, тугмаро пахш кунед: бот худаш пайваст мешавад.</p>
-              {url && <a className="btn tg-open" href={url}>Кушодани бот</a>}
+              {url && <a className="btn tg-open" href={url} onClick={e => { e.preventDefault(); openTelegramLink(url); }}>Кушодани бот</a>}
               <p className="note">Ё кодро дастӣ ба бот фиристед (15 дақиқа эътибор дорад):</p>
               <div className="tg-code">{code}</div>
               <button className="btn secondary" onClick={async () => {

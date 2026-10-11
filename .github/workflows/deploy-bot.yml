@@ -77,7 +77,16 @@ jobs:
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook" \
             --data-urlencode "url=${URL%/}/webhook" \
             --data-urlencode "secret_token=${WEBHOOK_SECRET}" \
-            --data-urlencode 'allowed_updates=["message"]'
+            --data-urlencode 'allowed_updates=["message","callback_query"]'
           echo
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyCommands" \
-            --data-urlencode 'commands=[{"command":"xulosa","description":"Хулосаи моҳ"},{"command":"qarzho","description":"Қарзҳо ва пардохтҳои навбатӣ"},{"command":"yodovari","description":"Ёдоварии имрӯз"},{"command":"help","description":"Роҳнамо"},{"command":"stop","description":"Ҷудо кардани бот аз аккаунт"}]'
+            --data-urlencode 'commands=[{"command":"start","description":"Менюи асосӣ"},{"command":"xulosa","description":"Хулосаи моҳ"},{"command":"qarzho","description":"Қарзҳо ва пардохтҳои навбатӣ"},{"command":"yodovari","description":"Ёдоварии имрӯз"},{"command":"help","description":"Роҳнамо"},{"command":"stop","description":"Ҷудо кардани бот аз аккаунт"}]'
+          echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setChatMenuButton" \
+            --data-urlencode 'menu_button={"type":"web_app","text":"Барнома","web_app":{"url":"https://yunusovshahriyor.github.io/darakhti_daromad/"}}'
+          echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyDescription" \
+            --data-urlencode 'description=Помощник приложения «Дарахти даромад»: напоминает о платежах по кредитам и долгам, присылает сводку доходов и расходов за месяц, показывает долги и ближайшие платежи. Подключите бота в приложении: Профиль → Telegram-бот.'
+          echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyShortDescription" \
+            --data-urlencode 'short_description=Напоминания о платежах по долгам и кредитам и сводка финансов из приложения «Дарахти даромад».'
