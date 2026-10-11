@@ -52,8 +52,8 @@ function Schedule({ debt, onEdit }: { debt: Debt; onEdit: (n: number) => void })
   return (
     <>
       <div className="loan-info">
-        <div><span>Гирифташуда</span><b>{fmt(plan.principal)} смн</b></div>
-        <div><span>Фоиз дар ҷамъ ({plan.rate}% дар сол)</span><b>{fmt(t.interest)} смн</b></div>
+        <div><span>{plan.method === 'flat' ? 'Нархи мол' : 'Гирифташуда'}</span><b>{fmt(plan.principal)} смн</b></div>
+        <div><span>{plan.method === 'flat' ? 'Комиссия' : `Фоиз дар ҷамъ (${plan.rate}% дар сол)`}</span><b>{fmt(t.interest)} смн</b></div>
         <div><span>Ҷамъи супоридан</span><b>{fmt(t.total)} смн</b></div>
       </div>
       <div className="sched">
@@ -66,7 +66,7 @@ function Schedule({ debt, onEdit }: { debt: Debt; onEdit: (n: number) => void })
               onClick={() => onEdit(r.n)}>
               <span className="sn">{done ? '✓' : r.n}</span>
               <span><b className="sd">{dayTitle(r.due)}{r.edited ? ' ✎' : ''}</b>
-                <small>асосӣ {fmt(r.principal)} · фоиз {fmt(r.interest)}</small></span>
+                <small>асосӣ {fmt(r.principal)} · {debt.plan?.method === 'flat' ? 'комиссия' : 'фоиз'} {fmt(r.interest)}</small></span>
               <span className="sp">{fmt(r.payment)}</span>
             </button>
           );
@@ -198,7 +198,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
                             </div>
                             <div className="progress"><i style={{ width: `${pct}%` }} /></div>
                             <small>
-                              Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.plan ? `🏦 ${d.plan.rate}% · ${d.plan.months} моҳ` : d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
+                              Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.plan ? d.plan.method === 'flat' ? `🏦 комиссия ${fmt(d.plan.commission ?? 0)} · ${d.plan.months} моҳ` : `🏦 ${d.plan.rate}% · ${d.plan.months} моҳ` : d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
                             </small>
                             {(() => {
                               const n = nextInstallment(d, today());

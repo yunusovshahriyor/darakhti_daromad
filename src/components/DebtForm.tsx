@@ -29,6 +29,7 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   const [rate, setRate] = useState(initial?.plan ? String(initial.plan.rate) : '');
   const [months, setMonths] = useState(initial?.plan ? String(initial.plan.months) : '');
   const [method, setMethod] = useState<DebtPlan['method']>(initial?.plan?.method ?? 'annuity');
+  const [commission, setCommission] = useState(initial?.plan?.commission !== undefined ? String(initial.plan.commission) : '');
   const [fixedPay, setFixedPay] = useState(initial?.plan?.payment ? String(initial.plan.payment) : '');
   const [payDay, setPayDay] = useState(initial?.plan?.payDay ? String(initial.plan.payDay) : '');
   const [shift, setShift] = useState(initial?.plan?.shiftWeekend ?? false);
@@ -42,10 +43,13 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   const monthsNum = Math.round(parseFloat(months) || 0);
   const payNum = parseFloat(fixedPay.replace(',', '.').replace(/\s/g, '')) || 0;
   const dayNum = Math.min(31, Math.max(1, Math.round(parseFloat(payDay) || 0)));
-  const validBase = bank && principal > 0 && monthsNum >= 1 && monthsNum <= 600 && (method !== 'actual' || payNum > 0);
+  const commNum = parseFloat(commission.replace(',', '.').replace(/\s/g, '')) || 0;
+  const validBase = bank && principal > 0 && monthsNum >= 1 && monthsNum <= 600
+    && (method !== 'actual' || payNum > 0) && (method !== 'flat' || commNum >= 0);
   const plan: DebtPlan | undefined = validBase
     ? {
-        principal, rate: Math.max(0, rateNum), months: monthsNum, method,
+        principal, rate: method === 'flat' ? 0 : Math.max(0, rateNum), months: monthsNum, method,
+        ...(method === 'flat' ? { commission: commNum } : {}),
         ...(method === 'actual' ? { payment: payNum } : {}),
         ...(payDay.trim() !== '' ? { payDay: dayNum } : {}),
         ...(shift ? { shiftWeekend: true } : {}),
@@ -90,9 +94,16 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
       {bank && (
         <>
           <div className="two-col">
-            <Field label="Фоиз дар сол, %">
-              <input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="Масалан, 24" />
-            </Field>
+            {method !== 'flat' && (
+              <Field label="Фоиз дар сол, %">
+                <input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="Масалан, 24" />
+              </Field>
+            )}
+            {method === 'flat' && (
+              <Field label="Комиссия, смн">
+                <input inputMode="decimal" value={commission} onChange={e => setCommission(e.target.value)} placeholder="Масалан, 1764" />
+              </Field>
+            )}
             <Field label="Мӯҳлат, моҳ">
               <input inputMode="numeric" value={months} onChange={e => setMonths(e.target.value.replace(/\D/g, ''))} placeholder="Масалан, 12" />
             </Field>
@@ -100,6 +111,9 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
           <div className="chips-block">
             <div className="chips-label">Усули супоридан</div>
             <div className="chips">
+              <button type="button" className={method === 'flat' ? 'chip on' : 'chip'} onClick={() => setMethod('flat')}>
+                <span className="chip-t"><b>Комиссияи яккарата</b><small>нарх + комиссия, баробар тақсим</small></span>
+              </button>
               <button type="button" className={method === 'actual' ? 'chip on' : 'chip'} onClick={() => setMethod('actual')}>
                 <span className="chip-t"><b>Пардохти собити бонк</b><small>фоиз аз рӯзҳои воқеӣ ÷ 365</small></span>
               </button>
@@ -132,9 +146,10 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
           </label>
           {plan && (
             <div className="loan-info">
-              <div><span>{method === 'diff' ? 'Пардохти аввал → охир' : 'Пардохти моҳона → охирин'}</span>
-                <b>{method === 'diff' || method === 'actual' ? `${fmt(rows[0].payment)} → ${fmt(rows[rows.length - 1].payment)}` : fmt(rows[0].payment)} смн</b></div>
-              <div><span>Фоиз дар ҷамъ</span><b>{fmt(totals.interest)} смн</b></div>
+              <div><span>{rows[0].payment !== rows[rows.length - 1].payment ? 'Пардохти аввал → охирин' : 'Пардохти моҳона'}</span>
+                <b>{rows[0].payment !== rows[rows.length - 1].payment ? `${fmt(rows[0].payment)} → ${fmt(rows[rows.length - 1].payment)}` : fmt(rows[0].payment)} смн</b></div>
+              {method === 'flat' && <div><span>Нархи мол</span><b>{fmt(principal)} смн</b></div>}
+              <div><span>{method === 'flat' ? `Комиссия (${principal > 0 ? Math.round((commNum / principal) * 10000) / 100 : 0}% аз нарх)` : 'Фоиз дар ҷамъ'}</span><b>{fmt(totals.interest)} смн</b></div>
               <div><span>Ҷамъи супоридан</span><b>{fmt(totals.total)} смн</b></div>
               <div><span>Пардохти аввал</span><b>{rows[0].due}</b></div>
               <div><span>Пардохтҳо</span><b>{rows.length} · то {rows[rows.length - 1].due}</b></div>

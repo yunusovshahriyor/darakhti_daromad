@@ -4,8 +4,11 @@ export const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
 
 export const today = () => new Date().toLocaleDateString('sv-SE');
 
-export const fmt = (n: number) =>
-  n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+/** Маблағ: бутун бе копейка, дарсадӣ ҳамеша бо ду рақам (6 424,40). */
+export const fmt = (n: number) => {
+  const r = Math.round(n * 100) / 100;
+  return r.toLocaleString('ru-RU', { minimumFractionDigits: Number.isInteger(r) ? 0 : 2, maximumFractionDigits: 2 });
+};
 
 export const emptyAlloc = (): Alloc =>
   Object.fromEntries(ALL_IDS.map(id => [id, 0])) as Alloc;

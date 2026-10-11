@@ -77,7 +77,9 @@ export interface DebtPlan {
   rate: number;
   months: number;
   /** annuity — пардохти баробар; diff — дифференсиалӣ; actual — пардохти собити бонк, фоиз аз рӯзҳои воқеӣ ÷ 365. */
-  method: 'annuity' | 'diff' | 'actual';
+  method: 'annuity' | 'diff' | 'actual' | 'flat';
+  /** flat — комиссияи яккарата: нархи мол (principal) + комиссия, ба пардохтҳои баробар тақсим мешавад. */
+  commission?: number;
   /** Пардохти собити бонк (барои method = 'actual'). */
   payment?: number;
   /** Рӯзи супоридан дар моҳ (1–31). */

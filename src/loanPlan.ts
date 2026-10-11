@@ -54,7 +54,33 @@ export function dueDate(start: string, k: number, payDay: number, shiftWeekend: 
  * - actual: пардохти собити бонк, фоиз = боқӣ × фоиз × рӯзҳои воқеӣ ÷ 365 (аз супориши қаблӣ).
  * Пардохти охирин боқимондаро мепӯшонад.
  */
+function buildFlat(plan: DebtPlan, start: string): Installment[] {
+  const { principal: P, months: n } = plan;
+  const C = plan.commission ?? 0;
+  const total = r2(P + C);
+  const payDay = plan.payDay ?? Number(start.split('-')[2]);
+  const shift = plan.shiftWeekend ?? false;
+  const base = r2(total / n);
+  const rows: Installment[] = [];
+  let balP = P;
+  let balC = C;
+  for (let i = 1; i <= n; i++) {
+    const ov = plan.overrides?.[i];
+    const due = ov?.due ?? dueDate(start, i, payDay, shift);
+    let payment = i === n ? r2(balP + balC) : ov?.payment ?? base;
+    let interest = i === n ? r2(balC) : total > 0 ? r2((payment * C) / total) : 0;
+    if (i < n && payment >= r2(balP + balC)) { payment = r2(balP + balC); interest = r2(balC); }
+    const principal = r2(payment - interest);
+    balP = r2(balP - principal);
+    balC = r2(balC - interest);
+    rows.push({ n: i, due, principal, interest, payment, edited: ov !== undefined });
+    if (balP + balC <= 0.005) break;
+  }
+  return rows;
+}
+
 export function buildSchedule(plan: DebtPlan, start: string): Installment[] {
+  if (plan.method === 'flat') return buildFlat(plan, start);
   const { principal: P, months: n, method } = plan;
   const payDay = plan.payDay ?? Number(start.split('-')[2]);
   const shift = plan.shiftWeekend ?? false;
