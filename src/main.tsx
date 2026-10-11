@@ -2,10 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { initStorage } from './storage';
+import { initSync } from './sync';
 import './style.css';
 
 // Аввал маълумотро аз IndexedDB мехонем, баъд барномаро мекушем
 initStorage().finally(() => {
+  initSync();
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App />

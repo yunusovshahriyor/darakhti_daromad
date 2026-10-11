@@ -70,6 +70,9 @@ function readState(): State {
   }
 }
 
+/** Пас аз ҳар навиштани ҳолат (барои синхронизатсияи абрӣ). */
+export const savedListeners = new Set<() => void>();
+
 let idbTimer: ReturnType<typeof setTimeout> | undefined;
 let pending: string | null = null;
 
@@ -94,6 +97,7 @@ export function saveState(state: State) {
   pending = raw;
   if (idbTimer) clearTimeout(idbTimer);
   idbTimer = setTimeout(flushIdb, 400);
+  savedListeners.forEach(fn => fn());
 }
 
 if (typeof window !== 'undefined') {
@@ -179,7 +183,7 @@ const readPrefs = (): Record<string, string> => {
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith('darakhti:') && !PREF_SKIP.has(k)) out[k] = localStorage.getItem(k) ?? '';
+      if (k && k.startsWith('darakhti:') && !k.startsWith('darakhti:sb') && !PREF_SKIP.has(k)) out[k] = localStorage.getItem(k) ?? '';
     }
   } catch { /* ignore */ }
   return out;
@@ -214,14 +218,26 @@ export function parseBackup(text: string): { raw: string; prefs: Record<string, 
 }
 
 /** Ҳолатро иваз мекунем (аввал нусхаи ҷорӣ ба нусхаҳои худкор меравад) ва саҳифаро аз нав мебор мекунем. */
-export async function restoreRaw(raw: string, prefs: Record<string, string> = {}): Promise<void> {
+export async function restoreRaw(raw: string, prefs: Record<string, string> = {}, onWritten?: () => void): Promise<void> {
   pending = null; // навиштани таъхирдодашудаи ҳолати кӯҳна ҳолати барқароршударо нест накунад
   if (idbTimer) clearTimeout(idbTimer);
   const current = localStorage.getItem(KEY);
   if (hasData(current)) await snapshotAdd({ ts: Date.now(), raw: current! }).catch(() => {});
   localStorage.setItem(KEY, raw);
   localStorage.setItem(SAVED_KEY, String(Date.now()));
-  for (const [k, v] of Object.entries(prefs)) if (k.startsWith('darakhti:')) localStorage.setItem(k, v);
+  for (const [k, v] of Object.entries(prefs)) {
+    if (k.startsWith('darakhti:') && !k.startsWith('darakhti:sb') && !PREF_SKIP.has(k)) localStorage.setItem(k, v);
+  }
+  onWritten?.();
   await idbSet('state', raw).then(() => idbSet('savedAt', Date.now())).catch(() => {});
   location.reload();
 }
+
+export const getSavedAt = (): number => {
+  try { return Number(localStorage.getItem(SAVED_KEY) ?? 0); } catch { return 0; }
+};
+export const addSnapshot = (raw: string) => snapshotAdd({ ts: Date.now(), raw }).catch(() => {});
+export const localRaw = (): string | null => {
+  try { return localStorage.getItem(KEY); } catch { return null; }
+};
+export const makeBackupText = () => JSON.stringify(makeBackup().file);

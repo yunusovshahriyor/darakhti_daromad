@@ -1,5 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { useConfirm } from '../components/ConfirmSheet';
+import SyncSheet, { statusText } from '../components/SyncSheet';
+import { useSync } from '../sync';
 import Field from '../components/Field';
 import { ChevronIcon, PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
@@ -39,6 +41,8 @@ export default function Profile({ state, open, canInstall, install, standalone, 
   const [name, setName] = useState(readName);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
+  const sync = useSync();
+  const [syncOpen, setSyncOpen] = useState(false);
   const [backedAt, setBackedAt] = useState(lastBackupAt);
   const [snaps, setSnaps] = useState<Snapshot[]>([]);
   const [showSnaps, setShowSnaps] = useState(false);
@@ -176,6 +180,14 @@ export default function Profile({ state, open, canInstall, install, standalone, 
 
       <h3 className="group-title"><span>Маълумот ва нусхаи эҳтиётӣ</span></h3>
       <div className="cells">
+        <button className="cell tap link" onClick={() => setSyncOpen(true)}>
+          <div className="ic">{sync.status === 'conflict' ? '⚠️' : '☁️'}</div>
+          <div className="grow">
+            <b>Синхронизатсияи абрӣ{sync.email ? ` · ${sync.email}` : ''}</b>
+            <small>{statusText(sync.status, sync.lastSyncAt, sync.error)}</small>
+          </div>
+          <ChevronIcon />
+        </button>
         <div className="cell">
           <div className="ic">{persisted ? '🔒' : '⚠️'}</div>
           <div className="grow">
@@ -225,6 +237,7 @@ export default function Profile({ state, open, canInstall, install, standalone, 
       </div>
       <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={pickFile} />
       {confirmDialog}
+      {syncOpen && <SyncSheet onClose={() => setSyncOpen(false)} onToast={onToast} />}
 
       {!standalone && (
         <>

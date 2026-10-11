@@ -1283,3 +1283,7 @@ button.sched-row { background: none; border-left: 0; border-right: 0; border-top
 .m-t em { font-style: normal; color: var(--primary); font-size: .78rem; line-height: 1.35; margin-top: 2px; }
 .m-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); margin-top: 8px; box-sizing: border-box; }
 .method.on .m-radio { border-color: var(--primary); background: radial-gradient(circle, var(--primary) 0 45%, transparent 50%); }
+
+.sync-steps { margin: 10px 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: .85rem; line-height: 1.45; }
+.conflict { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); border: 1px solid var(--danger); border-radius: 16px; padding: 12px 14px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.conflict p { margin: 0; font-size: .85rem; }

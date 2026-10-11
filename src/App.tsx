@@ -10,6 +10,7 @@ import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, tod
 import { lastBackupAt, loadState, saveState, stateHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
+import { setSyncNotifier } from './sync';
 import { useDreamMilestones } from './useDreamMilestones';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
@@ -176,6 +177,11 @@ export default function App() {
     return () => clearTimeout(t);
     // танҳо ҳангоми кушодани барнома
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    setSyncNotifier(setToast);
+    return () => setSyncNotifier(null);
   }, []);
 
   // Хотиррасонии нусхаи эҳтиётӣ: агар маълумот бошад ва зиёда аз 7 рӯз нусха нагирифта бошед (як маротиба дар як рӯз)
