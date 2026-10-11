@@ -4,13 +4,17 @@ import App from './App';
 import InstallPage from './components/InstallPage';
 import { initStorage } from './storage';
 import { initSync } from './sync';
-import { initTelegram } from './tg';
+import { initTelegram, loginCodeFromLaunch } from './tg';
+import TelegramLoginComplete from './components/TelegramLoginComplete';
 import './style.css';
 
 const installMode = new URLSearchParams(location.search).get('install') === '1';
 
 // Аввал маълумотро аз IndexedDB мехонем, баъд барномаро мекушем
-if (installMode) {
+const loginCode = loginCodeFromLaunch();
+if (loginCode) {
+  createRoot(document.getElementById('root')!).render(<StrictMode><TelegramLoginComplete code={loginCode} /></StrictMode>);
+} else if (installMode) {
   createRoot(document.getElementById('root')!).render(<StrictMode><InstallPage /></StrictMode>);
 } else initStorage().finally(() => {
   initTelegram();

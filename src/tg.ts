@@ -9,6 +9,7 @@ interface TgWebApp {
   openTelegramLink(url: string): void;
   openLink(url: string, options?: { try_browser?: string }): void;
   initData: string;
+  close(): void;
 }
 declare global {
   interface Window { Telegram?: { WebApp?: TgWebApp } }
@@ -47,4 +48,25 @@ export function openInBrowser(url: string) {
   const w = window.Telegram?.WebApp;
   if (w?.openLink) w.openLink(url, { try_browser: 'chrome' });
   else window.open(url, '_blank');
+}
+
+/** Кодҳои воридшавӣ аз `startapp=login_<КОД>`: Telegram онро ба hash-и барнома мегузорад (`tgWebAppStartParam`). */
+export function loginCodeFromLaunch(): string | null {
+  try {
+    const p = new URLSearchParams(location.hash.replace(/^#/, '')).get('tgWebAppStartParam') ?? '';
+    return /^login_[A-Z2-9]{10}$/.test(p) ? p.slice(6) : null;
+  } catch { return null; }
+}
+
+/** Скрипти расмии Telegram-ро бор мекунад ва `WebApp`-ро медиҳад. */
+export function loadTelegram(): Promise<TgWebApp | null> {
+  return new Promise(resolve => {
+    if (window.Telegram?.WebApp) return resolve(window.Telegram.WebApp);
+    const s = document.createElement('script');
+    s.src = 'https://telegram.org/js/telegram-web-app.js';
+    s.async = true;
+    s.onload = () => resolve(window.Telegram?.WebApp ?? null);
+    s.onerror = () => resolve(null);
+    document.head.appendChild(s);
+  });
 }

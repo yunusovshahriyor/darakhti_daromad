@@ -10,6 +10,7 @@ crons = ["0 * * * *"]
 FIREBASE_PROJECT_ID = "darakhti-daromad"
 TIMEZONE = "Asia/Dushanbe"
 BOT_USERNAME = "darakhti_daromad_bot"
+MINIAPP_SHORTNAME = ""
 APP_URL = "https://yunusovshahriyor.github.io/darakhti_daromad/"
 
 # Сирриҳо (дар GitHub Secrets ва тавассути workflow ба Cloudflare мераванд):

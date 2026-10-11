@@ -305,7 +305,23 @@ async function api(req: Request, env: Env, path: string): Promise<Response> {
     if (path === '/auth/start') {
       const code = newCode();
       await fs.set(env, `botLogins/${code}`, { createdAt: new Date().toISOString(), status: 'pending' });
-      return json({ code, url: `https://t.me/${env.BOT_USERNAME}?start=login_${code}` });
+      // Mini App (агар сабт шуда бошад): Telegram фавран онро мекушояд, «Start» лозим нест
+      const mini = !!env.MINIAPP_SHORTNAME;
+      const url = mini
+        ? `https://t.me/${env.BOT_USERNAME}/${env.MINIAPP_SHORTNAME}?startapp=login_${code}`
+        : `https://t.me/${env.BOT_USERNAME}?start=login_${code}`;
+      return json({ code, url, mini });
+    }
+    // Mini App воридшавиро анҷом медиҳад: initData-и имзошуда + код
+    if (path === '/auth/complete') {
+      const who = await verifyInitData(env, String(body.initData ?? ''));
+      if (!who) return json({ error: 'invalid' }, 401);
+      const code = String(body.code ?? '');
+      const d = LOGIN_RE.test(code) ? await fs.get(env, `botLogins/${code}`) : null;
+      if (!d || d.status !== 'pending' || !fresh(d)) return json({ status: 'gone' });
+      const { uid } = await resolveUid(env, who.id);
+      await fs.set(env, `botLogins/${code}`, { createdAt: String(d.createdAt), status: 'ok', uid, name: who.name });
+      return json({ status: 'ok' });
     }
     if (path === '/auth/poll') {
       const code = String(body.code ?? '');

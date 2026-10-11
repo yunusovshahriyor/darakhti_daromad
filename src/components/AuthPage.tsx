@@ -57,7 +57,7 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState<'' | 'form' | 'google' | 'reset' | 'tg'>('');
-  const [tgWait, setTgWait] = useState<{ code: string; url: string } | null>(null);
+  const [tgWait, setTgWait] = useState<{ code: string; url: string; mini?: boolean } | null>(null);
   const [err, setErr] = useState('');
   const [info, setInfo] = useState('');
   const closing = useRef(false);
@@ -180,7 +180,7 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
           {BOT_API && (tgWait ? (
             <div className="auth-tg-wait" role="status">
               <span className="spin" />
-              <p>Дар Telegram тугмаи «Start»-ро пахш кунед, ворид шудан худкор анҷом меёбад.</p>
+              <p>{tgWait.mini ? 'Telegram кушода мешавад: ворид шудан ва баргашт ба сайт худкор анҷом меёбад.' : 'Дар Telegram тугмаи «Start»-ро пахш кунед, ворид шудан худкор анҷом меёбад.'}</p>
               <a href={tgWait.url} target="_blank" rel="noreferrer"
                 onClick={e => { if (window.Telegram?.WebApp) { e.preventDefault(); openTelegramLink(tgWait.url); } }}>Кушодани Telegram</a>
               <button type="button" onClick={() => { cancelTelegramLogin(); setTgWait(null); }}>Бекор кардан</button>

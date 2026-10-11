@@ -665,8 +665,8 @@ export async function telegramAutoLogin(initData: string): Promise<void> {
   if (tgId) ls.set(TG_ID_KEY, tgId);
 }
 
-/** Браузер: кодро месозад; корбар дар бот «Start» мепахшад ва воридшавӣ худкор анҷом меёбад. */
-export async function telegramLoginStart(): Promise<{ code: string; url: string }> {
+/** Браузер: кодро месозад; Telegram Mini App-ро мекушояд (ё бот: «Start»), воридшавӣ худкор анҷом меёбад. */
+export async function telegramLoginStart(): Promise<{ code: string; url: string; mini?: boolean }> {
   return botPost('/auth/start', {});
 }
 

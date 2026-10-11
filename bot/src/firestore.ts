@@ -8,6 +8,8 @@ export interface Env {
   TIMEZONE?: string;
   APP_URL: string;
   BOT_USERNAME: string;
+  /** Қисқа номи Mini App дар @BotFather (/newapp), масалан «app». Агар холӣ бошад, воридшавӣ тавассути /start-и бот. */
+  MINIAPP_SHORTNAME?: string;
 }
 
 type Json = Record<string, unknown>;
