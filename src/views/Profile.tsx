@@ -1,5 +1,6 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { useSync } from '../sync';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { squareJpeg } from '../image';
+import { setAvatar, useSync } from '../sync';
 import Field from '../components/Field';
 import { ChevronIcon, PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
@@ -26,6 +27,35 @@ export default function Profile({ state, open, canInstall, install, standalone, 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const sync = useSync();
+  // Таҳрири акс: `pick` — аксҳои нави интихобшуда (ҳанӯз бор нашудааст), `removePhoto` — нест кардан
+  const [pick, setPick] = useState<{ blob: Blob; url: string } | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [photoErr, setPhotoErr] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const closeEdit = () => {
+    if (pick) URL.revokeObjectURL(pick.url);
+    setPick(null);
+    setRemovePhoto(false);
+    setPhotoErr('');
+    setEditing(false);
+  };
+
+  const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setPhotoErr('');
+    try {
+      const blob = await squareJpeg(file);
+      if (pick) URL.revokeObjectURL(pick.url);
+      setPick({ blob, url: URL.createObjectURL(blob) });
+      setRemovePhoto(false);
+    } catch (err) {
+      setPhotoErr(err instanceof Error ? err.message : 'Акс хонда нашуд');
+    }
+  };
 
   useEffect(() => {
     try { localStorage.setItem(NAME_KEY, name); } catch { /* ignore */ }
@@ -42,10 +72,23 @@ export default function Profile({ state, open, canInstall, install, standalone, 
   const avg = months.filter(m => m.total > 0).length
     ? months.reduce((s, m) => s + m.total, 0) / months.filter(m => m.total > 0).length : 0;
 
-  const save = (e: FormEvent) => {
+  const save = async (e: FormEvent) => {
     e.preventDefault();
     setName(draft.trim());
-    setEditing(false);
+    // Акс: нав бор мешавад ё нест мешавад; аксҳои кӯҳна дар Storage худкор нест мешаванд
+    if (pick || (removePhoto && sync.photo)) {
+      setSaving(true);
+      setPhotoErr('');
+      try {
+        await setAvatar(pick ? pick.blob : null);
+      } catch (err) {
+        setPhotoErr(err instanceof Error ? err.message : 'Акс нигоҳ дошта нашуд');
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+    }
+    closeEdit();
   };
 
   return (
@@ -149,12 +192,42 @@ export default function Profile({ state, open, canInstall, install, standalone, 
       )}
 
       {editing && (
-        <Sheet title="Номи шумо" onClose={() => setEditing(false)}>
+        <Sheet title="Профил" onClose={closeEdit}>
           <form onSubmit={save}>
+            {(() => {
+              const shown = removePhoto ? '' : pick ? pick.url : sync.photo;
+              const letter = (draft || sync.name || sync.email).trim().charAt(0).toUpperCase() || '👤';
+              return (
+                <div className="pe-photo">
+                  <button type="button" className="pe-ava" onClick={() => fileRef.current?.click()} aria-label="Акс интихоб кардан">
+                    {shown ? <img src={shown} alt="" referrerPolicy="no-referrer" /> : <span>{letter}</span>}
+                    <i className="pe-cam" aria-hidden>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2l1.1-1.6A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.2.4L16.3 6h1.2A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5Z" /><circle cx="12" cy="12.5" r="3.3" />
+                      </svg>
+                    </i>
+                  </button>
+                  <div className="pe-btns">
+                    <button type="button" className="pe-link" onClick={() => fileRef.current?.click()}>
+                      {shown ? 'Иваз кардани акс' : 'Илова кардани акс'}
+                    </button>
+                    {(shown || (pick && sync.photo)) && (
+                      <button type="button" className="pe-link danger" onClick={() => {
+                        if (pick) URL.revokeObjectURL(pick.url);
+                        setPick(null);
+                        setRemovePhoto(true);
+                      }}>Нест кардани акс</button>
+                    )}
+                  </div>
+                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
+                </div>
+              );
+            })()}
             <Field label="Ном">
-              <input value={draft} autoFocus maxLength={30} onChange={e => setDraft(e.target.value)} placeholder="Масалан, Шаҳриёр" />
+              <input value={draft} maxLength={30} onChange={e => setDraft(e.target.value)} placeholder="Масалан, Шаҳриёр" />
             </Field>
-            <button className="btn big" type="submit">Нигоҳ доштан</button>
+            {photoErr && <div className="alert danger">{photoErr}</div>}
+            <button className="btn big" type="submit" disabled={saving}>{saving ? 'Нигоҳ дошта истодааст…' : 'Нигоҳ доштан'}</button>
           </form>
         </Sheet>
       )}

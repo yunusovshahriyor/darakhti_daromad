@@ -1441,3 +1441,19 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
 .ss-out { height: 48px; border-radius: 16px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-weight: 600; font-size: .9rem; padding: 0 8px; }
 .ss-out.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
 .ss-note { margin: 10px 4px 0; color: var(--muted); font-size: .76rem; line-height: 1.45; text-align: center; }
+
+/* ===== Таҳрири профил: акс ===== */
+.pe-photo { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 4px 0 16px; }
+.pe-ava {
+  position: relative; width: 104px; height: 104px; border-radius: 50%; border: 0; padding: 0; overflow: visible;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; font-size: 2.6rem; font-weight: 700;
+  display: grid; place-items: center; box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 32%, transparent);
+}
+.pe-ava img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.pe-cam {
+  position: absolute; right: -2px; bottom: -2px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); color: var(--text); border: 3px solid var(--bg); box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+}
+.pe-btns { display: flex; gap: 18px; }
+.pe-link { border: 0; background: none; color: var(--primary); font-weight: 600; font-size: .92rem; padding: 6px 2px; }
+.pe-link.danger { color: var(--danger); }

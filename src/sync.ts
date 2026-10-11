@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { FirebaseOptions } from 'firebase/app';
+import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
@@ -112,6 +112,7 @@ export function clearConfig() {
 
 // ---------- Firebase (бор кардани танбал) ----------
 interface Fb {
+  app: FirebaseApp;
   auth: Auth;
   db: Firestore;
   authM: typeof import('firebase/auth');
@@ -135,7 +136,7 @@ async function load(): Promise<Fb | null> {
       }
       authM.onAuthStateChanged(auth, onAuth);
       authM.getRedirectResult(auth).catch(e => set('error', { error: authMessage(e) }));
-      return { auth, db, authM, fsM };
+      return { app, auth, db, authM, fsM };
     })().catch(e => { fb = null; throw e; });
   }
   return fb;
@@ -499,3 +500,57 @@ export function initSync() {
 
 /** Барои саҳифаи Профил: SDK-ро пешакӣ бор мекунем. */
 export const preload = () => { if (getConfig()) void load().catch(() => { /* ignore */ }); };
+
+// ---------- Акси профил (Firebase Storage) ----------
+const storageMessage = (e: unknown): string => {
+  const code = (e as { code?: string })?.code ?? '';
+  const map: Record<string, string> = {
+    'storage/unauthorized': 'Иҷозат нест: қоидаҳои Storage (storage.rules) нашр нашудаанд ё ворид нашудаед',
+    'storage/bucket-not-found': 'Storage дар Firebase фаъол нест (Build → Storage → Get started)',
+    'storage/project-not-found': 'Storage дар Firebase фаъол нест',
+    'storage/quota-exceeded': 'Ҷойи Storage пур шудааст',
+    'storage/retry-limit-exceeded': 'Бор нашуд: интернетро санҷед ва аз нав кӯшиш кунед',
+    'storage/canceled': 'Бор кардан бекор шуд',
+    'storage/unknown': 'Хатои номаълуми Storage: фаъол будани Storage ва нақшаи Blaze-ро санҷед',
+  };
+  return map[code] ?? (e instanceof Error ? e.message : 'Хатои номаълум');
+};
+
+let storageEmuConnected = false;
+
+/**
+ * Акси профилро иваз мекунад (`image`) ё нест мекунад (`null`).
+ * Тартиб: аввал аксҳои нав бор мешавад, баъд профил нав мешавад ва дар охир аксҳои кӯҳна нест мешаванд,
+ * то дар Storage ҳамеша танҳо як акс монад ва ҷой пур нашавад.
+ */
+export async function setAvatar(image: Blob | null): Promise<void> {
+  const f = await load();
+  const u = f?.auth.currentUser;
+  if (!f || !u) throw new Error('Аввал ворид шавед');
+  try {
+    const st = await import('firebase/storage');
+    const storage = st.getStorage(f.app);
+    if (location.hostname === 'localhost' && ls.get(EMU_KEY) === '1' && !storageEmuConnected) {
+      st.connectStorageEmulator(storage, '127.0.0.1', 9199);
+      storageEmuConnected = true;
+    }
+    const folder = st.ref(storage, `users/${u.uid}/avatar`);
+    let keep = '';
+    let url = '';
+    if (image) {
+      keep = `${Date.now()}.jpg`;
+      const target = st.ref(folder, keep);
+      await st.uploadBytes(target, image, { contentType: 'image/jpeg', cacheControl: 'public,max-age=31536000' });
+      url = await st.getDownloadURL(target);
+    }
+    await f.authM.updateProfile(u, { photoURL: url });
+    // Аксҳои кӯҳнаро нест мекунем (хатои нест кардан муҳим нест: акс аллакай иваз шуд)
+    const all = await st.listAll(folder).catch(() => ({ items: [] as { name: string }[] }));
+    await Promise.all(all.items.filter(i => i.name !== keep).map(i => st.deleteObject(i as never).catch(() => undefined)));
+    curUser = curUser ? { ...curUser, photo: url } : curUser;
+    ls.set(PHOTO_KEY, url);
+    set('idle');
+  } catch (e) {
+    throw new Error(storageMessage(e));
+  }
+}
