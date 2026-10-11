@@ -71,7 +71,8 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
 
   return (
     <form onSubmit={submit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate}
+        dateLabel={bank ? 'Санаи оғози шартнома' : 'Санаи амалиёт'} />
       {afterPad}
       <Field label="Ба кӣ / барои чӣ">
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, қарз ба Алӣ" />
@@ -135,6 +136,7 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
                 <b>{method === 'diff' || method === 'actual' ? `${fmt(rows[0].payment)} → ${fmt(rows[rows.length - 1].payment)}` : fmt(rows[0].payment)} смн</b></div>
               <div><span>Фоиз дар ҷамъ</span><b>{fmt(totals.interest)} смн</b></div>
               <div><span>Ҷамъи супоридан</span><b>{fmt(totals.total)} смн</b></div>
+              <div><span>Қисти аввал</span><b>{rows[0].due}</b></div>
               <div><span>Қистҳо</span><b>{rows.length} · то {rows[rows.length - 1].due}</b></div>
             </div>
           )}

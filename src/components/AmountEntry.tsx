@@ -28,7 +28,9 @@ function shown(value: string) {
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'back'];
 
 /** Маблағ бо тугмачаҳои рақамӣ + сана: тарҳи барномаи мобилӣ. */
-export default function AmountEntry({ value, onChange, date, onDate, sign, locked = false }: {
+export default function AmountEntry({ value, onChange, date, onDate, sign, locked = false, dateLabel = 'Санаи амалиёт' }: {
+  /** Номи сатри сана. */
+  dateLabel?: string;
   /** Маблағ тағйир намеёбад (амалиёти вобаста ба қарз/орзу): тугмачаҳои рақамӣ нест. */
   locked?: boolean;
   /** «+» барои воридот, «−» барои баромад: ранг ва аломат дар маблағи калон. */
@@ -77,7 +79,7 @@ export default function AmountEntry({ value, onChange, date, onDate, sign, locke
           strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <rect x="3.5" y="5" width="17" height="15.5" rx="3" /><path d="M3.5 10h17M8 3v4M16 3v4" />
         </svg>
-        <span className="dr-label">Санаи амалиёт</span>
+        <span className="dr-label">{dateLabel}</span>
         <b>{dateText(date)}</b>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"
           strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
