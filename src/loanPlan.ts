@@ -6,7 +6,7 @@ export interface Installment {
   principal: number;
   interest: number;
   payment: number;
-  /** Сана ё маблағи ин қист дастӣ иваз шудааст. */
+  /** Сана ё маблағи ин пардохт дастӣ иваз шудааст. */
   edited?: boolean;
 }
 
@@ -32,7 +32,7 @@ export function addMonths(isoDate: string, k: number): string {
   return `${ny}-${String(nm + 1).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
 }
 
-/** Санаи қисти k-ум: рӯзи муайяни моҳ; агар шанбе/якшанбе афтад, ба душанбе мегузарад. */
+/** Санаи пардохти k-ум: рӯзи муайяни моҳ; агар шанбе/якшанбе афтад, ба душанбе мегузарад. */
 export function dueDate(start: string, k: number, payDay: number, shiftWeekend: boolean): string {
   const [y, m] = start.split('-').map(Number);
   const total = m - 1 + k;
@@ -49,10 +49,10 @@ export function dueDate(start: string, k: number, payDay: number, shiftWeekend: 
 
 /**
  * Ҷадвали супоридани ҳармоҳа.
- * - annuity: қисти баробар, фоиз = боқӣ × (фоиз/12).
+ * - annuity: пардохти баробар, фоиз = боқӣ × (фоиз/12).
  * - diff: қисми асосии баробар, фоиз аз боқӣ.
- * - actual: қисти собити бонк, фоиз = боқӣ × фоиз × рӯзҳои воқеӣ ÷ 365 (аз супориши қаблӣ).
- * Қисти охирин боқимондаро мепӯшонад.
+ * - actual: пардохти собити бонк, фоиз = боқӣ × фоиз × рӯзҳои воқеӣ ÷ 365 (аз супориши қаблӣ).
+ * Пардохти охирин боқимондаро мепӯшонад.
  */
 export function buildSchedule(plan: DebtPlan, start: string): Installment[] {
   const { principal: P, months: n, method } = plan;
@@ -89,26 +89,26 @@ export const planTotals = (rows: Installment[]) => ({
   interest: r2(rows.reduce((s, x) => s + x.interest, 0)),
 });
 
-/** Қисти ҳамон рӯз ба охир нарасидааст: пардохти қисти маҷбурии ҳар моҳ аз фоизи ҳисобшуда кам аст. */
+/** Пардохти ҳамон рӯз ба охир нарасидааст: пардохти пардохти маҷбурии ҳар моҳ аз фоизи ҳисобшуда кам аст. */
 export const paymentCoversInterest = (plan: DebtPlan, start: string) => {
   const rows = buildSchedule(plan, start);
   return rows.length > 0 && rows[0].principal > 0;
 };
 
-/** Ҷамъи қистҳои то санаи `until` (бо ҳамон санаҳо). */
+/** Ҷамъи пардохтҳои то санаи `until` (бо ҳамон санаҳо). */
 export const paidThrough = (rows: Installment[], until: string) =>
   r2(rows.filter(x => x.due <= until).reduce((s, x) => s + x.payment, 0));
 
 export interface DueInfo {
   row: Installment;
-  /** Чӣ қадар то пурра супоридани ҳамин қист мондааст. */
+  /** Чӣ қадар то пурра супоридани ҳамин пардохт мондааст. */
   toPay: number;
   overdue: boolean;
-  /** Ҷамъи қистҳои гузашта (санааш расидааст), ки ҳанӯз супорида нашудаанд. */
+  /** Ҷамъи пардохтҳои гузашта (санааш расидааст), ки ҳанӯз супорида нашудаанд. */
   overdueSum: number;
 }
 
-/** Қисти навбатии супоридашуда: аввалин қисте, ки то ҳол пурра пардохт нашудааст. */
+/** Пардохти навбатии супоридашуда: аввалин пардохте, ки то ҳол пурра пардохт нашудааст. */
 export function nextInstallment(d: Debt, today: string): DueInfo | null {
   if (!d.plan) return null;
   const rows = buildSchedule(d.plan, d.date ?? today);

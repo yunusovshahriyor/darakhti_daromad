@@ -154,7 +154,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Хотиррасонии қисти бонкӣ: мӯҳлат гузашт ё дар 3 рӯзи наздик мерасад (як маротиба дар як рӯз)
+  // Хотиррасонии пардохти моҳонаи бонкӣ: мӯҳлат гузашт ё дар 3 рӯзи наздик мерасад (як маротиба дар як рӯз)
   useEffect(() => {
     const t = setTimeout(() => {
       try {
@@ -167,7 +167,7 @@ export default function App() {
           const n = nextInstallment(d, day);
           if (n && n.row.due <= limit) {
             localStorage.setItem('darakhti:duenudge', day);
-            setToast(n.overdue ? `⚠️ «${d.title}»: мӯҳлати қист гузашт` : `🏦 «${d.title}»: қисти ${n.row.due} наздик аст`);
+            setToast(n.overdue ? `⚠️ «${d.title}»: мӯҳлати пардохт гузашт` : `🏦 «${d.title}»: пардохти ${n.row.due} наздик аст`);
             break;
           }
         }

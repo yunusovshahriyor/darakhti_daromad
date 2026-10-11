@@ -35,7 +35,7 @@ function RowEdit({ row, last, edited, onSave, onReset }: {
     <form onSubmit={submit}>
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} />
       <p className="muted" style={{ margin: '4px 2px 0' }}>
-        {last ? 'Қисти охирин боқимондаро мепӯшонад: танҳо санаро иваз кунед.' : 'Фоизи қистҳои баъдӣ аз санаи нав ҳисоб мешавад.'}
+        {last ? 'Пардохти охирин боқимондаро мепӯшонад: танҳо санаро иваз кунед.' : 'Фоизи пардохтҳои баъдӣ аз санаи нав ҳисоб мешавад.'}
       </p>
       <button className="btn big" type="submit" disabled={!last && !(num > 0)}>Нигоҳ доштан</button>
       {edited && <button type="button" className="btn ghost" onClick={onReset}>Ба ҳисоби аввал баргардонидан</button>}
@@ -72,7 +72,7 @@ function Schedule({ debt, onEdit }: { debt: Debt; onEdit: (n: number) => void })
           );
         })}
       </div>
-      <p className="muted" style={{ margin: '8px 2px 0' }}>Барои тағйири сана ё маблағи қист онро пахш кунед.</p>
+      <p className="muted" style={{ margin: '8px 2px 0' }}>Барои тағйири сана ё маблағи пардохт онро пахш кунед.</p>
     </>
   );
 }
@@ -160,7 +160,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
         if (count === 0) return null;
         return (
           <div className={late ? 'due-card late' : 'due-card'}>
-            <small>{late ? '⚠️ Қистҳои мӯҳлаташ гузашта ва ин моҳ' : 'Ин моҳ супоридан лозим'} · {count} қарз</small>
+            <small>{late ? '⚠️ Пардохтҳои мӯҳлаташ гузашта ва ин моҳ' : 'Ин моҳ супоридан лозим'} · {count} қарз</small>
             <b>{fmt(sum)} смн</b>
           </div>
         );
@@ -204,7 +204,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
                               const n = nextInstallment(d, today());
                               return n ? (
                                 <span className={n.overdue ? 'due-line late' : 'due-line'}>
-                                  {n.overdue ? 'Мӯҳлат гузашт' : 'Қисти навбатӣ'}: {fmt(n.toPay)} · {dayTitle(n.row.due)}
+                                  {n.overdue ? 'Мӯҳлат гузашт' : 'Пардохти навбатӣ'}: {fmt(n.toPay)} · {dayTitle(n.row.due)}
                                 </span>
                               ) : null;
                             })()}
@@ -328,7 +328,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
         const row = rows.find(r => r.n === rowEdit);
         if (!row) return null;
         return (
-          <Sheet title={`Қисти ${row.n}-ум`} onClose={() => setRowEdit(null)}>
+          <Sheet title={`Пардохти №${row.n}`} onClose={() => setRowEdit(null)}>
             <RowEdit row={row} last={row.n === rows.length} edited={!!row.edited}
               onSave={v => saveRow(row.n, v)} onReset={() => saveRow(row.n, null)} />
           </Sheet>

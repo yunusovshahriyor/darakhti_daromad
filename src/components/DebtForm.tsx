@@ -11,7 +11,7 @@ interface Values {
   priority: boolean;
   date: string;
   plan?: DebtPlan;
-  /** Қистҳои то имрӯз аллакай супоридашуда (барои қарзи кӯҳнаи бонкӣ). */
+  /** Пардохтҳои то имрӯз аллакай супоридашуда (барои қарзи кӯҳнаи бонкӣ). */
   paid?: number;
 }
 
@@ -101,18 +101,18 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
             <div className="chips-label">Усули супоридан</div>
             <div className="chips">
               <button type="button" className={method === 'actual' ? 'chip on' : 'chip'} onClick={() => setMethod('actual')}>
-                <span className="chip-t"><b>Қисти собити бонк</b><small>фоиз аз рӯзҳои воқеӣ ÷ 365</small></span>
+                <span className="chip-t"><b>Пардохти собити бонк</b><small>фоиз аз рӯзҳои воқеӣ ÷ 365</small></span>
               </button>
               <button type="button" className={method === 'annuity' ? 'chip on' : 'chip'} onClick={() => setMethod('annuity')}>
-                <span className="chip-t"><b>Аннуитетӣ</b><small>қисти баробар, фоиз ÷ 12</small></span>
+                <span className="chip-t"><b>Аннуитетӣ</b><small>пардохти баробар, фоиз ÷ 12</small></span>
               </button>
               <button type="button" className={method === 'diff' ? 'chip on' : 'chip'} onClick={() => setMethod('diff')}>
-                <span className="chip-t"><b>Дифференсиалӣ</b><small>қист тадриҷан кам мешавад</small></span>
+                <span className="chip-t"><b>Дифференсиалӣ</b><small>пардохт тадриҷан кам мешавад</small></span>
               </button>
             </div>
           </div>
           {method === 'actual' && (
-            <Field label="Қисти ҳармоҳа аз ҷадвали бонк, смн">
+            <Field label="Пардохти моҳона аз ҷадвали бонк, смн">
               <input inputMode="decimal" value={fixedPay} onChange={e => setFixedPay(e.target.value)} placeholder="Масалан, 4192" />
             </Field>
           )}
@@ -132,22 +132,22 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
           </label>
           {plan && (
             <div className="loan-info">
-              <div><span>{method === 'diff' ? 'Қисти аввал → охир' : 'Қисти ҳармоҳа → охирин'}</span>
+              <div><span>{method === 'diff' ? 'Пардохти аввал → охир' : 'Пардохти моҳона → охирин'}</span>
                 <b>{method === 'diff' || method === 'actual' ? `${fmt(rows[0].payment)} → ${fmt(rows[rows.length - 1].payment)}` : fmt(rows[0].payment)} смн</b></div>
               <div><span>Фоиз дар ҷамъ</span><b>{fmt(totals.interest)} смн</b></div>
               <div><span>Ҷамъи супоридан</span><b>{fmt(totals.total)} смн</b></div>
-              <div><span>Қисти аввал</span><b>{rows[0].due}</b></div>
-              <div><span>Қистҳо</span><b>{rows.length} · то {rows[rows.length - 1].due}</b></div>
+              <div><span>Пардохти аввал</span><b>{rows[0].due}</b></div>
+              <div><span>Пардохтҳо</span><b>{rows.length} · то {rows[rows.length - 1].due}</b></div>
             </div>
           )}
           {noCover && (
-            <div className="alert danger">Қист аз фоизи моҳи аввал кам аст ({fmt(rows[0].interest)}): қарз кам намешавад.</div>
+            <div className="alert danger">Пардохти моҳона аз фоизи моҳи аввал кам аст ({fmt(rows[0].interest)}): қарз кам намешавад.</div>
           )}
           {plan && pastCount > 0 && (
             <label className="switch-row">
               <span>
-                <b>Қистҳои гузашта аллакай супорида шудаанд</b>
-                <small>{pastCount} қист то имрӯз ({fmt(pastPaid)} смн) супорида ҳисоб мешавад, бе хароҷоти нав.</small>
+                <b>Пардохтҳои гузашта аллакай супорида шудаанд</b>
+                <small>{pastCount} пардохт то имрӯз ({fmt(pastPaid)} смн) супорида ҳисоб мешавад, бе хароҷоти нав.</small>
               </span>
               <span className="switch">
                 <input type="checkbox" checked={catchUp} onChange={e => setCatchUp(e.target.checked)} />

@@ -92,11 +92,11 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
         if (!due) return null;
         return (
           <div className="chips-block">
-            <div className="chips-label">Қисти {due.row.n}-ум · {dayTitle(due.row.due)}</div>
+            <div className="chips-label">Пардохти №{due.row.n} · {dayTitle(due.row.due)}</div>
             <div className="chips">
               <button type="button" className={Math.abs(num - due.toPay) < 0.005 ? 'chip on' : 'chip'}
                 onClick={() => setAmount(String(due.toPay))}>
-                <span className="chip-t"><b>{fmt(due.toPay)}</b><small>{due.overdue ? 'мӯҳлат гузашт' : 'қисти моҳ'}</small></span>
+                <span className="chip-t"><b>{fmt(due.toPay)}</b><small>{due.overdue ? 'мӯҳлат гузашт' : 'пардохти моҳона'}</small></span>
               </button>
             </div>
           </div>
