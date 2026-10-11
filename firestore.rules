@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Ҳар корбар танҳо ҳуҷҷатҳои худашро мехонад ва менависад: users/{uid}/sync/{meta | chunk_N}
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/sync/{docId} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+
+      allow create, update: if request.auth != null && request.auth.uid == uid && (
+        (
+          docId == 'meta'
+          && request.resource.data.keys().hasOnly(['rev', 'chunks', 'size', 'updatedAt', 'device'])
+          && request.resource.data.rev is int
+          && request.resource.data.rev == (resource == null ? 1 : resource.data.rev + 1)
+          && request.resource.data.chunks is int
+          && request.resource.data.chunks >= 1 && request.resource.data.chunks <= 20
+        ) || (
+          docId.matches('chunk_[0-9]+')
+          && request.resource.data.keys().hasOnly(['i', 'part'])
+          && request.resource.data.part is string
+          && request.resource.data.part.size() <= 300000
+        )
+      );
+    }
+  }
+}

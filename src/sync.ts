@@ -1,32 +1,35 @@
 import { useSyncExternalStore } from 'react';
+import type { FirebaseOptions } from 'firebase/app';
+import type { Auth, User } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
+import { EMBEDDED_CONFIG } from './firebaseConfig';
 import {
   addSnapshot, localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, summarize,
 } from './storage';
 
 /**
- * Синхронизатсияи абрӣ бо Supabase (бе китобхона, бо fetch).
- * Ҷадвал: `user_state(user_id, data jsonb, updated_at)` — як сатр барои ҳар корбар (RLS).
+ * Синхронизатсияи абрӣ бо Firebase (Auth + Firestore).
+ * Модел: `users/{uid}/sync/meta` {rev, chunks, size, updatedAt, device} + `users/{uid}/sync/chunk_N` {i, part}.
+ * Ҳолат (нусхаи пурраи JSON) ба порчаҳои ≤ 250 000 аломат тақсим мешавад (ҳудуди ҳуҷҷат 1 МБ).
+ * Навсозӣ танҳо тавассути транзаксия бо санҷиши `rev` (ҳифз аз навиштани ихтилофӣ).
  * Ихтилоф: агар ҳам сервер ва ҳам ин дастгоҳ аз синхронизатсияи охирин тағйир ёфта бошанд, корбар интихоб мекунад.
  */
-const CFG_KEY = 'darakhti:sbcfg';
-const SESS_KEY = 'darakhti:sbsess';
-const BASE_KEY = 'darakhti:sbbase'; // updated_at-и сервер дар синхронизатсияи охирин
-const SYNCED_KEY = 'darakhti:sbsynced'; // ҳэши мазмуни маҳаллӣ дар синхронизатсияи охирин
-const LAST_KEY = 'darakhti:sblast';
+const CFG_KEY = 'darakhti:cloud-cfg'; // танзимоти дастӣ (агар дар код нест)
+const FLAG_KEY = 'darakhti:cloud-on'; // корбар пештар ворид шуда буд: SDK-ро ҳангоми кушодан бор мекунем
+const EMAIL_KEY = 'darakhti:cloud-email';
+const BASE_KEY = 'darakhti:cloud-base'; // rev-и сервер дар синхронизатсияи охирин
+const SYNCED_KEY = 'darakhti:cloud-synced'; // ҳэши мазмуни маҳаллӣ дар синхронизатсияи охирин
+const LAST_KEY = 'darakhti:cloud-last';
+const EMU_KEY = 'darakhti:cloud-emu'; // танҳо дар localhost: Firebase Emulator барои санҷиш
+const DEVICE_KEY = 'darakhti:cloud-device';
+const CHUNK = 250_000;
 const PUSH_DELAY = 3000;
 
-export interface SyncConfig { url: string; key: string }
-interface Session {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number;
-  user: { id: string; email: string };
-}
 export type SyncStatus = 'off' | 'signedout' | 'idle' | 'syncing' | 'offline' | 'error' | 'conflict';
 export interface Conflict {
   remoteRaw: string;
   remotePrefs: Record<string, string>;
-  remoteAt: string;
+  remoteRev: number;
   remoteCounts: ReturnType<typeof summarize>;
   localCounts: ReturnType<typeof summarize>;
 }
@@ -37,6 +40,8 @@ export interface SyncSnap {
   error: string;
   conflict: Conflict | null;
   configured: boolean;
+  /** Танзимот дар код (оммавӣ) ё дастӣ. */
+  embedded: boolean;
 }
 
 const ls = {
@@ -45,24 +50,25 @@ const ls = {
   del: (k: string) => { try { localStorage.removeItem(k); } catch { /* ignore */ } },
 };
 
-const readJson = <T,>(k: string): T | null => {
-  try { return JSON.parse(ls.get(k) ?? 'null') as T | null; } catch { return null; }
-};
+export function getConfig(): FirebaseOptions | null {
+  if (EMBEDDED_CONFIG) return EMBEDDED_CONFIG;
+  try { return JSON.parse(ls.get(CFG_KEY) ?? 'null') as FirebaseOptions | null; } catch { return null; }
+}
 
-export const getConfig = () => readJson<SyncConfig>(CFG_KEY);
-const getSession = () => readJson<Session>(SESS_KEY);
-
+let authReady = false;
+let curUser: { uid: string; email: string } | null = null;
 let snap: SyncSnap = build('idle');
 const listeners = new Set<() => void>();
 let notifier: ((msg: string) => void) | null = null;
 
 function build(status?: SyncStatus, extra: Partial<SyncSnap> = {}): SyncSnap {
   const cfg = getConfig();
-  const sess = getSession();
-  const st: SyncStatus = !cfg ? 'off' : !sess ? 'signedout' : status ?? 'idle';
+  const email = curUser?.email ?? ls.get(EMAIL_KEY) ?? '';
+  const loggedIn = !!curUser || (ls.get(FLAG_KEY) === '1' && !authReady);
+  const st: SyncStatus = !cfg ? 'off' : !loggedIn ? 'signedout' : status ?? 'idle';
   return {
-    status: st, email: sess?.user.email ?? '', lastSyncAt: Number(ls.get(LAST_KEY) ?? 0),
-    error: '', conflict: null, configured: !!cfg, ...extra,
+    status: st, email: loggedIn ? email : '', lastSyncAt: Number(ls.get(LAST_KEY) ?? 0),
+    error: '', conflict: null, configured: !!cfg, embedded: !!EMBEDDED_CONFIG, ...extra,
   };
 }
 function set(status?: SyncStatus, extra: Partial<SyncSnap> = {}) {
@@ -76,142 +82,184 @@ export const useSync = () => useSyncExternalStore(
   () => snap,
 );
 
-// ---------- Шабака ----------
-class HttpError extends Error {
-  constructor(public status: number, message: string) { super(message); }
-}
-
-async function call(cfg: SyncConfig, path: string, init: RequestInit & { token?: string } = {}) {
-  const { token, ...rest } = init;
-  const res = await fetch(`${cfg.url}${path}`, {
-    ...rest,
-    headers: {
-      apikey: cfg.key,
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : { Authorization: `Bearer ${cfg.key}` }),
-      ...(rest.headers ?? {}),
-    },
-  });
-  const text = await res.text();
-  let body: unknown = null;
-  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
-  if (!res.ok) {
-    const b = body as { error_description?: string; msg?: string; message?: string; error?: string } | null;
-    throw new HttpError(res.status, b?.error_description ?? b?.msg ?? b?.message ?? b?.error ?? `HTTP ${res.status}`);
-  }
-  return body;
-}
-
-const isOffline = (e: unknown) => e instanceof TypeError || (typeof navigator !== 'undefined' && navigator.onLine === false);
-
-export function normalizeUrl(u: string): string | null {
-  const t = u.trim().replace(/\/+$/, '');
-  if (!/^https:\/\/[^\s/]+$/.test(t) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(t)) return null;
-  return t;
-}
-
-/** Танзимот: суроға ва калиди «anon» (оммавӣ). Пайвастро месанҷем. */
-export async function configure(url: string, key: string): Promise<void> {
-  const u = normalizeUrl(url);
-  if (!u) throw new Error('Суроға бояд бо https:// сар шавад (масалан, https://abcd.supabase.co)');
-  const k = key.trim();
-  if (k.length < 20) throw new Error('Калиди «anon public» нодуруст аст');
-  if (k.split('.').length === 3) {
-    try {
-      const role = (JSON.parse(atob(k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) as { role?: string }).role;
-      if (role === 'service_role') throw new Error('Ин калиди «service_role» аст (махфӣ). Калиди «anon public»-ро истифода баред.');
-    } catch (e) {
-      if (e instanceof Error && e.message.includes('service_role')) throw e;
-    }
-  }
+// ---------- Танзимот ----------
+export function saveConfig(text: string): void {
+  let cfg: FirebaseOptions;
   try {
-    await call({ url: u, key: k }, '/auth/v1/settings');
-  } catch (e) {
-    if (e instanceof HttpError) throw new Error('Supabase калидро қабул накард: суроға ё калидро санҷед');
-    throw new Error('Пайваст нашуд: интернет ё суроғаро санҷед');
+    // Ҳам JSON ва ҳам объекти JavaScript-ро қабул мекунем: { apiKey: "...", ... }
+    const cleaned = text.trim().replace(/^(const|let|var)\s+\w+\s*=\s*/, '').replace(/;\s*$/, '')
+      .replace(/([{,]\s*)([A-Za-z_]\w*)\s*:/g, '$1"$2":').replace(/'/g, '"');
+    cfg = JSON.parse(cleaned) as FirebaseOptions;
+  } catch {
+    throw new Error('Матнро хонда нашуд. Объекти firebaseConfig-ро пурра нусха кунед ({ apiKey: …, projectId: … }).');
   }
-  ls.set(CFG_KEY, JSON.stringify({ url: u, key: k }));
+  if (!cfg.apiKey || !cfg.projectId || !cfg.appId) throw new Error('Дар танзимот apiKey, projectId ва appId лозиманд');
+  ls.set(CFG_KEY, JSON.stringify(cfg));
+  fb = null;
   set('signedout');
 }
 
-export function disconnect() {
-  [CFG_KEY, SESS_KEY, BASE_KEY, SYNCED_KEY, LAST_KEY].forEach(ls.del);
+export function clearConfig() {
+  [CFG_KEY, FLAG_KEY, EMAIL_KEY, BASE_KEY, SYNCED_KEY, LAST_KEY].forEach(ls.del);
+  stopWatch();
+  fb = null;
+  curUser = null;
   set('off');
 }
 
-function storeSession(body: unknown): Session {
-  const b = body as { access_token: string; refresh_token: string; expires_in?: number; user: { id: string; email: string } };
-  const sess: Session = {
-    access_token: b.access_token, refresh_token: b.refresh_token,
-    expires_at: Date.now() + (b.expires_in ?? 3600) * 1000, user: { id: b.user.id, email: b.user.email },
-  };
-  ls.set(SESS_KEY, JSON.stringify(sess));
-  return sess;
+// ---------- Firebase (бор кардани танбал) ----------
+interface Fb {
+  auth: Auth;
+  db: Firestore;
+  authM: typeof import('firebase/auth');
+  fsM: typeof import('firebase/firestore');
 }
+
+let fb: Promise<Fb | null> | null = null;
+
+async function load(): Promise<Fb | null> {
+  const cfg = getConfig();
+  if (!cfg) return null;
+  if (!fb) {
+    fb = (async () => {
+      const [appM, authM, fsM] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/firestore')]);
+      const app = appM.getApps()[0] ?? appM.initializeApp(cfg);
+      const auth = authM.getAuth(app);
+      const db = fsM.initializeFirestore(app, { localCache: fsM.memoryLocalCache() });
+      if (location.hostname === 'localhost' && ls.get(EMU_KEY) === '1') {
+        authM.connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+        fsM.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      }
+      authM.onAuthStateChanged(auth, onAuth);
+      return { auth, db, authM, fsM };
+    })().catch(e => { fb = null; throw e; });
+  }
+  return fb;
+}
+
+function onAuth(u: User | null) {
+  authReady = true;
+  if (u) {
+    curUser = { uid: u.uid, email: u.email ?? '' };
+    ls.set(FLAG_KEY, '1');
+    ls.set(EMAIL_KEY, curUser.email);
+    set('idle');
+    void startWatch();
+    schedule(300);
+  } else {
+    curUser = null;
+    ls.del(FLAG_KEY);
+    ls.del(EMAIL_KEY);
+    ls.del(BASE_KEY);
+    ls.del(SYNCED_KEY);
+    stopWatch();
+    set('signedout');
+  }
+}
+
+const authMessage = (e: unknown): string => {
+  const code = (e as { code?: string })?.code ?? '';
+  const map: Record<string, string> = {
+    'auth/invalid-credential': 'Почта ё рамз нодуруст аст',
+    'auth/wrong-password': 'Почта ё рамз нодуруст аст',
+    'auth/user-not-found': 'Ин почта сабт нашудааст',
+    'auth/email-already-in-use': 'Ин почта аллакай сабт шудааст: «Даромадан»-ро пахш кунед',
+    'auth/weak-password': 'Рамз заиф аст (на камтар аз 6 аломат)',
+    'auth/invalid-email': 'Суроғаи почта нодуруст аст',
+    'auth/too-many-requests': 'Кӯшишҳо зиёд шуд: каме баъдтар такрор кунед',
+    'auth/network-request-failed': 'Пайваст нашуд: интернетро санҷед',
+    'auth/popup-closed-by-user': 'Равзанаи Google пӯшида шуд',
+    'auth/cancelled-popup-request': 'Равзанаи Google пӯшида шуд',
+    'auth/unauthorized-domain': 'Ин сайт дар Firebase иҷозат нашудааст: Authentication → Settings → Authorized domains',
+    'auth/operation-not-allowed': 'Ин усули воридшавӣ дар Firebase фаъол нест (Authentication → Sign-in method)',
+    'auth/requires-recent-login': 'Барои ин амал аз нав ворид шавед ва такрор кунед',
+    'auth/invalid-api-key': 'apiKey нодуруст аст',
+  };
+  return map[code] ?? (e instanceof Error ? e.message : 'Хатои номаълум');
+};
 
 export async function signIn(email: string, password: string): Promise<void> {
-  const cfg = getConfig();
-  if (!cfg) throw new Error('Аввал Supabase-ро пайваст кунед');
+  const f = await load();
+  if (!f) throw new Error('Аввал Firebase-ро танзим кунед');
+  try { await f.authM.signInWithEmailAndPassword(f.auth, email, password); } catch (e) { throw new Error(authMessage(e)); }
+}
+
+export async function signUp(email: string, password: string): Promise<void> {
+  const f = await load();
+  if (!f) throw new Error('Аввал Firebase-ро танзим кунед');
   try {
-    storeSession(await call(cfg, '/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email, password }) }));
-  } catch (e) {
-    if (e instanceof HttpError) throw new Error(e.message.includes('Invalid login') ? 'Почта ё рамз нодуруст аст' : e.message);
-    throw new Error('Пайваст нашуд: интернетро санҷед');
-  }
-  ls.del(BASE_KEY);
-  ls.del(SYNCED_KEY);
-  set('idle');
-  void syncNow();
+    const cred = await f.authM.createUserWithEmailAndPassword(f.auth, email, password);
+    void f.authM.sendEmailVerification(cred.user).catch(() => { /* ихтиёрӣ */ });
+  } catch (e) { throw new Error(authMessage(e)); }
 }
 
-/** Сабти ном. Агар «Confirm email» фаъол бошад, ҳисоб тасдиқ мешавад ва `false` бармегардад. */
-export async function signUp(email: string, password: string): Promise<boolean> {
-  const cfg = getConfig();
-  if (!cfg) throw new Error('Аввал Supabase-ро пайваст кунед');
+export async function signInGoogle(): Promise<void> {
+  const f = await load();
+  if (!f) throw new Error('Аввал Firebase-ро танзим кунед');
+  const provider = new f.authM.GoogleAuthProvider();
   try {
-    const body = await call(cfg, '/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password }) }) as { access_token?: string };
-    if (!body?.access_token) return false;
-    storeSession(body);
+    await f.authM.signInWithPopup(f.auth, provider);
   } catch (e) {
-    if (e instanceof HttpError) throw new Error(e.message);
-    throw new Error('Пайваст нашуд: интернетро санҷед');
-  }
-  ls.del(BASE_KEY);
-  ls.del(SYNCED_KEY);
-  set('idle');
-  void syncNow();
-  return true;
-}
-
-export function signOut() {
-  ls.del(SESS_KEY);
-  ls.del(BASE_KEY);
-  ls.del(SYNCED_KEY);
-  set('signedout');
-}
-
-async function token(cfg: SyncConfig): Promise<Session> {
-  let sess = getSession();
-  if (!sess) throw new HttpError(401, 'signedout');
-  if (sess.expires_at - 60_000 < Date.now()) {
-    try {
-      sess = storeSession(await call(cfg, '/auth/v1/token?grant_type=refresh_token', {
-        method: 'POST', body: JSON.stringify({ refresh_token: sess.refresh_token }),
-      }));
-    } catch (e) {
-      if (e instanceof HttpError) { ls.del(SESS_KEY); throw new HttpError(401, 'signedout'); }
-      throw e;
+    const code = (e as { code?: string }).code;
+    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+      await f.authM.signInWithRedirect(f.auth, provider);
+      return;
     }
+    throw new Error(authMessage(e));
   }
-  return sess;
 }
 
-// ---------- Маълумот ----------
-interface Remote { data: unknown; updated_at: string }
+export async function resetPassword(email: string): Promise<void> {
+  const f = await load();
+  if (!f) throw new Error('Аввал Firebase-ро танзим кунед');
+  try { await f.authM.sendPasswordResetEmail(f.auth, email); } catch (e) { throw new Error(authMessage(e)); }
+}
 
-async function getRemote(cfg: SyncConfig, sess: Session): Promise<Remote | null> {
-  const rows = await call(cfg, `/rest/v1/user_state?select=data,updated_at&user_id=eq.${sess.user.id}`, { token: sess.access_token }) as Remote[];
-  return rows[0] ?? null;
+export async function signOut(): Promise<void> {
+  const f = await load();
+  if (f) await f.authM.signOut(f.auth);
+  else onAuth(null);
+}
+
+/** Ҳисоб ва маълумоти он дар сервер нест мешавад. Маълумоти маҳаллӣ мемонад. */
+export async function deleteAccount(): Promise<void> {
+  const f = await load();
+  const u = f?.auth.currentUser;
+  if (!f || !u) throw new Error('Аввал ворид шавед');
+  try {
+    const { doc, getDoc, writeBatch } = f.fsM;
+    const metaRef = doc(f.db, 'users', u.uid, 'sync', 'meta');
+    const meta = await getDoc(metaRef);
+    const batch = writeBatch(f.db);
+    const n = meta.exists() ? (meta.data().chunks as number) : 0;
+    for (let i = 0; i < n; i++) batch.delete(doc(f.db, 'users', u.uid, 'sync', `chunk_${i}`));
+    batch.delete(metaRef);
+    await batch.commit();
+    await f.authM.deleteUser(u);
+  } catch (e) { throw new Error(authMessage(e)); }
+}
+
+// ---------- Маълумот (Firestore) ----------
+class ConflictError extends Error {}
+
+const deviceId = () => {
+  let d = ls.get(DEVICE_KEY);
+  if (!d) { d = Math.random().toString(36).slice(2, 10); ls.set(DEVICE_KEY, d); }
+  return d;
+};
+
+interface Remote { rev: number; data: unknown }
+
+async function getRemote(f: Fb, uid: string): Promise<Remote | null> {
+  const { doc, runTransaction } = f.fsM;
+  return runTransaction(f.db, async tx => {
+    const meta = await tx.get(doc(f.db, 'users', uid, 'sync', 'meta'));
+    if (!meta.exists()) return null;
+    const n = meta.data().chunks as number;
+    const parts = await Promise.all(Array.from({ length: n }, (_, i) => tx.get(doc(f.db, 'users', uid, 'sync', `chunk_${i}`))));
+    const json = parts.map(p => (p.data()?.part as string | undefined) ?? '').join('');
+    return { rev: meta.data().rev as number, data: JSON.parse(json) as unknown };
+  });
 }
 
 /** Ҳэши кӯтоҳи сатр (cyrb53): барои муайян кардани «мазмун тағйир ёфтааст?», на вақт. */
@@ -229,38 +277,32 @@ function hash(str: string): string {
 }
 const localHash = () => hash(localRaw() ?? '');
 
-/** Маълумоти ҳозира барои фиристодан + ҳэши ҳамон мазмун. */
-function payload() {
+function markSynced(rev: number, contentHash: string) {
+  ls.set(BASE_KEY, String(rev));
+  ls.set(SYNCED_KEY, contentHash);
+  ls.set(LAST_KEY, String(Date.now()));
+}
+
+/** Навсозӣ танҳо агар `rev`-и сервер ҳанӯз баробари `base` бошад; дар акс ConflictError. */
+async function push(f: Fb, uid: string, base: number): Promise<void> {
   const file = makeBackup().file;
-  return { file, sent: hash(JSON.stringify(file.state)) };
-}
-
-async function insert(cfg: SyncConfig, sess: Session): Promise<boolean> {
-  const { file, sent } = payload();
-  try {
-    const rows = await call(cfg, '/rest/v1/user_state', {
-      method: 'POST', token: sess.access_token, headers: { Prefer: 'return=representation' },
-      body: JSON.stringify({ user_id: sess.user.id, data: file }),
-    }) as { updated_at: string }[];
-    if (!rows[0]) return false;
-    markSynced(rows[0].updated_at, sent);
-    return true;
-  } catch (e) {
-    if (e instanceof HttpError && (e.status === 409 || e.message.includes('duplicate'))) return false;
-    throw e;
-  }
-}
-
-/** Танҳо агар сервер ҳанӯз ҳамон `base` дошта бошад (ҳифзи навиштани ихтилофӣ). */
-async function update(cfg: SyncConfig, sess: Session, base: string): Promise<boolean> {
-  const { file, sent } = payload();
-  const rows = await call(cfg, `/rest/v1/user_state?user_id=eq.${sess.user.id}&updated_at=eq.${encodeURIComponent(base)}`, {
-    method: 'PATCH', token: sess.access_token, headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({ data: file }),
-  }) as { updated_at: string }[];
-  if (!rows[0]) return false;
-  markSynced(rows[0].updated_at, sent);
-  return true;
+  const sent = hash(JSON.stringify(file.state));
+  const json = JSON.stringify(file);
+  const chunks: string[] = [];
+  for (let i = 0; i < json.length; i += CHUNK) chunks.push(json.slice(i, i + CHUNK));
+  const { doc, runTransaction, serverTimestamp } = f.fsM;
+  const rev = await runTransaction(f.db, async tx => {
+    const metaRef = doc(f.db, 'users', uid, 'sync', 'meta');
+    const meta = await tx.get(metaRef);
+    const cur = meta.exists() ? (meta.data().rev as number) : 0;
+    if (cur !== base) throw new ConflictError('rev');
+    const old = meta.exists() ? (meta.data().chunks as number) : 0;
+    chunks.forEach((part, i) => tx.set(doc(f.db, 'users', uid, 'sync', `chunk_${i}`), { i, part }));
+    for (let i = chunks.length; i < old; i++) tx.delete(doc(f.db, 'users', uid, 'sync', `chunk_${i}`));
+    tx.set(metaRef, { rev: cur + 1, chunks: chunks.length, size: json.length, updatedAt: serverTimestamp(), device: deviceId() });
+    return cur + 1;
+  });
+  markSynced(rev, sent);
 }
 
 function remoteInfo(remote: Remote) {
@@ -268,48 +310,77 @@ function remoteInfo(remote: Remote) {
   return parsed ? { raw: parsed.raw, prefs: parsed.prefs } : null;
 }
 
-function markSynced(updatedAt: string, contentHash: string) {
-  ls.set(BASE_KEY, updatedAt);
-  ls.set(SYNCED_KEY, contentHash);
-  ls.set(LAST_KEY, String(Date.now()));
-}
-
 async function applyRemote(remote: Remote) {
   const info = remoteInfo(remote);
   if (!info) throw new Error('Маълумоти сервер хонда нашуд');
-  await restoreRaw(info.raw, info.prefs, () => markSynced(remote.updated_at, hash(info.raw)));
+  await restoreRaw(info.raw, info.prefs, () => markSynced(remote.rev, hash(info.raw)));
 }
 
 let busy = false;
 let again = false;
 let timer: ReturnType<typeof setTimeout> | undefined;
+let unwatch: (() => void) | null = null;
+
+function schedule(ms: number) {
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(() => void syncNow(), ms);
+}
+
+/** Тағйироти фаврии дигар дастгоҳҳо: ба ҳуҷҷати `meta` гӯш медиҳем (Firestore realtime). */
+async function startWatch() {
+  stopWatch();
+  const f = await load();
+  if (!f || !curUser) return;
+  const { doc, onSnapshot } = f.fsM;
+  unwatch = onSnapshot(
+    doc(f.db, 'users', curUser.uid, 'sync', 'meta'),
+    s => {
+      if (s.metadata.hasPendingWrites || busy) return;
+      const rev = s.exists() ? (s.data().rev as number) : 0;
+      if (String(rev) !== (ls.get(BASE_KEY) ?? '0') && snap.status !== 'conflict') schedule(400);
+    },
+    () => { /* бе интернет ё иҷозат: syncNow ҳолатро нишон медиҳад */ },
+  );
+}
+function stopWatch() {
+  unwatch?.();
+  unwatch = null;
+}
+
+const isOffline = (e: unknown) =>
+  (e as { code?: string })?.code === 'unavailable' || (typeof navigator !== 'undefined' && navigator.onLine === false);
 
 /** Як давраи пурраи синхронизатсия: гирифтан, муқоиса, фиристодан ё ихтилоф. */
 export async function syncNow(): Promise<void> {
-  const cfg = getConfig();
-  if (!cfg || !getSession()) return;
+  if (!getConfig() || !curUser) return;
   if (busy) { again = true; return; }
   busy = true;
   set('syncing');
   try {
-    const sess = await token(cfg);
-    const remote = await getRemote(cfg, sess);
+    const f = await load();
+    if (!f || !curUser) return;
+    const uid = curUser.uid;
+    const remote = await getRemote(f, uid);
     const hasLocal = stateHasData();
     const base = ls.get(BASE_KEY);
     const dirty = localHash() !== ls.get(SYNCED_KEY);
 
     if (!remote) {
-      if (hasLocal && !(await insert(cfg, sess))) again = true; // сервер дар ҳамин вақт сатр сохт
+      if (hasLocal) {
+        try { await push(f, uid, 0); } catch (e) { if (e instanceof ConflictError) again = true; else throw e; }
+      }
       set('idle');
       return;
     }
-    if (remote.updated_at === base) {
-      if (dirty && !(await update(cfg, sess, base))) again = true; // дар ҳамин вақт тағйир ёфт: аз нав месанҷем
+    if (base !== null && String(remote.rev) === base) {
+      if (dirty) {
+        try { await push(f, uid, remote.rev); } catch (e) { if (e instanceof ConflictError) again = true; else throw e; }
+      }
       set('idle');
       return;
     }
-    // Сервер аз синхронизатсияи охирин тағйир ёфтааст
-    if (!hasLocal || (base && !dirty)) {
+    // Сервер аз синхронизатсияи охирин тағйир ёфтааст (ё ин аввалин пайвастшавист)
+    if (!hasLocal || (base !== null && !dirty)) {
       await applyRemote(remote);
       return;
     }
@@ -317,19 +388,19 @@ export async function syncNow(): Promise<void> {
     if (!info) throw new Error('Маълумоти сервер хонда нашуд');
     set('conflict', {
       conflict: {
-        remoteRaw: info.raw, remotePrefs: info.prefs, remoteAt: remote.updated_at,
+        remoteRaw: info.raw, remotePrefs: info.prefs, remoteRev: remote.rev,
         remoteCounts: summarize(info.raw), localCounts: summarize(localRaw() ?? '{}'),
       },
     });
     notifier?.('☁️ Ихтилофи маълумот: Профил → Синхронизатсия');
   } catch (e) {
-    if (e instanceof HttpError && e.message === 'signedout') {
-      set('signedout');
-      notifier?.('☁️ Аз ҳисоб баромадед: аз нав ворид шавед');
-    } else if (isOffline(e)) {
-      set('offline');
-    } else {
-      set('error', { error: e instanceof Error ? e.message : 'Хатои номаълум' });
+    if (isOffline(e)) set('offline');
+    else {
+      const code = (e as { code?: string })?.code;
+      const msg = code === 'permission-denied'
+        ? 'Иҷозат нест: қоидаҳои Firestore (firestore.rules) нашр нашудаанд'
+        : e instanceof Error ? e.message : 'Хатои номаълум';
+      set('error', { error: msg });
     }
   } finally {
     busy = false;
@@ -337,39 +408,41 @@ export async function syncNow(): Promise<void> {
   }
 }
 
-function schedule(ms: number) {
-  if (timer) clearTimeout(timer);
-  timer = setTimeout(() => void syncNow(), ms);
-}
-
 /** Ихтилофро ҳал мекунем: 'remote' — аз сервер гирифтан, 'local' — маълумоти ин дастгоҳро фиристодан. */
 export async function resolveConflict(choice: 'remote' | 'local'): Promise<void> {
   const c = snap.conflict;
-  const cfg = getConfig();
-  if (!c || !cfg) return;
+  if (!c || !curUser) return;
   busy = true;
   set('syncing');
   try {
-    const sess = await token(cfg);
+    const f = await load();
+    if (!f) return;
     if (choice === 'remote') {
-      await applyRemote({ data: { app: 'darakhti', version: 1, state: JSON.parse(c.remoteRaw), prefs: c.remotePrefs }, updated_at: c.remoteAt });
+      await applyRemote({ rev: c.remoteRev, data: { app: 'darakhti', version: 1, state: JSON.parse(c.remoteRaw), prefs: c.remotePrefs } });
       return;
     }
     await addSnapshot(c.remoteRaw); // нусхаи сервер дар дастгоҳ мемонад
-    await update(cfg, sess, c.remoteAt);
+    await push(f, curUser.uid, c.remoteRev);
     set('idle');
   } catch (e) {
+    if (e instanceof ConflictError) { busy = false; void syncNow(); return; }
     set(isOffline(e) ? 'offline' : 'error', { error: e instanceof Error ? e.message : 'Хатои номаълум' });
   } finally {
     busy = false;
   }
 }
 
-/** Пеш аз рендер аз main.tsx даъват мешавад: гӯш кардани тағйирот, баргашт ба барнома ва шабака. */
+/** Аз main.tsx пеш аз рендер: гӯш кардани тағйирот, баргашт ба барнома ва шабака. */
 export function initSync() {
+  // Тозакунии калидҳои Supabase-и кӯҳна
+  ['darakhti:sbcfg', 'darakhti:sbsess', 'darakhti:sbbase', 'darakhti:sbsynced', 'darakhti:sblast'].forEach(ls.del);
+  savedListeners.add(() => { if (getConfig() && curUser && snap.status !== 'conflict') schedule(PUSH_DELAY); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && curUser) schedule(800); });
+  window.addEventListener('online', () => { if (curUser) schedule(500); });
   snap = build('idle');
-  savedListeners.add(() => { if (getConfig() && getSession() && snap.status !== 'conflict') schedule(PUSH_DELAY); });
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') schedule(800); });
-  window.addEventListener('online', () => schedule(500));
-  if (getConfig() && getSession()) schedule(300);
+  // Агар пештар ворид шуда бошед: SDK-ро бор мекунем, то воридшавӣ барқарор шавад
+  if (getConfig() && ls.get(FLAG_KEY) === '1') void load().catch(() => set('offline'));
 }
+
+/** Барои саҳифаи Профил: SDK-ро пешакӣ бор мекунем. */
+export const preload = () => { if (getConfig()) void load().catch(() => { /* ignore */ }); };

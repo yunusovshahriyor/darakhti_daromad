@@ -1,7 +1,10 @@
-import { FormEvent, useState } from 'react';
-import SETUP_SQL from '../../supabase/setup.sql?raw';
-import { configure, disconnect, resolveConflict, signIn, signOut, signUp, syncNow, useSync } from '../sync';
+import { FormEvent, useEffect, useState } from 'react';
+import {
+  clearConfig, deleteAccount, preload, resetPassword, resolveConflict, saveConfig, signIn, signInGoogle, signOut, signUp,
+  syncNow, useSync,
+} from '../sync';
 import type { SyncStatus } from '../sync';
+import rules from '../../firestore.rules?raw';
 import { useConfirm } from './ConfirmSheet';
 import Field from './Field';
 import Sheet from './Sheet';
@@ -18,7 +21,7 @@ const minutes = (ts: number) => {
 export const statusText = (st: SyncStatus, last: number, error: string) => {
   switch (st) {
     case 'off': return 'Хомӯш: маълумот танҳо дар ин дастгоҳ';
-    case 'signedout': return 'Пайваст шуд, лекин ворид нашудаед';
+    case 'signedout': return 'Ворид нашудаед';
     case 'syncing': return 'Синхронизатсия…';
     case 'offline': return 'Бе интернет: баъдтар худкор мефиристад';
     case 'error': return `Хато: ${error}`;
@@ -29,39 +32,55 @@ export const statusText = (st: SyncStatus, last: number, error: string) => {
 
 export default function SyncSheet({ onClose, onToast }: { onClose: () => void; onToast: (m: string) => void }) {
   const sync = useSync();
-  const [url, setUrl] = useState('');
-  const [key, setKey] = useState('');
+  const [cfgText, setCfgText] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [info, setInfo] = useState('');
   const [help, setHelp] = useState(false);
   const [ask, confirmDialog] = useConfirm();
+
+  useEffect(() => { preload(); }, []);
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     setErr('');
+    setInfo('');
     try { await fn(); } catch (e) { setErr(e instanceof Error ? e.message : 'Хатои номаълум'); } finally { setBusy(false); }
   };
 
-  const copySql = async () => {
-    try { await navigator.clipboard.writeText(SETUP_SQL); onToast('SQL нусха шуд ✓'); } catch { setHelp(true); onToast('Нусха нашуд: аз зер дастӣ нусха гиред'); }
+  const copy = async (text: string, msg: string) => {
+    try { await navigator.clipboard.writeText(text); onToast(msg); } catch { onToast('Нусха нашуд'); }
   };
 
-  const onConfigure = (e: FormEvent) => { e.preventDefault(); void run(() => configure(url, key)); };
+  const onConfig = (e: FormEvent) => { e.preventDefault(); void run(async () => saveConfig(cfgText)); };
   const onSignIn = (e: FormEvent) => { e.preventDefault(); void run(() => signIn(email.trim(), password)); };
-  const onSignUp = () => run(async () => {
-    const ok = await signUp(email.trim(), password);
-    if (!ok) setErr('Ҳисоб сохта шуд. Почтаи худро тасдиқ кунед ва баъд «Даромадан»-ро пахш кунед.');
+  const valid = email.trim() !== '' && password.length >= 6;
+
+  const forgot = () => run(async () => {
+    if (!email.trim()) throw new Error('Аввал почтаро ворид кунед');
+    await resetPassword(email.trim());
+    setInfo('Паёми баркашидани рамз ба почта фиристода шуд.');
   });
 
   const off = async () => {
     if (await ask({
-      title: 'Ҷудо кардани Supabase',
-      text: 'Пайвастшавӣ ба сервер нест мешавад. Маълумот дар ин дастгоҳ ва дар сервер мемонад, вале синхронизатсия қатъ мешавад.',
+      title: 'Ҷудо кардани Firebase',
+      text: 'Танзимот ва воридшавӣ дар ин дастгоҳ нест мешавад. Маълумот дар ин дастгоҳ ва дар сервер мемонад, вале синхронизатсия қатъ мешавад.',
       ok: 'Ҷудо кардан',
       danger: true,
-    })) { disconnect(); onClose(); }
+    })) { clearConfig(); onClose(); }
+  };
+
+  const del = async () => {
+    if (!(await ask({
+      title: 'Нест кардани ҳисоб',
+      text: 'Ҳисоби шумо ва тамоми маълумоти он дар сервер ҳамеша нест мешавад. Маълумот дар ин дастгоҳ мемонад. Ин амалро бекор кардан мумкин нест.',
+      ok: 'Ҳа, нест кунед',
+      danger: true,
+    }))) return;
+    await run(async () => { await deleteAccount(); onToast('Ҳисоб нест шуд'); onClose(); });
   };
 
   const c = sync.conflict;
@@ -69,43 +88,41 @@ export default function SyncSheet({ onClose, onToast }: { onClose: () => void; o
   return (
     <Sheet title="Синхронизатсияи абрӣ" onClose={onClose} tall>
       {!sync.configured && (
-        <form onSubmit={onConfigure}>
+        <form onSubmit={onConfig}>
           <p className="muted" style={{ margin: '0 2px 10px' }}>
-            Маълумот дар ҳисоби шахсии шумо дар Supabase нигоҳ дошта мешавад ва дар ҳамаи дастгоҳҳо як хел аст.
-            Танҳо шумо онро мебинед. Ройгон, аммо як маротиба танзим кардан лозим аст.
+            Маълумот дар ҳисоби шахсии шумо дар Firebase нигоҳ дошта мешавад ва дар ҳамаи дастгоҳҳо як хел аст.
+            Дар лоиҳаи Firebase-и худ танзим кунед ва танзимотро (firebaseConfig) дар зер гузоред.
           </p>
           <button type="button" className="btn secondary" onClick={() => setHelp(h => !h)}>
-            {help ? 'Пинҳон кардани дастур' : 'Дастури танзим (4 қадам)'}
+            {help ? 'Пинҳон кардани дастур' : 'Дастури танзим'}
           </button>
           {help && (
             <ol className="sync-steps">
-              <li>Ба <b>supabase.com</b> ворид шавед ва лоиҳаи нав созед (New project).</li>
-              <li>
-                <b>SQL Editor</b> → ҷадвали навро ёбед → матнро гузоред ва <b>Run</b> кунед.{' '}
-                <button type="button" className="btn-sm" onClick={copySql}>Нусхаи SQL</button>
-              </li>
-              <li><b>Authentication → Sign In / Providers → Email</b>: «Confirm email»-ро хомӯш кунед.</li>
-              <li><b>Project Settings → API</b>: «Project URL» ва «anon public» калидро дар зер гузоред. «service_role»-ро ҳаргиз нагузоред.</li>
+              <li>Дар <b>console.firebase.google.com</b> лоиҳа созед ва «Web app» илова кунед.</li>
+              <li><b>Authentication → Sign-in method</b>: <b>Email/Password</b> ва <b>Google</b>-ро фаъол кунед.</li>
+              <li><b>Authentication → Settings → Authorized domains</b>: <b>yunusovshahriyor.github.io</b>-ро илова кунед.</li>
+              <li><b>Firestore Database</b> созед, <b>Rules</b> ро кушоед, қоидаҳоро гузоред ва <b>Publish</b> кунед.{' '}
+                <button type="button" className="btn-sm" onClick={() => void copy(rules, 'Қоидаҳо нусха шуданд ✓')}>Нусхаи қоидаҳо</button></li>
+              <li><b>Project settings → Your apps</b>: объекти <b>firebaseConfig</b>-ро нусха карда, дар зер гузоред.</li>
             </ol>
           )}
-          <Field label="Project URL">
-            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://abcdxyz.supabase.co" autoCapitalize="off" autoCorrect="off" />
-          </Field>
-          <Field label="anon public key">
-            <input value={key} onChange={e => setKey(e.target.value)} placeholder="eyJhbGciOi..." autoCapitalize="off" autoCorrect="off" />
+          <Field label="firebaseConfig">
+            <textarea rows={7} value={cfgText} onChange={e => setCfgText(e.target.value)}
+              placeholder={'{ apiKey: "…", authDomain: "…", projectId: "…", appId: "…" }'}
+              autoCapitalize="off" autoCorrect="off" spellCheck={false} />
           </Field>
           {err && <div className="alert danger">{err}</div>}
-          <button className="btn big" type="submit" disabled={busy || !url.trim() || !key.trim()}>
-            {busy ? 'Санҷиш…' : 'Пайваст кардан'}
-          </button>
+          <button className="btn big" type="submit" disabled={busy || !cfgText.trim()}>Нигоҳ доштан</button>
         </form>
       )}
 
       {sync.configured && sync.status === 'signedout' && (
         <form onSubmit={onSignIn}>
           <p className="muted" style={{ margin: '0 2px 10px' }}>
-            Бо почта ва рамзи худ ворид шавед (ё ҳисоби нав созед). Дар ҳамаи дастгоҳҳо ҳамин ҳисобро истифода баред.
+            Ворид шавед, то маълумот дар ҳамаи дастгоҳҳои шумо як хел бошад. Дар ҳамаи дастгоҳҳо ҳамон ҳисобро истифода баред.
           </p>
+          <button type="button" className="btn big" disabled={busy} onClick={() => void run(signInGoogle)}>Бо Google ворид шудан</button>
+          <div className="or-line"><span>ё бо почта</span></div>
           <Field label="Почтаи электронӣ">
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@gmail.com" autoComplete="email" />
           </Field>
@@ -113,13 +130,14 @@ export default function SyncSheet({ onClose, onToast }: { onClose: () => void; o
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
           </Field>
           {err && <div className="alert danger">{err}</div>}
-          <button className="btn big" type="submit" disabled={busy || !email.trim() || password.length < 6}>
-            {busy ? 'Лутфан интизор шавед…' : 'Даромадан'}
-          </button>
-          <button type="button" className="btn secondary" style={{ marginTop: 8 }} disabled={busy || !email.trim() || password.length < 6} onClick={onSignUp}>
+          {info && <div className="alert">{info}</div>}
+          <button className="btn big" type="submit" disabled={busy || !valid}>{busy ? 'Лутфан интизор шавед…' : 'Даромадан'}</button>
+          <button type="button" className="btn secondary" style={{ marginTop: 8 }} disabled={busy || !valid}
+            onClick={() => void run(() => signUp(email.trim(), password))}>
             Ҳисоби нав сохтан
           </button>
-          <button type="button" className="btn ghost" onClick={off}>Ҷудо кардани Supabase</button>
+          <button type="button" className="btn ghost" disabled={busy} onClick={() => void forgot()}>Рамзро фаромӯш кардед?</button>
+          {!sync.embedded && <button type="button" className="btn ghost" onClick={off}>Ҷудо кардани Firebase</button>}
         </form>
       )}
 
@@ -148,8 +166,9 @@ export default function SyncSheet({ onClose, onToast }: { onClose: () => void; o
               {sync.status === 'syncing' ? 'Синхронизатсия…' : 'Ҳозир синхронизатсия кардан'}
             </button>
           )}
-          <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => { signOut(); }}>Аз ҳисоб баромадан</button>
-          <button className="btn ghost" onClick={off}>Ҷудо кардани Supabase</button>
+          <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => void signOut()}>Аз ҳисоб баромадан</button>
+          <button className="btn ghost" disabled={busy} onClick={() => void del()}>Нест кардани ҳисоб ва маълумоти сервер</button>
+          {!sync.embedded && <button className="btn ghost" onClick={off}>Ҷудо кардани Firebase</button>}
         </>
       )}
       {confirmDialog}

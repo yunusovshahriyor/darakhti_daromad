@@ -1287,3 +1287,10 @@ button.sched-row { background: none; border-left: 0; border-right: 0; border-top
 .sync-steps { margin: 10px 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: .85rem; line-height: 1.45; }
 .conflict { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); border: 1px solid var(--danger); border-radius: 16px; padding: 12px 14px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
 .conflict p { margin: 0; font-size: .85rem; }
+.or-line { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .8rem; margin: 12px 0; }
+.or-line::before, .or-line::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+textarea {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; resize: vertical;
+  background: var(--bg); color: var(--text); font: inherit; font-size: .85rem; line-height: 1.4;
+}
+textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 20%, transparent); }

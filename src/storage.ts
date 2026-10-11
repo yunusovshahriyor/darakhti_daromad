@@ -183,7 +183,7 @@ const readPrefs = (): Record<string, string> => {
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith('darakhti:') && !k.startsWith('darakhti:sb') && !PREF_SKIP.has(k)) out[k] = localStorage.getItem(k) ?? '';
+      if (k && k.startsWith('darakhti:') && !k.startsWith('darakhti:cloud') && !PREF_SKIP.has(k)) out[k] = localStorage.getItem(k) ?? '';
     }
   } catch { /* ignore */ }
   return out;
@@ -226,7 +226,7 @@ export async function restoreRaw(raw: string, prefs: Record<string, string> = {}
   localStorage.setItem(KEY, raw);
   localStorage.setItem(SAVED_KEY, String(Date.now()));
   for (const [k, v] of Object.entries(prefs)) {
-    if (k.startsWith('darakhti:') && !k.startsWith('darakhti:sb') && !PREF_SKIP.has(k)) localStorage.setItem(k, v);
+    if (k.startsWith('darakhti:') && !k.startsWith('darakhti:cloud') && !PREF_SKIP.has(k)) localStorage.setItem(k, v);
   }
   onWritten?.();
   await idbSet('state', raw).then(() => idbSet('savedAt', Date.now())).catch(() => {});
