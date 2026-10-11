@@ -82,6 +82,10 @@ jobs:
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyCommands" \
             --data-urlencode 'commands=[{"command":"start","description":"Менюи асосӣ"},{"command":"xulosa","description":"Хулосаи моҳ"},{"command":"qarzho","description":"Қарзҳо ва пардохтҳои навбатӣ"},{"command":"yodovari","description":"Ёдоварии имрӯз"},{"command":"help","description":"Роҳнамо"},{"command":"stop","description":"Ҷудо кардани бот аз аккаунт"}]'
           echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyCommands" \
+            --data-urlencode 'language_code=en' \
+            --data-urlencode 'commands=[{"command":"start","description":"Main menu"},{"command":"summary","description":"Monthly summary"},{"command":"debts","description":"Debts and upcoming payments"},{"command":"reminders","description":"Today'"'"'s payment reminders"},{"command":"help","description":"Help"},{"command":"stop","description":"Unlink the bot from your account"}]'
+          echo
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setChatMenuButton" \
             --data-urlencode 'menu_button={"type":"web_app","text":"Барнома","web_app":{"url":"https://yunusovshahriyor.github.io/darakhti_daromad/"}}'
           echo

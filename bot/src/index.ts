@@ -39,6 +39,7 @@ const HELP =
   '/qarzho — қарзҳо ва пардохтҳои навбатӣ\n' +
   '/yodovari — ёдоварии имрӯз\n' +
   '/stop — ҷудо кардани бот аз аккаунт\n\n' +
+  'Бо забони англисӣ: /summary, /debts, /reminders.\n\n' +
   'Ёдоварӣ ҳар рӯз дар соати интихобшуда меояд (имрӯз, пагоҳ, пас аз 3 рӯз ва пардохтҳои гузашта). Соат ва хулосаи ҳафтаина дар ⚙️ Танзимот.';
 
 const NOT_LINKED =
@@ -189,9 +190,9 @@ async function onMessage(env: Env, chat: number, text: string, name: string) {
     if (c) { await fs.del(env, `users/${c.uid}/bot/link`); await fs.del(env, `botChats/${chat}`); }
     return send(env, chat, '👋 Бот аз аккаунт ҷудо шуд. Барои пайвастани дубора /start-ро пахш кунед.');
   }
-  if (cmd === '/xulosa') return report(env, chat, 'sum');
-  if (cmd === '/qarzho') return report(env, chat, 'debts');
-  if (cmd === '/yodovari') return report(env, chat, 'rem');
+  if (cmd === '/xulosa' || cmd === '/summary') return report(env, chat, 'sum');
+  if (cmd === '/qarzho' || cmd === '/debts') return report(env, chat, 'debts');
+  if (cmd === '/yodovari' || cmd === '/reminders') return report(env, chat, 'rem');
   return send(env, chat, 'Фармон нофаҳмо аст. /help ё /start');
 }
 
