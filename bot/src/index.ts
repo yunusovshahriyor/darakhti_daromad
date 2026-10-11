@@ -314,7 +314,7 @@ async function api(req: Request, env: Env, path: string): Promise<Response> {
       const who = await verifyInitData(env, String(body.initData ?? ''));
       if (!who) return json({ error: 'invalid' }, 401);
       const { uid, isNew } = await resolveUid(env, who.id);
-      return json({ token: await customToken(env, uid), name: who.name, isNew });
+      return json({ token: await customToken(env, uid), uid, name: who.name, isNew });
     }
 
     // Браузер: код месозем, корбар дар бот тасдиқ мекунад, барнома мепурсад

@@ -4,7 +4,7 @@ import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { BOT_API, EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
 import {
-  localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData,
+  emptyState, localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData,
 } from './storage';
 
 /**
@@ -20,6 +20,7 @@ const FLAG_KEY = 'darakhti:cloud-on'; // корбар пештар ворид ш
 const EMAIL_KEY = 'darakhti:cloud-email';
 const NAME_KEY = 'darakhti:cloud-name';
 const PHOTO_KEY = 'darakhti:cloud-photo';
+const TG_ID_KEY = 'darakhti:tg-id'; // кадом корбари Telegram сессияи ҷорӣ барои ӯ сохта шудааст
 const BASE_KEY = 'darakhti:cloud-base'; // rev-и сервер дар синхронизатсияи охирин
 const SYNCED_KEY = 'darakhti:cloud-synced'; // ҳэши мазмуни маҳаллӣ дар синхронизатсияи охирин
 const LAST_KEY = 'darakhti:cloud-last';
@@ -156,7 +157,7 @@ function onAuth(u: User | null) {
   } else {
     curUser = null;
     ls.del(FLAG_KEY);
-    [EMAIL_KEY, NAME_KEY, PHOTO_KEY, BASE_KEY, SYNCED_KEY].forEach(ls.del);
+    [EMAIL_KEY, NAME_KEY, PHOTO_KEY, BASE_KEY, SYNCED_KEY, TG_ID_KEY].forEach(ls.del);
     stopWatch();
     set('signedout');
   }
@@ -618,13 +619,30 @@ async function signInWithToken(token: string, name: string): Promise<void> {
   }
 }
 
-/** Mini App: агар корбар ворид нашуда бошад, бо initData-и имзошудаи Telegram худкор ворид мешавад. */
+/**
+ * Mini App: ворид шудан бо initData-и имзошудаи Telegram.
+ * Хотираи Mini App ба худи Telegram тааллуқ дорад (на ба ҳисоби Telegram), бинобар ин сессияи кӯҳна метавонад ба
+ * корбари дигар тааллуқ дошта бошад: ҳар дафъа санҷида, лозим бошад иваз мекунем.
+ */
 export async function telegramAutoLogin(initData: string): Promise<void> {
   if (!BOT_API || !initData) return;
   const f = await loadAuthed();
-  if (!f || curUser) return;
-  const r = await botPost<{ token: string; name: string }>('/auth/telegram', { initData });
+  if (!f) return;
+  let tgId = '';
+  try { tgId = String((JSON.parse(new URLSearchParams(initData).get('user') ?? '{}') as { id?: number }).id ?? ''); } catch { /* ignore */ }
+  const stored = ls.get(TG_ID_KEY);
+  if (curUser && tgId && stored === tgId) return; // сессия барои ҳамин корбар аст
+  if (curUser && !curUser.uid.startsWith('tg_') && !stored) return; // ворид шудан бо почта/Google — ихтиёрӣ, тағйир намедиҳем
+  const r = await botPost<{ token: string; uid: string; name: string }>('/auth/telegram', { initData });
+  if (curUser?.uid === r.uid) { if (tgId) ls.set(TG_ID_KEY, tgId); return; }
+  if (curUser) {
+    // Аккаунти дигар: баромад, маълумоти маҳаллии кӯҳна ба нусхаҳои худкор меравад, барнома аз нав боз мешавад ва ворид мешавад
+    await signOut();
+    await restoreRaw(JSON.stringify(emptyState()));
+    return;
+  }
   await signInWithToken(r.token, r.name);
+  if (tgId) ls.set(TG_ID_KEY, tgId);
 }
 
 /** Браузер: кодро месозад; корбар дар бот тасдиқ мекунад. */
