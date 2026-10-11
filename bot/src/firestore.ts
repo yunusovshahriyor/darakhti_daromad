@@ -107,10 +107,10 @@ export async function get(env: Env, path: string): Promise<Json | null> {
 }
 
 /** Сабт: сатр → stringValue, адад → integerValue, ISO-сана бо калиди …At → timestampValue. */
-export async function set(env: Env, path: string, data: Record<string, string | number>): Promise<void> {
+export async function set(env: Env, path: string, data: Record<string, string | number | boolean>): Promise<void> {
   const fields: Json = {};
   for (const [k, v] of Object.entries(data)) {
-    fields[k] = typeof v === 'number' ? { integerValue: String(v) } : k.endsWith('At') ? { timestampValue: v } : { stringValue: v };
+    fields[k] = typeof v === 'boolean' ? { booleanValue: v } : typeof v === 'number' ? { integerValue: String(v) } : k.endsWith('At') ? { timestampValue: v } : { stringValue: v };
   }
   await call(env, path, { method: 'PATCH', body: JSON.stringify({ fields }) });
 }

@@ -1,24 +1,9 @@
 import { balancesOf, fmt, fundDreams, loanLeft, openLoans, remaining } from '../../src/model';
 import type { State } from '../../src/types';
 import { daysBetween } from './report';
+import { NOTIFY } from '../../src/notify';
 
-/** Калидҳои огоҳиномаҳо ва пешфарз (true — фаъол). */
-export const NOTIFY: { key: string; label: string; group: string; def: boolean }[] = [
-  { key: 'pay', label: '💳 Ёдоварии пардохтҳо', group: 'Ҳатмӣ', def: true },
-  { key: 'overdue', label: '⚠️ Пардохти дер шуда', group: 'Ҳатмӣ', def: true },
-  { key: 'weekly', label: '📊 Хулосаи ҳафтаина', group: 'Ҳатмӣ', def: true },
-  { key: 'monthly', label: '🗓 Хулосаи моҳ', group: 'Ҳатмӣ', def: true },
-  { key: 'noentry', label: '✍️ «Сабт накардед»', group: 'Тавсияшаванда', def: true },
-  { key: 'dreams', label: '✨ Орзуҳо (ҳадаф ва муҳлат)', group: 'Тавсияшаванда', def: true },
-  { key: 'debtpaid', label: '🎉 Қарз пардохт шуд', group: 'Тавсияшаванда', def: true },
-  { key: 'autosave', label: '🐷 Ҷамъкунии даврӣ', group: 'Тавсияшаванда', def: true },
-  { key: 'goals', label: '🎯 Ҳадафи ҳисоб', group: 'Тавсияшаванда', def: true },
-  { key: 'loans', label: '🤝 Қарздорон', group: 'Тавсияшаванда', def: true },
-  { key: 'bigexp', label: '💸 Хароҷоти калон', group: 'Ихтиёрӣ', def: false },
-  { key: 'catover', label: '📈 Категорияи аз миёна зиёд', group: 'Ихтиёрӣ', def: false },
-  { key: 'evening', label: '🌙 Хулосаи рӯз', group: 'Ихтиёрӣ', def: false },
-  { key: 'tips', label: '💡 Маслиҳат (ҳафтае)', group: 'Ихтиёрӣ', def: false },
-];
+export { NOTIFY };
 
 export type Flags = Record<string, boolean>;
 

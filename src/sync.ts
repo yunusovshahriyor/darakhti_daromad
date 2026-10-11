@@ -3,6 +3,8 @@ import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { BOT_API, EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
+import { prefsFromDoc, prefsToDoc } from './notify';
+import type { NotifyPrefs } from './notify';
 import {
   localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, stateObjHasData, wipeAllLocal,
 } from './storage';
@@ -611,6 +613,22 @@ export async function telegramCreateCode(): Promise<string> {
   const code = makeCode();
   await setDoc(doc(f.db, 'botLinks', code), { uid: curUser.uid, createdAt: serverTimestamp() });
   return code;
+}
+
+/** Танзимоти огоҳиномаҳои Telegram (ҳуҷҷати `users/{uid}/bot/prefs`); агар нест — пешфарз. */
+export async function telegramPrefsGet(): Promise<NotifyPrefs> {
+  const f = await loadAuthed();
+  if (!f || !curUser) return prefsFromDoc(null);
+  const { doc, getDoc } = f.fsM;
+  const s = await getDoc(doc(f.db, 'users', curUser.uid, 'bot', 'prefs'));
+  return prefsFromDoc(s.exists() ? s.data() : null);
+}
+
+export async function telegramPrefsSet(p: NotifyPrefs): Promise<void> {
+  const f = await loadAuthed();
+  if (!f || !curUser) throw new Error('Аввал ба аккаунт ворид шавед');
+  const { doc, setDoc } = f.fsM;
+  await setDoc(doc(f.db, 'users', curUser.uid, 'bot', 'prefs'), prefsToDoc(p));
 }
 
 export async function telegramUnlink(): Promise<void> {

@@ -1,5 +1,6 @@
 import { dateOf, debtsText, reminderText, summaryText } from './report';
 import { NOTIFY, buildDigest } from './digest';
+import { NOTIFY_HOURS, defaultPrefs, prefsFromDoc, prefsToDoc } from '../../src/notify';
 import type { Flags, Seen } from './digest';
 import * as fs from './firestore';
 import { customToken } from './firestore';
@@ -55,31 +56,35 @@ const LINK_TTL_MS = 15 * 60_000;
 
 // ---------- Танзимот (дар botChats/{chat}) ----------
 interface Prefs { hour: number; flags: Flags }
-const HOURS = [7, 9, 12, 18, 21];
+const HOURS = NOTIFY_HOURS;
 
-/** `pay` ва `weekly` дар майдонҳои кӯҳна (remindOn, weeklyOn) нигоҳ дошта мешаванд; боқӣ — `n_<калид>`. */
-const prefsOf = (c: Record<string, unknown> | null): Prefs => {
-  const flags: Flags = {};
+/** Танзимот дар `users/{uid}/bot/prefs` нигоҳ дошта мешавад (барнома низ онро таҳрир мекунад). Агар нест — майдонҳои кӯҳнаи botChats. */
+function legacyPrefs(c: Record<string, unknown> | null): Prefs {
+  const p: Prefs = defaultPrefs();
+  if (!c) return p;
+  if (typeof c.hour === 'number' && HOURS.includes(c.hour)) p.hour = c.hour;
   for (const n of NOTIFY) {
-    const raw = n.key === 'pay' ? c?.remindOn : n.key === 'weekly' ? c?.weeklyOn : c?.[`n_${n.key}`];
-    flags[n.key] = raw === undefined || raw === null ? n.def : raw !== '0';
+    const raw = n.key === 'pay' ? c.remindOn : n.key === 'weekly' ? c.weeklyOn : c[`n_${n.key}`];
+    if (raw !== undefined && raw !== null) p.flags[n.key] = raw !== '0';
   }
-  return { hour: typeof c?.hour === 'number' ? c.hour : 9, flags };
-};
+  return p;
+}
+
+async function loadPrefs(env: Env, c: Record<string, unknown>): Promise<Prefs> {
+  const d = await fs.get(env, `users/${c.uid}/bot/prefs`);
+  if (d) return prefsFromDoc(d);
+  const p = legacyPrefs(c); // як маротиба: танзимоти кӯҳна ба ҳуҷҷати нав мегузарад (то барнома низ онро бинад)
+  await fs.set(env, `users/${c.uid}/bot/prefs`, prefsToDoc(p));
+  return p;
+}
 
 const seenOf = (c: Record<string, unknown> | null): Seen | null => {
   try { return typeof c?.seen === 'string' && c.seen ? (JSON.parse(c.seen) as Seen) : null; } catch { return null; }
 };
 
-async function writeChat(env: Env, chat: number, c: Record<string, unknown>, p: Prefs, seen: Seen | null) {
-  const doc: Record<string, string | number> = {
-    uid: String(c.uid),
-    linkedAt: String(c.linkedAt ?? new Date().toISOString()),
-    hour: p.hour,
-    remindOn: p.flags.pay ? '1' : '0',
-    weeklyOn: p.flags.weekly ? '1' : '0',
-  };
-  for (const n of NOTIFY) if (n.key !== 'pay' && n.key !== 'weekly') doc[`n_${n.key}`] = p.flags[n.key] ? '1' : '0';
+/** botChats/{chat}: танҳо uid, linkedAt ва `seen` (ёддошти серверӣ). */
+async function writeChat(env: Env, chat: number, c: Record<string, unknown>, seen: Seen | null) {
+  const doc: Record<string, string> = { uid: String(c.uid), linkedAt: String(c.linkedAt ?? new Date().toISOString()) };
   if (seen) doc.seen = JSON.stringify(seen);
   await fs.set(env, `botChats/${chat}`, doc);
 }
@@ -87,10 +92,10 @@ async function writeChat(env: Env, chat: number, c: Record<string, unknown>, p: 
 async function savePrefs(env: Env, chat: number, patch: { hour?: number; toggle?: string }): Promise<Prefs | null> {
   const c = await fs.get(env, `botChats/${chat}`);
   if (!c) return null;
-  const p = prefsOf(c);
+  const p = await loadPrefs(env, c);
   if (patch.hour !== undefined) p.hour = patch.hour;
   if (patch.toggle && patch.toggle in p.flags) p.flags[patch.toggle] = !p.flags[patch.toggle];
-  await writeChat(env, chat, c, p, seenOf(c));
+  await fs.set(env, `users/${c.uid}/bot/prefs`, prefsToDoc(p));
   return p;
 }
 
@@ -267,7 +272,7 @@ async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
   if (data === 'set' || data === 'sets' || data === 'nt' || data.startsWith('nt:') || data.startsWith('h:')) {
     const c = await fs.get(env, `botChats/${chat}`);
     if (!c) return send(env, chat, NOT_LINKED, { inline_keyboard: linkHelp(env)[1].inline_keyboard });
-    let p = prefsOf(c);
+    let p = await loadPrefs(env, c);
     if (data.startsWith('nt:')) p = (await savePrefs(env, chat, { toggle: data.slice(3) })) ?? p;
     else if (data.startsWith('h:')) {
       const h = Number(data.slice(2));
@@ -297,7 +302,7 @@ async function daily(env: Env, when = new Date()) {
   await cleanup(env).catch(e => console.log(`cleanup: ${e instanceof Error ? e.message : e}`));
   for (const c of await fs.list(env, 'botChats')) {
     try {
-      const p = prefsOf(c.data);
+      const p = await loadPrefs(env, c.data);
       if (p.hour !== hour) continue;
       const chat = Number(c.id);
       const r = await stateOf(env, chat);
@@ -309,7 +314,7 @@ async function daily(env: Env, when = new Date()) {
       const prevSeen = seenOf(c.data);
       const d = buildDigest(r.state, prevSeen, p.flags, today);
       if (d.lines.length) await send(env, chat, `🔔 <b>Огоҳиномаҳои имрӯз</b>\n\n${d.lines.join('\n\n')}`);
-      await writeChat(env, chat, c.data, p, d.seen);
+      await writeChat(env, chat, c.data, d.seen);
 
       if (dayOfWeek === 1 && p.flags.weekly) await send(env, chat, summaryText(r.state, today));
       if (dayOfMonth === 1 && p.flags.monthly) {

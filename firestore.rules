@@ -18,6 +18,20 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Танзимоти огоҳиномаҳои Telegram: барнома ва бот ҳарду менависанд. Ҳамаи калидҳо ҳатмӣ ва boolean, соат аз рӯйхат.
+    match /users/{uid}/bot/prefs {
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['hour', 'pay', 'overdue', 'weekly', 'monthly', 'noentry', 'dreams', 'debtpaid', 'autosave', 'goals', 'loans', 'bigexp', 'catover', 'evening', 'tips'])
+        && request.resource.data.hour in [7, 9, 12, 18, 21]
+        && request.resource.data.pay is bool && request.resource.data.overdue is bool
+        && request.resource.data.weekly is bool && request.resource.data.monthly is bool
+        && request.resource.data.noentry is bool && request.resource.data.dreams is bool
+        && request.resource.data.debtpaid is bool && request.resource.data.autosave is bool
+        && request.resource.data.goals is bool && request.resource.data.loans is bool
+        && request.resource.data.bigexp is bool && request.resource.data.catover is bool
+        && request.resource.data.evening is bool && request.resource.data.tips is bool;
+    }
+
     match /users/{uid}/sync/{docId} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
 
