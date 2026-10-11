@@ -17,6 +17,8 @@ import {
 const CFG_KEY = 'darakhti:cloud-cfg'; // танзимоти дастӣ (агар дар код нест)
 const FLAG_KEY = 'darakhti:cloud-on'; // корбар пештар ворид шуда буд: SDK-ро ҳангоми кушодан бор мекунем
 const EMAIL_KEY = 'darakhti:cloud-email';
+const NAME_KEY = 'darakhti:cloud-name';
+const PHOTO_KEY = 'darakhti:cloud-photo';
 const BASE_KEY = 'darakhti:cloud-base'; // rev-и сервер дар синхронизатсияи охирин
 const SYNCED_KEY = 'darakhti:cloud-synced'; // ҳэши мазмуни маҳаллӣ дар синхронизатсияи охирин
 const LAST_KEY = 'darakhti:cloud-last';
@@ -36,6 +38,10 @@ export interface Conflict {
 export interface SyncSnap {
   status: SyncStatus;
   email: string;
+  /** Номи ҳисоби Google (агар бошад). */
+  name: string;
+  /** Акси ҳисоби Google (агар бошад). */
+  photo: string;
   lastSyncAt: number;
   error: string;
   conflict: Conflict | null;
@@ -56,7 +62,7 @@ export function getConfig(): FirebaseOptions | null {
 }
 
 let authReady = false;
-let curUser: { uid: string; email: string } | null = null;
+let curUser: { uid: string; email: string; name: string; photo: string } | null = null;
 let snap: SyncSnap = build('idle');
 const listeners = new Set<() => void>();
 let notifier: ((msg: string) => void) | null = null;
@@ -67,7 +73,10 @@ function build(status?: SyncStatus, extra: Partial<SyncSnap> = {}): SyncSnap {
   const loggedIn = !!curUser || (ls.get(FLAG_KEY) === '1' && !authReady);
   const st: SyncStatus = !cfg ? 'off' : !loggedIn ? 'signedout' : status ?? 'idle';
   return {
-    status: st, email: loggedIn ? email : '', lastSyncAt: Number(ls.get(LAST_KEY) ?? 0),
+    status: st, email: loggedIn ? email : '',
+    name: loggedIn ? curUser?.name ?? ls.get(NAME_KEY) ?? '' : '',
+    photo: loggedIn ? curUser?.photo ?? ls.get(PHOTO_KEY) ?? '' : '',
+    lastSyncAt: Number(ls.get(LAST_KEY) ?? 0),
     error: '', conflict: null, configured: !!cfg, embedded: !!EMBEDDED_CONFIG, ...extra,
   };
 }
@@ -100,7 +109,7 @@ export function saveConfig(text: string): void {
 }
 
 export function clearConfig() {
-  [CFG_KEY, FLAG_KEY, EMAIL_KEY, BASE_KEY, SYNCED_KEY, LAST_KEY].forEach(ls.del);
+  [CFG_KEY, FLAG_KEY, EMAIL_KEY, NAME_KEY, PHOTO_KEY, BASE_KEY, SYNCED_KEY, LAST_KEY].forEach(ls.del);
   stopWatch();
   fb = null;
   curUser = null;
@@ -140,18 +149,18 @@ async function load(): Promise<Fb | null> {
 function onAuth(u: User | null) {
   authReady = true;
   if (u) {
-    curUser = { uid: u.uid, email: u.email ?? '' };
+    curUser = { uid: u.uid, email: u.email ?? '', name: u.displayName ?? '', photo: u.photoURL ?? '' };
     ls.set(FLAG_KEY, '1');
     ls.set(EMAIL_KEY, curUser.email);
+    ls.set(NAME_KEY, curUser.name);
+    ls.set(PHOTO_KEY, curUser.photo);
     set('idle');
     void startWatch();
     schedule(300);
   } else {
     curUser = null;
     ls.del(FLAG_KEY);
-    ls.del(EMAIL_KEY);
-    ls.del(BASE_KEY);
-    ls.del(SYNCED_KEY);
+    [EMAIL_KEY, NAME_KEY, PHOTO_KEY, BASE_KEY, SYNCED_KEY].forEach(ls.del);
     stopWatch();
     set('signedout');
   }

@@ -126,15 +126,33 @@ export default function Profile({ state, open, canInstall, install, standalone, 
   return (
     <div className="profile-page">
       <section className="pf-hero">
-        <div className="pf-avatar">{name ? name.trim().charAt(0).toUpperCase() : '👤'}</div>
-        <div className="pf-who">
-          <b>{name || 'Номи шумо'}</b>
-          <small>Ҳамагӣ дар ҳисобҳо: {fmt(total)} смн</small>
-        </div>
-        <button className="icon-btn" aria-label="Таҳрири ном"
-          onClick={() => { setDraft(name); setEditing(true); }}>
-          <PencilIcon />
-        </button>
+        {(() => {
+          const signed = sync.configured && sync.status !== 'signedout' && sync.status !== 'off' && sync.email !== '';
+          const shown = signed ? (name || sync.name || sync.email.split('@')[0]) : 'Меҳмон';
+          return (
+            <>
+              <div className="pf-avatar">
+                {signed && sync.photo
+                  ? <img src={sync.photo} alt="" referrerPolicy="no-referrer" />
+                  : signed ? shown.trim().charAt(0).toUpperCase() : '👤'}
+              </div>
+              <div className="pf-who">
+                <b>{shown}</b>
+                {signed ? <small className="pf-mail">{sync.email}</small> : <small>Ворид нашудаед · маълумот танҳо дар ин дастгоҳ</small>}
+                <small>Ҳамагӣ дар ҳисобҳо: {fmt(total)} смн</small>
+                {!signed && sync.configured && (
+                  <button className="pf-login" onClick={() => setSyncOpen(true)}>Ворид шудан ё сабти ном</button>
+                )}
+              </div>
+              {signed && (
+                <button className="icon-btn" aria-label="Таҳрири ном"
+                  onClick={() => { setDraft(name || sync.name); setEditing(true); }}>
+                  <PencilIcon />
+                </button>
+              )}
+            </>
+          );
+        })()}
       </section>
 
       <h3 className="group-title"><span>Даромад</span></h3>
