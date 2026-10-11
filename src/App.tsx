@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
+import AuthPage from './components/AuthPage';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
@@ -96,6 +97,7 @@ export default function App() {
   const reuseAcct = useRef(layerOnBoot && nav0.acct !== null);
   const [adding, setAdding] = useState(false);
   const [info, setInfo] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; text: string } | null>(null);
   const [hidden, setHidden] = useState(readHidden);
@@ -320,7 +322,7 @@ export default function App() {
     if (tab === 'accounts') return <Accounts {...props} {...privacy} onOpenAccount={openAccount} />;
     if (tab === 'history') return <History {...props} filter={filter} onFilter={setFilter} />;
     return (
-      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onToast={setToast}
+      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onToast={setToast} onOpenAuth={() => setAuthOpen(true)}
         canInstall={installEvent !== null}
         install={() => installEvent?.prompt().then(() => setInstallEvent(null))} />
     );
@@ -366,6 +368,8 @@ export default function App() {
         </button>
         {RIGHT.map(tabButton)}
       </nav>
+
+      {authOpen && <AuthPage onClose={() => setAuthOpen(false)} onToast={setToast} />}
 
       {info && infoKind && <InfoSheet kind={infoKind} onClose={() => setInfo(false)} />}
 

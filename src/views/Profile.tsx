@@ -25,6 +25,7 @@ interface ProfileProps extends Props {
   standalone: boolean;
   ios: boolean;
   onToast: (m: string) => void;
+  onOpenAuth: () => void;
 }
 
 const ago = (ts: number) => {
@@ -37,7 +38,7 @@ const ago = (ts: number) => {
 
 const stamp = (ts: number) => new Date(ts).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-export default function Profile({ state, open, canInstall, install, standalone, ios, onToast }: ProfileProps) {
+export default function Profile({ state, open, canInstall, install, standalone, ios, onToast, onOpenAuth }: ProfileProps) {
   const [name, setName] = useState(readName);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -139,9 +140,8 @@ export default function Profile({ state, open, canInstall, install, standalone, 
               <div className="pf-who">
                 <b>{shown}</b>
                 {signed ? <small className="pf-mail">{sync.email}</small> : <small>Ворид нашудаед · маълумот танҳо дар ин дастгоҳ</small>}
-                <small>Ҳамагӣ дар ҳисобҳо: {fmt(total)} смн</small>
                 {!signed && sync.configured && (
-                  <button className="pf-login" onClick={() => setSyncOpen(true)}>Ворид шудан ё сабти ном</button>
+                  <button className="pf-login" onClick={onOpenAuth}>Ворид шудан ё сабти ном</button>
                 )}
               </div>
               {signed && (
@@ -255,7 +255,7 @@ export default function Profile({ state, open, canInstall, install, standalone, 
       </div>
       <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={pickFile} />
       {confirmDialog}
-      {syncOpen && <SyncSheet onClose={() => setSyncOpen(false)} onToast={onToast} />}
+      {syncOpen && <SyncSheet onClose={() => setSyncOpen(false)} onToast={onToast} onOpenAuth={() => { setSyncOpen(false); onOpenAuth(); }} />}
 
       {!standalone && (
         <>

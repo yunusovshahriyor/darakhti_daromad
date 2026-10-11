@@ -30,7 +30,7 @@ export const statusText = (st: SyncStatus, last: number, error: string) => {
   }
 };
 
-export default function SyncSheet({ onClose, onToast }: { onClose: () => void; onToast: (m: string) => void }) {
+export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: () => void; onToast: (m: string) => void; onOpenAuth: () => void }) {
   const sync = useSync();
   const [cfgText, setCfgText] = useState('');
   const [email, setEmail] = useState('');
@@ -117,28 +117,13 @@ export default function SyncSheet({ onClose, onToast }: { onClose: () => void; o
       )}
 
       {sync.configured && sync.status === 'signedout' && (
-        <form onSubmit={onSignIn}>
-          <p className="muted" style={{ margin: '0 2px 10px' }}>
-            Ворид шавед, то маълумот дар ҳамаи дастгоҳҳои шумо як хел бошад. Дар ҳамаи дастгоҳҳо ҳамон ҳисобро истифода баред.
+        <>
+          <p className="muted" style={{ margin: '0 2px 12px' }}>
+            Ворид шавед, то маълумот дар ҳамаи дастгоҳҳои шумо як хел бошад ва нусхаи автоматӣ дошта бошад.
           </p>
-          <button type="button" className="btn big" disabled={busy} onClick={() => void run(signInGoogle)}>Бо Google ворид шудан</button>
-          <div className="or-line"><span>ё бо почта</span></div>
-          <Field label="Почтаи электронӣ">
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@gmail.com" autoComplete="email" />
-          </Field>
-          <Field label="Рамз (на камтар аз 6 аломат)">
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" />
-          </Field>
-          {err && <div className="alert danger">{err}</div>}
-          {info && <div className="alert">{info}</div>}
-          <button className="btn big" type="submit" disabled={busy || !valid}>{busy ? 'Лутфан интизор шавед…' : 'Даромадан'}</button>
-          <button type="button" className="btn secondary" style={{ marginTop: 8 }} disabled={busy || !valid}
-            onClick={() => void run(() => signUp(email.trim(), password))}>
-            Ҳисоби нав сохтан
-          </button>
-          <button type="button" className="btn ghost" disabled={busy} onClick={() => void forgot()}>Рамзро фаромӯш кардед?</button>
+          <button className="btn big" onClick={onOpenAuth}>Ворид шудан ё сабти ном</button>
           {!sync.embedded && <button type="button" className="btn ghost" onClick={off}>Ҷудо кардани Firebase</button>}
-        </form>
+        </>
       )}
 
       {sync.configured && sync.status !== 'signedout' && (
