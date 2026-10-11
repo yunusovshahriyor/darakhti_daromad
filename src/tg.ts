@@ -7,6 +7,7 @@ interface TgWebApp {
   expand(): void;
   disableVerticalSwipes?(): void;
   openTelegramLink(url: string): void;
+  openLink(url: string, options?: { try_browser?: string }): void;
   initData: string;
 }
 declare global {
@@ -39,4 +40,11 @@ export function openTelegramLink(url: string) {
   const w = window.Telegram?.WebApp;
   if (w) w.openTelegramLink(url);
   else window.location.href = url;
+}
+
+/** Сайтро дар браузери беруна (Chrome) мекушояд: дар Mini App насб кардан мумкин нест. */
+export function openInBrowser(url: string) {
+  const w = window.Telegram?.WebApp;
+  if (w?.openLink) w.openLink(url, { try_browser: 'chrome' });
+  else window.open(url, '_blank');
 }

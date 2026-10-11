@@ -5,6 +5,7 @@ import Field from '../components/Field';
 import { ChevronIcon, PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
 import TelegramSheet from '../components/TelegramSheet';
+import { inTelegram, openInBrowser } from '../tg';
 import { fmt, inPeriod, monthlyIncome, periodAt } from '../model';
 import type { Props, Sub } from './props';
 
@@ -175,7 +176,16 @@ export default function Profile({ state, open, canInstall, install, standalone, 
         <>
           <h3 className="group-title"><span>Барнома</span></h3>
           <div className="cells">
-            {canInstall ? (
+            {inTelegram() ? (
+              <button className="cell tap link" onClick={() => openInBrowser(location.origin + location.pathname)}>
+                <div className="ic">📲</div>
+                <div className="grow">
+                  <b>Насб кардан дар браузер</b>
+                  <small>Дар браузер кушода мешавад: менюи (⋮) → «Install app»</small>
+                </div>
+                <ChevronIcon />
+              </button>
+            ) : canInstall ? (
               <button className="cell tap link" onClick={install}>
                 <div className="ic">📲</div>
                 <div className="grow">
