@@ -7,7 +7,7 @@ import {
 } from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
-import { loadState, saveState } from './storage';
+import { lastBackupAt, loadState, saveState, stateHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
 import { useDreamMilestones } from './useDreamMilestones';
@@ -178,6 +178,23 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Хотиррасонии нусхаи эҳтиётӣ: агар маълумот бошад ва зиёда аз 7 рӯз нусха нагирифта бошед (як маротиба дар як рӯз)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const day = today();
+        if (!stateHasData() || localStorage.getItem('darakhti:backupnudge') === day) return;
+        if (Date.now() - lastBackupAt() > 7 * 86_400_000) {
+          localStorage.setItem('darakhti:backupnudge', day);
+          setToast('💾 Нусхаи эҳтиётӣ нагирифтаед: Профил → Нусхаи эҳтиётӣ');
+        }
+      } catch { /* ignore */ }
+    }, 6500);
+    return () => clearTimeout(t);
+    // танҳо ҳангоми кушодани барнома
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Ҳавасмандии орзуҳо: марҳилаҳои 25/50/75/100% ва ҷашни харид
   useDreamMilestones(state, setToast, (title, text) => setCelebration({ title, text }));
 
@@ -297,7 +314,7 @@ export default function App() {
     if (tab === 'accounts') return <Accounts {...props} {...privacy} onOpenAccount={openAccount} />;
     if (tab === 'history') return <History {...props} filter={filter} onFilter={setFilter} />;
     return (
-      <Profile {...props} open={setSub} standalone={standalone} ios={ios}
+      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onToast={setToast}
         canInstall={installEvent !== null}
         install={() => installEvent?.prompt().then(() => setInstallEvent(null))} />
     );
