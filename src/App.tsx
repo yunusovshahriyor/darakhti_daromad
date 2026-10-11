@@ -37,6 +37,8 @@ const RIGHT: { id: Tab; label: string; icon: ReactNode }[] = [
 
 const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисобҳо', history: 'Таърих', profile: 'Профил' };
 const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
+/** Огоҳии баромад: 3 сония намоиш дода мешавад; дар ҳамин вақт бозгашти дуюм барномаро мепӯшад. */
+const EXIT_MSG = 'Барои баромадан боз тугмаи «Назад»-ро пахш кунед';
 const HIDE_KEY = 'darakhti:hide';
 const NAV_KEY = 'darakhti:nav';
 const FILTER_KEY = 'darakhti:hfilter';
@@ -226,7 +228,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(''), 2400);
+    const t = setTimeout(() => setToast(''), toast === EXIT_MSG ? 3000 : 2400);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -254,8 +256,8 @@ export default function App() {
         return;
       }
       armed = true;
-      setToast('Барои баромадан боз як маротиба «Бозгашт»-ро пахш кунед');
-      timer = setTimeout(() => disarm(true), 2200);
+      setToast(EXIT_MSG);
+      timer = setTimeout(() => disarm(true), 3000);
     });
     // Корбар дар вақти интизорӣ чизеро пахш кард: посбонро барқарор мекунем (пеш аз он ки қабати нав илова шавад)
     const onDown = () => disarm(true);
