@@ -262,3 +262,6 @@ export async function wipeAllLocal(keep: string[] = []): Promise<void> {
   try { sessionStorage.clear(); } catch { /* ignore */ }
   await idbClearAll().catch(() => {});
 }
+
+/** Оё ҳолати додашуда (аз сервер) маълумот дорад? */
+export const stateObjHasData = (state: unknown): boolean => hasData(JSON.stringify(state ?? null));

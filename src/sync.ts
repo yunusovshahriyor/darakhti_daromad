@@ -4,7 +4,7 @@ import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { BOT_API, EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
 import {
-  localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, wipeAllLocal,
+  localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, stateObjHasData, wipeAllLocal,
 } from './storage';
 
 /**
@@ -479,6 +479,13 @@ export async function syncNow(): Promise<void> {
       if (dirty) {
         try { await push(f, uid, remote.rev); } catch (e) { if (e instanceof ConflictError) again = true; else throw e; }
       }
+      ls.set(LAST_KEY, String(Date.now()));
+      set('idle');
+      return;
+    }
+    // Аккаунт холӣ аст (маълумот надорад), вале дар браузер маълумот ҳаст: ба аккаунт мефиристем
+    if (base === null && hasLocal && !stateObjHasData((remote.data as { state?: unknown })?.state)) {
+      try { await push(f, uid, remote.rev); } catch (e) { if (e instanceof ConflictError) again = true; else throw e; }
       ls.set(LAST_KEY, String(Date.now()));
       set('idle');
       return;
