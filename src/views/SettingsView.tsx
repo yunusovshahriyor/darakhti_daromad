@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
+import { useHistoryLayer } from '../components/useHistoryLayer';
+import { signOut, useSync } from '../sync';
 import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isRemainderNode } from '../model';
 import { emptyState } from '../storage';
 import type { DistNode } from '../types';
@@ -17,6 +19,11 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
   const [editId, setEditId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [closed, setClosed] = useState(readClosed);
+  const [page, setPage] = useState<'menu' | 'accounts'>('menu');
+  const sync = useSync();
+  const signed = sync.configured && sync.status !== 'signedout' && sync.status !== 'off' && sync.email !== '';
+  // «Бозгашт»-и телефон аз зерсаҳифаи «Ҳисобҳо ва фоизҳо» ба менюи танзимот бармегардонад
+  useHistoryLayer(page === 'accounts', () => setPage('menu'));
   const root = state.tree;
   const debt = hasDebt(state.debts);
 
@@ -37,6 +44,17 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
       danger: true,
     });
     if (ok) setState(emptyState());
+  };
+
+  const logout = async () => {
+    const ok = await ask({
+      title: 'Баромад аз аккаунт',
+      text: 'Шумо аз аккаунт мебароед. Маълумот дар сервер мемонад ва бо ворид шудан дубора пайдо мешавад.',
+      ok: 'Баромадан',
+      danger: true,
+    });
+    if (!ok) return;
+    try { await signOut(); onToast('Аз аккаунт баромадед'); } catch { onToast('Баромад нашуд: аз нав кӯшиш кунед'); }
   };
 
   const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
@@ -93,15 +111,44 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
     );
   };
 
+  const accountCount = state.accounts.filter(a => !a.archived).length;
+
+  if (page === 'menu') {
+    return (
+      <>
+        <h3 className="group-title"><span>Танзимот</span></h3>
+        <div className="cells">
+          <button className="cell tap link" onClick={() => setPage('accounts')}>
+            <div className="ic">🧩</div>
+            <div className="grow"><b>Ҳисобҳо ва фоизҳо</b><small>{accountCount} ҳисоб · тақсими даромад</small></div>
+            <ChevronIcon />
+          </button>
+          {signed && (
+            <button className="cell tap link" onClick={logout}>
+              <div className="ic">🚪</div>
+              <div className="grow"><b>Баромад аз аккаунт</b><small>{sync.email}</small></div>
+              <ChevronIcon />
+            </button>
+          )}
+        </div>
+
+        <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
+
+        {confirmDialog}
+      </>
+    );
+  }
+
   return (
     <>
+      <button className="set-back tap" onClick={() => setPage('menu')}>
+        <span className="chev-back"><ChevronIcon /></span> Танзимот
+      </button>
       <h3 className="group-title"><span>Ҳисобҳо ва фоизҳо</span></h3>
       <div className="cells tree">
         {row(root, -1)}
       </div>
       <button className="btn" onClick={() => setAdding(true)}><PlusIcon /> Ҳисоби нав</button>
-
-      <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
 
       {confirmDialog}
 
