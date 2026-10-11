@@ -71,7 +71,7 @@ export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: (
     },
     ok: {
       title: 'Синхронизатсия шуд',
-      text: 'Маълумоти шумо дар ҳисоби худатон дар абр захира шудааст. Ҳар тағйирот баъд аз чанд сония худкор мефиристад ва аз дастгоҳи дигар худкор мерасад.',
+      text: 'Маълумотҳои шумо бо муваффақият сабт шудаанд. Ҳар тағйирот ба таври автоматӣ дар аккаунт сабт мешавад.',
     },
     sync: {
       title: 'Синхронизатсия мешавад…',
@@ -121,9 +121,20 @@ export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: (
           </div>
 
           {signed && (
-            <div className="loan-info">
-              <div><span>Ҳисоб</span><b>{sync.email}</b></div>
-              <div><span>Охирин синхронизатсия</span><b>{minutes(sync.lastSyncAt)}</b></div>
+            <div className="ss-card">
+              <div className="ss-account">
+                <div className="ss-ava">
+                  {sync.photo ? <img src={sync.photo} alt="" referrerPolicy="no-referrer" /> : (sync.name || sync.email).trim().charAt(0).toUpperCase()}
+                </div>
+                <div className="ss-who">
+                  <b>{sync.name || sync.email.split('@')[0]}</b>
+                  <small>{sync.email}</small>
+                </div>
+              </div>
+              <div className="ss-grid">
+                <div><small>Охирин синхронизатсия</small><b>{minutes(sync.lastSyncAt)}</b></div>
+                <div><small>Ҳолат</small><b className={`ss-pill ${kind}`}>{kind === 'ok' ? 'Сабт шуд' : kind === 'sync' ? 'Дар ҷараён' : 'Интизор'}</b></div>
+              </div>
             </div>
           )}
 
@@ -139,16 +150,24 @@ export default function SyncSheet({ onClose, onToast, onOpenAuth }: { onClose: (
 
           {kind === 'x' ? (
             <>
-              <button className="btn big" onClick={onOpenAuth}>Ворид шудан ё сабти ном</button>
+              <button className="ss-main" onClick={onOpenAuth}><span>Ворид шудан ё сабти ном</span></button>
               {!sync.embedded && <button type="button" className="btn ghost" onClick={off}>Ҷудо кардани Firebase</button>}
             </>
           ) : (
             <>
-              <button className="btn big" disabled={sync.status === 'syncing'} onClick={() => void syncNow()}>
-                {sync.status === 'syncing' ? 'Синхронизатсия…' : 'Ҳозир синхронизатсия кардан'}
+              <button className="ss-main" disabled={sync.status === 'syncing'} onClick={() => void syncNow()}>
+                {sync.status === 'syncing' ? <span className="spin" /> : (
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M20 11a8 8 0 0 0-14.5-4.6M4 13a8 8 0 0 0 14.5 4.6" /><path d="M5.5 3v4h4M18.5 21v-4h-4" />
+                  </svg>
+                )}
+                <span>{sync.status === 'syncing' ? 'Синхронизатсия…' : 'Ҳозир синхронизатсия кардан'}</span>
               </button>
-              <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => void signOut()}>Аз ҳисоб баромадан</button>
-              <button className="btn ghost" disabled={busy} onClick={() => void del()}>Нест кардани ҳисоб ва маълумоти сервер</button>
+              <div className="ss-actions">
+                <button type="button" className="ss-out" onClick={() => void signOut()}>Аз ҳисоб баромадан</button>
+                <button type="button" className="ss-out danger" disabled={busy} onClick={() => void del()}>Нест кардани ҳисоб</button>
+              </div>
+              <p className="ss-note">«Нест кардани ҳисоб» ҳисоб ва тамоми маълумоти шуморо дар сервер ҳамеша нест мекунад. Маълумот дар ин дастгоҳ мемонад.</p>
               {!sync.embedded && <button className="btn ghost" onClick={off}>Ҷудо кардани Firebase</button>}
             </>
           )}

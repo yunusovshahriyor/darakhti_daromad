@@ -20,6 +20,7 @@ export default function SyncBadge({ onClick }: { onClick: () => void }) {
       <span className={`sb sb-${kind}`} aria-hidden>
         {kind === 'x' && <svg viewBox="0 0 12 12" width="9" height="9"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>}
         {kind === 'ok' && <svg viewBox="0 0 12 12" width="9" height="9"><path d="M2.4 6.3 5 8.8l4.6-5.2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>}
+        {kind === 'sync' && <svg viewBox="0 0 12 12" width="10" height="10" className="sb-rot"><path d="M6 1.8a4.2 4.2 0 1 0 4.2 4.2" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" fill="none" /></svg>}
         {kind === 'warn' && <svg viewBox="0 0 12 12" width="9" height="9"><path d="M6 2.5v4.2M6 9.2v.1" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>}
       </span>
     </button>
