@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
-import { EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
+import { BOT_API, EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
 import {
   localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData,
 } from './storage';
@@ -145,7 +145,7 @@ async function load(): Promise<Fb | null> {
 function onAuth(u: User | null) {
   authReady = true;
   if (u) {
-    curUser = { uid: u.uid, email: u.email ?? '', name: u.displayName ?? '', photo: u.photoURL ?? '' };
+    curUser = { uid: u.uid, email: u.email ?? (u.uid.startsWith('tg_') || u.providerData.length === 0 ? 'Telegram' : ''), name: u.displayName ?? '', photo: u.photoURL ?? '' };
     ls.set(FLAG_KEY, '1');
     ls.set(EMAIL_KEY, curUser.email);
     ls.set(NAME_KEY, curUser.name);
@@ -596,4 +596,47 @@ export async function telegramUnlink(): Promise<void> {
   if (!f || !curUser) return;
   const { doc, deleteDoc } = f.fsM;
   await deleteDoc(doc(f.db, 'users', curUser.uid, 'bot', 'link'));
+}
+
+
+// ---------- Воридшавӣ бо Telegram ----------
+async function botPost<T>(path: string, body: unknown): Promise<T> {
+  const r = await fetch(`${BOT_API}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(r.status === 401 ? 'Telegram маълумотро тасдиқ накард' : 'Сервер ҷавоб надод: баъдтар кӯшиш кунед');
+  return (await r.json()) as T;
+}
+
+async function signInWithToken(token: string, name: string): Promise<void> {
+  const f = await load();
+  if (!f) throw new Error('Аввал Firebase-ро танзим кунед');
+  const cred = await f.authM.signInWithCustomToken(f.auth, token);
+  if (name && !cred.user.displayName) {
+    try {
+      await f.authM.updateProfile(cred.user, { displayName: name });
+      if (curUser) { curUser = { ...curUser, name }; ls.set(NAME_KEY, name); set(); }
+    } catch { /* ном ихтиёрӣ аст */ }
+  }
+}
+
+/** Mini App: агар корбар ворид нашуда бошад, бо initData-и имзошудаи Telegram худкор ворид мешавад. */
+export async function telegramAutoLogin(initData: string): Promise<void> {
+  if (!BOT_API || !initData) return;
+  const f = await loadAuthed();
+  if (!f || curUser) return;
+  const r = await botPost<{ token: string; name: string }>('/auth/telegram', { initData });
+  await signInWithToken(r.token, r.name);
+}
+
+/** Браузер: кодро месозад; корбар дар бот тасдиқ мекунад. */
+export async function telegramLoginStart(): Promise<{ code: string; url: string }> {
+  return botPost('/auth/start', {});
+}
+
+/** `true` — ворид шуд; `false` — ҳанӯз интизор; хато — дархост кӯҳна шуд. */
+export async function telegramLoginPoll(code: string): Promise<boolean> {
+  const r = await botPost<{ status: 'pending' | 'gone' | 'ok'; token?: string; name?: string }>('/auth/poll', { code });
+  if (r.status === 'gone') throw new Error('Дархост кӯҳна шуд. Аз нав кӯшиш кунед');
+  if (r.status !== 'ok' || !r.token) return false;
+  await signInWithToken(r.token, r.name ?? '');
+  return true;
 }

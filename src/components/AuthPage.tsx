@@ -1,8 +1,17 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { resetPassword, signIn, signInGoogle, signUp, useSync } from '../sync';
+import { BOT_API } from '../firebaseConfig';
+import { resetPassword, signIn, signInGoogle, signUp, telegramLoginPoll, telegramLoginStart, useSync } from '../sync';
+import { openTelegramLink } from '../tg';
 import { useHistoryLayer } from './useHistoryLayer';
 
 type Mode = 'in' | 'up';
+
+const TelegramLogo = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="12" fill="#2aabee" />
+    <path fill="#fff" d="M5.4 11.9l11.2-4.3c.5-.2 1 .1.8.9l-1.9 9c-.1.6-.5.8-1 .5l-2.9-2.1-1.4 1.4c-.2.2-.3.3-.6.3l.2-3 5.3-4.8c.2-.2 0-.3-.3-.1l-6.6 4.1-2.8-.9c-.6-.2-.6-.6.1-.9z" />
+  </svg>
+);
 
 const GoogleG = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
@@ -47,7 +56,8 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState<'' | 'form' | 'google' | 'reset'>('');
+  const [busy, setBusy] = useState<'' | 'form' | 'google' | 'reset' | 'tg'>('');
+  const [tgWait, setTgWait] = useState<{ code: string; url: string } | null>(null);
   const [err, setErr] = useState('');
   const [info, setInfo] = useState('');
   const closing = useRef(false);
@@ -63,7 +73,35 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
     }
   }, [sync.email, sync.status, sync.name]);
 
-  const run = async (kind: 'form' | 'google' | 'reset', fn: () => Promise<void>) => {
+  // Воридшавӣ бо Telegram: код месозем, бот кушода мешавад, баъд ҳар 2 сония мепурсем
+  const startTelegram = async () => {
+    // Дар браузер: равзана бояд дар худи пахш (синхронӣ) кушода шавад, то манъ нашавад; саҳифаи барнома бояд боз бимонад
+    const inTg = !!window.Telegram?.WebApp;
+    const w = inTg ? null : window.open('', '_blank');
+    try {
+      const r = await telegramLoginStart();
+      setTgWait(r);
+      if (inTg) openTelegramLink(r.url);
+      else if (w) w.location.href = r.url;
+    } catch (e) {
+      w?.close();
+      throw e;
+    }
+  };
+  useEffect(() => {
+    if (!tgWait) return;
+    let alive = true;
+    const t = setInterval(() => {
+      telegramLoginPoll(tgWait.code).catch(e => {
+        if (!alive) return;
+        setTgWait(null);
+        setErr(e instanceof Error ? e.message : 'Хатои номаълум');
+      });
+    }, 2000);
+    return () => { alive = false; clearInterval(t); };
+  }, [tgWait]);
+
+  const run = async (kind: 'form' | 'google' | 'reset' | 'tg', fn: () => Promise<void>) => {
     setBusy(kind);
     setErr('');
     setInfo('');
@@ -150,6 +188,21 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
             {busy === 'google' ? <span className="spin" /> : <GoogleG />}
             <span>Бо Google идома додан</span>
           </button>
+
+          {BOT_API && (tgWait ? (
+            <div className="auth-tg-wait" role="status">
+              <span className="spin" />
+              <p>Дар Telegram «Start» ва «Ҳа, ворид шавам»-ро пахш кунед, баъд ба ин ҷо баргардед.</p>
+              <a href={tgWait.url} target="_blank" rel="noreferrer"
+                onClick={e => { if (window.Telegram?.WebApp) { e.preventDefault(); openTelegramLink(tgWait.url); } }}>Кушодани Telegram</a>
+              <button type="button" onClick={() => setTgWait(null)}>Бекор кардан</button>
+            </div>
+          ) : (
+            <button type="button" className="auth-google auth-telegram" disabled={busy !== ''} onClick={() => void run('tg', startTelegram)}>
+              {busy === 'tg' ? <span className="spin" /> : <TelegramLogo />}
+              <span>Бо Telegram идома додан</span>
+            </button>
+          ))}
         </div>
 
         <ul className="auth-perks">

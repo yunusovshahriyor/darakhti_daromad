@@ -7,6 +7,7 @@ interface TgWebApp {
   expand(): void;
   disableVerticalSwipes?(): void;
   openTelegramLink(url: string): void;
+  initData: string;
 }
 declare global {
   interface Window { Telegram?: { WebApp?: TgWebApp } }
@@ -27,6 +28,8 @@ export function initTelegram() {
     w?.ready();
     w?.expand();
     w?.disableVerticalSwipes?.();
+    // Воридшавии худкор бо Telegram (агар ворид нашуда бошад)
+    if (w?.initData) void import('./sync').then(m => m.telegramAutoLogin(w.initData)).catch(() => {});
   };
   document.head.appendChild(s);
 }

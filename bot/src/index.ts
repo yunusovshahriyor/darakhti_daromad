@@ -1,9 +1,11 @@
 import { dateOf, debtsText, reminderText, summaryText } from './report';
 import * as fs from './firestore';
+import { customToken } from './firestore';
 import type { Env } from './firestore';
 import type { State } from '../../src/types';
+import { LOGIN_RE, LOGIN_TTL_MS, newCode, resolveUid, verifyInitData } from './auth';
 
-interface TgUser { first_name?: string }
+interface TgUser { id?: number; first_name?: string; last_name?: string }
 interface Update {
   message?: { chat: { id: number; type: string }; text?: string; from?: TgUser };
   callback_query?: { id: string; from: TgUser; data?: string; message?: { chat: { id: number; type: string }; message_id: number } };
@@ -131,6 +133,34 @@ const isLinked = async (env: Env, chat: number) => {
   return !!l && String(l.chatId) === String(chat);
 };
 
+// ---------- Воридшавӣ ба барнома тавассути бот ----------
+const fresh = (d: Record<string, unknown> | null) => !!d && Date.now() - Date.parse(String(d.createdAt)) <= LOGIN_TTL_MS;
+
+async function askLogin(env: Env, chat: number, code: string) {
+  const d = LOGIN_RE.test(code) ? await fs.get(env, `botLogins/${code}`) : null;
+  if (!d || d.status !== 'pending' || !fresh(d)) {
+    return send(env, chat, '⌛ Дархости воридшавӣ кӯҳна шудааст ё ёфт нашуд. Дар барнома «Ворид шудан бо Telegram»-ро аз нав пахш кунед.');
+  }
+  return send(env, chat,
+    '🔐 <b>Ворид шудан ба «Дарахти даромад»?</b>\n\n' +
+    'Агар шумо худатон дар барнома «Ворид шудан бо Telegram»-ро пахш кардаед, тасдиқ кунед. ' +
+    'Агар касе ин пайвандро ба шумо фиристода бошад, <b>бекор кунед</b>.',
+    { inline_keyboard: [[{ text: '✅ Ҳа, ворид шавам', callback_data: `lg:${code}` }, { text: '✖️ Не', callback_data: `lgx:${code}` }]] });
+}
+
+async function confirmLogin(env: Env, q: NonNullable<Update['callback_query']>, code: string, ok: boolean) {
+  const chat = q.message!.chat.id;
+  const mid = q.message!.message_id;
+  const edit = (text: string) => tg(env, 'editMessageText', { chat_id: chat, message_id: mid, text, parse_mode: 'HTML' });
+  const d = LOGIN_RE.test(code) ? await fs.get(env, `botLogins/${code}`) : null;
+  if (!ok) { if (d) await fs.del(env, `botLogins/${code}`); return edit('✖️ Воридшавӣ бекор шуд.'); }
+  if (!d || d.status !== 'pending' || !fresh(d)) return edit('⌛ Дархост кӯҳна шудааст. Дар барнома аз нав кӯшиш кунед.');
+  const { uid } = await resolveUid(env, q.from.id ?? chat);
+  const name = [q.from.first_name, q.from.last_name].filter(Boolean).join(' ');
+  await fs.set(env, `botLogins/${code}`, { createdAt: String(d.createdAt), status: 'ok', uid, name });
+  return edit('✅ <b>Тайёр!</b> Ба барнома баргардед: воридшавӣ худкор анҷом меёбад.');
+}
+
 // ---------- Менюи асосӣ ----------
 function menu(env: Env, linked: boolean): Keyboard {
   return {
@@ -178,6 +208,7 @@ async function onMessage(env: Env, chat: number, text: string, name: string) {
   const cmd = cmdRaw.split('@')[0].toLowerCase();
 
   if (cmd === '/start') {
+    if (rest[0]?.startsWith('login_')) return askLogin(env, chat, rest[0].slice(6));
     if (rest[0]) await send(env, chat, await link(env, chat, rest[0]));
     return sendMenu(env, chat, name);
   }
@@ -205,6 +236,8 @@ async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
 
   if (data === 'linked') return answer('Аккаунт пайваст аст ✅');
   await answer();
+  if (data.startsWith('lg:')) return confirmLogin(env, q, data.slice(3), true);
+  if (data.startsWith('lgx:')) return confirmLogin(env, q, data.slice(4), false);
   if (data === 'sum' || data === 'debts' || data === 'rem') return report(env, chat, data);
   if (data === 'help') return send(env, chat, HELP);
   if (data === 'link') {
@@ -231,11 +264,20 @@ async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
 }
 
 // ---------- Ёдоварии ҳаррӯза (cron ҳар соат) ----------
+async function cleanup(env: Env) {
+  for (const col of ['botLogins', 'botLinks']) {
+    for (const d of await fs.list(env, col)) {
+      if (Date.now() - Date.parse(String(d.data.createdAt)) > 60 * 60_000) await fs.del(env, `${col}/${d.id}`);
+    }
+  }
+}
+
 async function daily(env: Env, when = new Date()) {
   const tz = env.TIMEZONE ?? 'Asia/Dushanbe';
   const today = dateOf(tz, when);
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }).format(when));
   const monday = new Date(`${today}T12:00:00Z`).getUTCDay() === 1;
+  await cleanup(env).catch(e => console.log(`cleanup: ${e instanceof Error ? e.message : e}`));
   for (const c of await fs.list(env, 'botChats')) {
     try {
       const p = prefsOf(c.data);
@@ -254,9 +296,52 @@ async function daily(env: Env, when = new Date()) {
   }
 }
 
+const ALLOWED_ORIGINS = ['https://yunusovshahriyor.github.io', 'http://localhost:4173', 'http://localhost:5173'];
+
+async function api(req: Request, env: Env, path: string): Promise<Response> {
+  const origin = req.headers.get('origin') ?? '';
+  const cors: Record<string, string> = ALLOWED_ORIGINS.includes(origin)
+    ? { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type', vary: 'origin' }
+    : {};
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...cors } });
+  if (req.method !== 'POST') return json({ error: 'method' }, 405);
+  try {
+    const body = (await req.json().catch(() => ({}))) as { initData?: string; code?: string };
+
+    // Mini App: воридшавии худкор бо initData-и имзошудаи Telegram
+    if (path === '/auth/telegram') {
+      const who = await verifyInitData(env, String(body.initData ?? ''));
+      if (!who) return json({ error: 'invalid' }, 401);
+      const { uid, isNew } = await resolveUid(env, who.id);
+      return json({ token: await customToken(env, uid), name: who.name, isNew });
+    }
+
+    // Браузер: код месозем, корбар дар бот тасдиқ мекунад, барнома мепурсад
+    if (path === '/auth/start') {
+      const code = newCode();
+      await fs.set(env, `botLogins/${code}`, { createdAt: new Date().toISOString(), status: 'pending' });
+      return json({ code, url: `https://t.me/${env.BOT_USERNAME}?start=login_${code}` });
+    }
+    if (path === '/auth/poll') {
+      const code = String(body.code ?? '');
+      const d = LOGIN_RE.test(code) ? await fs.get(env, `botLogins/${code}`) : null;
+      if (!d || !fresh(d)) return json({ status: 'gone' });
+      if (d.status !== 'ok') return json({ status: 'pending' });
+      await fs.del(env, `botLogins/${code}`); // як маротиба
+      return json({ status: 'ok', token: await customToken(env, String(d.uid)), name: String(d.name ?? '') });
+    }
+    return json({ error: 'not found' }, 404);
+  } catch (e) {
+    console.log(`api ${path}: ${e instanceof Error ? e.stack : e}`);
+    return json({ error: 'server' }, 500);
+  }
+}
+
 export default {
   async fetch(req: Request, env: Env, ctx: Ctx): Promise<Response> {
     const url = new URL(req.url);
+    if (url.pathname.startsWith('/auth/')) return api(req, env, url.pathname);
     if (req.method !== 'POST' || url.pathname !== '/webhook') return new Response('Дарахти даромад — бот', { status: 200 });
     if (req.headers.get('x-telegram-bot-api-secret-token') !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });
     const u = (await req.json()) as Update;

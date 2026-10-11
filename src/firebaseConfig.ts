@@ -26,3 +26,9 @@ export const GOOGLE_CLIENT_ID = '21659404718-jd3c7vpsnjphfnlogjrq2udja3amv68g.ap
  * Бо он тугмаи «Кушодани бот» пайванди t.me/<ном>?start=<код> месозад; агар холӣ бошад, танҳо код нишон дода мешавад.
  */
 export const TELEGRAM_BOT_USERNAME = 'darakhti_daromad_bot';
+
+/**
+ * Суроғаи Worker-и бот (Cloudflare): воридшавӣ бо Telegram аз ҳамин ҷо токен мегирад.
+ * Агар холӣ бошад, тугмаи «Бо Telegram» нест.
+ */
+export const BOT_API = 'https://darakhti-bot.yunusov-shahriyor98.workers.dev';

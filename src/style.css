@@ -1464,3 +1464,12 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
   background: var(--surface); font: 700 1.6rem/1 ui-monospace, Menlo, monospace; letter-spacing: .18em; user-select: all;
 }
 .btn.tg-open { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+
+.auth-telegram { margin-top: 10px; }
+.auth-tg-wait {
+  margin-top: 10px; padding: 14px; border-radius: 14px; text-align: center;
+  background: color-mix(in srgb, #2aabee 10%, var(--surface)); display: grid; gap: 8px; justify-items: center;
+}
+.auth-tg-wait p { margin: 0; font-size: .85rem; color: var(--muted); }
+.auth-tg-wait a { color: #229ed9; font-weight: 600; text-decoration: none; }
+.auth-tg-wait button { background: none; border: 0; color: var(--muted); font-size: .8rem; }

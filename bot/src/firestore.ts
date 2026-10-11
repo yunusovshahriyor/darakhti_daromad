@@ -7,6 +7,7 @@ export interface Env {
   FIREBASE_PROJECT_ID: string;
   TIMEZONE?: string;
   APP_URL: string;
+  BOT_USERNAME: string;
 }
 
 type Json = Record<string, unknown>;
@@ -20,31 +21,54 @@ const b64url = (buf: ArrayBuffer | string) => {
 
 let cached: { token: string; exp: number } | null = null;
 
+async function importKey(pem: string): Promise<CryptoKey> {
+  const der = Uint8Array.from(atob(pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')), c => c.charCodeAt(0));
+  return crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+}
+
+/** JWT (RS256), имзошуда бо калиди ҳисоби хидматӣ. */
+async function signJwt(env: Env, claim: Json): Promise<string> {
+  const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT) as { private_key: string };
+  const head = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const body = b64url(JSON.stringify(claim));
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', await importKey(sa.private_key), new TextEncoder().encode(`${head}.${body}`));
+  return `${head}.${body}.${b64url(sig)}`;
+}
+
 async function accessToken(env: Env): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cached && cached.exp - 60 > now) return cached.token;
-  const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT) as { client_email: string; private_key: string };
-  const head = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const claim = b64url(JSON.stringify({
+  const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT) as { client_email: string };
+  const assertion = await signJwt(env, {
     iss: sa.client_email,
     scope: 'https://www.googleapis.com/auth/datastore',
     aud: 'https://oauth2.googleapis.com/token',
     iat: now,
     exp: now + 3600,
-  }));
-  const pem = sa.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
-  const der = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
-  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${head}.${claim}`));
+  });
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${head}.${claim}.${b64url(sig)}` }),
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }),
   });
   if (!res.ok) throw new Error(`Google token: ${res.status} ${await res.text()}`);
   const j = (await res.json()) as { access_token: string; expires_in: number };
   cached = { token: j.access_token, exp: now + j.expires_in };
   return cached.token;
+}
+
+/** Токени воридшавии Firebase (signInWithCustomToken) барои `uid`. */
+export async function customToken(env: Env, uid: string): Promise<string> {
+  const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT) as { client_email: string };
+  const now = Math.floor(Date.now() / 1000);
+  return signJwt(env, {
+    iss: sa.client_email,
+    sub: sa.client_email,
+    aud: 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit',
+    iat: now,
+    exp: now + 3600,
+    uid,
+  });
 }
 
 const base = (env: Env) => `https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents`;
