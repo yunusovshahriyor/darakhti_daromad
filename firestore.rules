@@ -3,6 +3,21 @@ rules_version = '2';
 // Ҳар корбар танҳо ҳуҷҷатҳои худашро мехонад ва менависад: users/{uid}/sync/{meta | chunk_N}
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Пайвастани Telegram-бот: барнома рамзи яккарата месозад, бот онро бо ҳисоби хидматӣ мехонад ва нест мекунад.
+    match /botLinks/{code} {
+      allow create: if request.auth != null
+        && code.matches('[A-Z2-9]{10}')
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // Ҳолати пайвастшавии бот (сабт мешавад аз тарафи бот): корбар мехонад ва ҷудо мекунад.
+    match /users/{uid}/bot/{docId} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /users/{uid}/sync/{docId} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
 

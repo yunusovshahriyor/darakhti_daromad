@@ -4,6 +4,7 @@ import { setAvatar, useSync } from '../sync';
 import Field from '../components/Field';
 import { ChevronIcon, PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
+import TelegramSheet from '../components/TelegramSheet';
 import { fmt, inPeriod, monthlyIncome, periodAt } from '../model';
 import type { Props, Sub } from './props';
 
@@ -25,6 +26,7 @@ interface ProfileProps extends Props {
 export default function Profile({ state, open, canInstall, install, standalone, ios, onOpenAuth }: ProfileProps) {
   const [name, setName] = useState(readName);
   const [editing, setEditing] = useState(false);
+  const [tgOpen, setTgOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const sync = useSync();
   // Таҳрири акс: `pick` — аксҳои нави интихобшуда (ҳанӯз бор нашудааст), `removePhoto` — нест кардан
@@ -153,6 +155,11 @@ export default function Profile({ state, open, canInstall, install, standalone, 
           <div className="grow"><b>Қарзҳо</b><small>{state.debts.length + state.loans.length} сабт</small></div>
           <ChevronIcon />
         </button>
+        <button className="cell tap link" onClick={() => setTgOpen(true)}>
+          <div className="ic">✈️</div>
+          <div className="grow"><b>Telegram-бот</b><small>Ёдоварии пардохтҳо ва хулоса</small></div>
+          <ChevronIcon />
+        </button>
         <button className="cell tap link" onClick={() => open('settings')}>
           <div className="ic">⚙️</div>
           <div className="grow"><b>Танзимот</b><small>Фоизҳои тақсим, маълумот</small></div>
@@ -187,6 +194,8 @@ export default function Profile({ state, open, canInstall, install, standalone, 
           </div>
         </>
       )}
+
+      {tgOpen && <TelegramSheet onClose={() => setTgOpen(false)} onOpenAuth={onOpenAuth} />}
 
       {editing && (
         <Sheet title="Таҳрири маълумотҳо" onClose={closeEdit}>

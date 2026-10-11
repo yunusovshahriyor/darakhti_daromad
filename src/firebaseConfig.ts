@@ -20,3 +20,9 @@ export const EMBEDDED_CONFIG: FirebaseOptions | null = {
  * Агар холӣ бошад, воридшавӣ бо равзанаи оддии Google (popup) кор мекунад.
  */
 export const GOOGLE_CLIENT_ID = '21659404718-jd3c7vpsnjphfnlogjrq2udja3amv68g.apps.googleusercontent.com';
+
+/**
+ * Номи корбарии Telegram-бот (бе @), ки дар @BotFather сохтаед, масалан 'darakhti_daromad_bot'.
+ * Бо он тугмаи «Кушодани бот» пайванди t.me/<ном>?start=<код> месозад; агар холӣ бошад, танҳо код нишон дода мешавад.
+ */
+export const TELEGRAM_BOT_USERNAME = '';

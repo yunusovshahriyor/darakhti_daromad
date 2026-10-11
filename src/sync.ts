@@ -554,3 +554,38 @@ export async function setAvatar(image: Blob | null): Promise<void> {
     throw new Error(storageMessage(e));
   }
 }
+
+// ---------- Telegram-бот ----------
+export interface TelegramLink { linkedAt: string }
+
+/** Рамзи пайвастшавӣ: 10 аломат бе 0/1/I/O (барои хондан осон), аз crypto. */
+const makeCode = () => {
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const b = crypto.getRandomValues(new Uint8Array(10));
+  return Array.from(b, x => A[x % A.length]).join('');
+};
+
+export async function telegramStatus(): Promise<TelegramLink | null> {
+  const f = await load();
+  if (!f || !curUser) return null;
+  const { doc, getDoc } = f.fsM;
+  const s = await getDoc(doc(f.db, 'users', curUser.uid, 'bot', 'link'));
+  return s.exists() ? { linkedAt: String(s.data().linkedAt ?? '') } : null;
+}
+
+/** Рамзи нав месозад; ба бот фиристода мешавад ва то 15 дақиқа эътибор дорад. */
+export async function telegramCreateCode(): Promise<string> {
+  const f = await load();
+  if (!f || !curUser) throw new Error('Аввал ба аккаунт ворид шавед');
+  const { doc, setDoc, serverTimestamp } = f.fsM;
+  const code = makeCode();
+  await setDoc(doc(f.db, 'botLinks', code), { uid: curUser.uid, createdAt: serverTimestamp() });
+  return code;
+}
+
+export async function telegramUnlink(): Promise<void> {
+  const f = await load();
+  if (!f || !curUser) return;
+  const { doc, deleteDoc } = f.fsM;
+  await deleteDoc(doc(f.db, 'users', curUser.uid, 'bot', 'link'));
+}

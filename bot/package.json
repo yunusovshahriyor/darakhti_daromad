@@ -1,0 +1,14 @@
+{
+  "name": "darakhti-bot",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3",
+    "wrangler": "^4.0.0"
+  }
+}
