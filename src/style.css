@@ -1264,3 +1264,22 @@ button.date-row { width: 100%; text-align: left; font: inherit; }
 .due-line.late { color: var(--danger); font-weight: 600; }
 button.sched-row { background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; text-align: left; color: inherit; font: inherit; }
 .btn.ghost { background: none; color: var(--muted); box-shadow: none; margin-top: 6px; }
+
+/* ===== Усули супоридан ===== */
+.method-block { margin: 6px 0 4px; }
+.mb-title { font-weight: 700; font-size: .95rem; margin: 12px 2px 8px; }
+.mb-title.sub { margin-top: 16px; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+.method-list { display: flex; flex-direction: column; gap: 8px; }
+.method {
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) 22px; gap: 12px; align-items: start; text-align: left;
+  padding: 12px 14px; border-radius: 16px; background: var(--bg); border: 1.5px solid transparent;
+  color: inherit; font: inherit; width: 100%;
+}
+.method.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 9%, var(--surface)); }
+.m-ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 1.2rem; background: var(--surface); }
+.m-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.m-t b { font-size: .95rem; }
+.m-t small { color: var(--muted); font-size: .8rem; line-height: 1.35; }
+.m-t em { font-style: normal; color: var(--primary); font-size: .78rem; line-height: 1.35; margin-top: 2px; }
+.m-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); margin-top: 8px; box-sizing: border-box; }
+.method.on .m-radio { border-color: var(--primary); background: radial-gradient(circle, var(--primary) 0 45%, transparent 50%); }

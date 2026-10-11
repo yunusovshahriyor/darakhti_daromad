@@ -15,6 +15,21 @@ interface Values {
   paid?: number;
 }
 
+const METHODS: { id: DebtPlan['method']; icon: string; title: string; text: string; example: string }[] = [
+  { id: 'flat', icon: '🛍️', title: 'Насия (бо комиссия)',
+    text: 'Нарх + комиссияи собит. Ҳар моҳ як хел пардохт мекунед.',
+    example: 'Масалан: телефон ё техника ба насия, 9 800 + комиссия 1 764 дар 18 моҳ.' },
+  { id: 'actual', icon: '🏠', title: 'Бонк ҷадвал додааст',
+    text: 'Пардохти моҳона дар ҷадвали бонк навишта шудааст, фоиз аз рӯзҳои воқеӣ ҳисоб мешавад.',
+    example: 'Масалан: иҷора ё қарзи хона, пардохти моҳона 4 192, фоиз 16%.' },
+  { id: 'annuity', icon: '🏦', title: 'Кредити оддӣ',
+    text: 'Пардохти ҳар моҳ як хел, фоиз = фоизи солона ÷ 12.',
+    example: 'Масалан: қарзи нақдӣ бо фоизи солонаи 24% барои 12 моҳ.' },
+  { id: 'diff', icon: '📉', title: 'Пардохт тадриҷан кам мешавад',
+    text: 'Қисми асосӣ ҳар моҳ баробар, фоиз тадриҷан кам мешавад. Пардохти аввал калонтарин.',
+    example: 'Масалан: қарзи бонкӣ бо ҷадвали дифференсиалӣ.' },
+];
+
 /** Форма барои илова кардан ва таҳрири қарз: маблағи калон, сана, тугмачаҳои рақамӣ. */
 export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   initial?: Debt;
@@ -93,6 +108,25 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
       </label>
       {bank && (
         <>
+          <div className="method-block">
+            <div className="mb-title">Қарзи шумо кадом навъ аст?</div>
+            <div className="method-list" role="radiogroup" aria-label="Усули супоридан">
+              {METHODS.map(m => (
+                <button key={m.id} type="button" role="radio" aria-checked={method === m.id}
+                  className={method === m.id ? 'method on' : 'method'} onClick={() => setMethod(m.id)}>
+                  <span className="m-ic">{m.icon}</span>
+                  <span className="m-t">
+                    <b>{m.title}</b>
+                    <small>{m.text}</small>
+                    {method === m.id && <em>{m.example}</em>}
+                  </span>
+                  <span className="m-radio" aria-hidden />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-title sub">Шартҳои қарз</div>
           <div className="two-col">
             {method !== 'flat' && (
               <Field label="Фоиз дар сол, %">
@@ -108,29 +142,14 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
               <input inputMode="numeric" value={months} onChange={e => setMonths(e.target.value.replace(/\D/g, ''))} placeholder="Масалан, 12" />
             </Field>
           </div>
-          <div className="chips-block">
-            <div className="chips-label">Усули супоридан</div>
-            <div className="chips">
-              <button type="button" className={method === 'flat' ? 'chip on' : 'chip'} onClick={() => setMethod('flat')}>
-                <span className="chip-t"><b>Комиссияи яккарата</b><small>нарх + комиссия, баробар тақсим</small></span>
-              </button>
-              <button type="button" className={method === 'actual' ? 'chip on' : 'chip'} onClick={() => setMethod('actual')}>
-                <span className="chip-t"><b>Пардохти собити бонк</b><small>фоиз аз рӯзҳои воқеӣ ÷ 365</small></span>
-              </button>
-              <button type="button" className={method === 'annuity' ? 'chip on' : 'chip'} onClick={() => setMethod('annuity')}>
-                <span className="chip-t"><b>Аннуитетӣ</b><small>пардохти баробар, фоиз ÷ 12</small></span>
-              </button>
-              <button type="button" className={method === 'diff' ? 'chip on' : 'chip'} onClick={() => setMethod('diff')}>
-                <span className="chip-t"><b>Дифференсиалӣ</b><small>пардохт тадриҷан кам мешавад</small></span>
-              </button>
-            </div>
-          </div>
           {method === 'actual' && (
             <Field label="Пардохти моҳона аз ҷадвали бонк, смн">
               <input inputMode="decimal" value={fixedPay} onChange={e => setFixedPay(e.target.value)} placeholder="Масалан, 4192" />
             </Field>
           )}
-          <Field label="Рӯзи супоридан дар моҳ (холӣ = рӯзи оғоз)">
+
+          <div className="mb-title sub">Рӯзи супоридан</div>
+          <Field label="Рӯзи моҳ (холӣ = рӯзи оғози шартнома)">
             <input inputMode="numeric" value={payDay} onChange={e => setPayDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
               placeholder={`Масалан, ${date.split('-')[2] ? Number(date.split('-')[2]) : 12}`} />
           </Field>
