@@ -1,6 +1,8 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
 import AuthPage from './components/AuthPage';
+import SyncBadge from './components/SyncBadge';
+import SyncSheet from './components/SyncSheet';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
@@ -8,7 +10,7 @@ import {
 } from './components/Icons';
 import { useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
-import { lastBackupAt, loadState, saveState, stateHasData } from './storage';
+import { loadState, saveState } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
 import { setSyncNotifier, takeNotice } from './sync';
@@ -98,6 +100,7 @@ export default function App() {
   const [adding, setAdding] = useState(false);
   const [info, setInfo] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; text: string } | null>(null);
   const [hidden, setHidden] = useState(readHidden);
@@ -186,23 +189,6 @@ export default function App() {
     if (m) setTimeout(() => setToast(m), 600);
     setSyncNotifier(setToast);
     return () => setSyncNotifier(null);
-  }, []);
-
-  // Хотиррасонии нусхаи эҳтиётӣ: агар маълумот бошад ва зиёда аз 7 рӯз нусха нагирифта бошед (як маротиба дар як рӯз)
-  useEffect(() => {
-    const t = setTimeout(() => {
-      try {
-        const day = today();
-        if (!stateHasData() || localStorage.getItem('darakhti:backupnudge') === day) return;
-        if (Date.now() - lastBackupAt() > 7 * 86_400_000) {
-          localStorage.setItem('darakhti:backupnudge', day);
-          setToast('💾 Нусхаи эҳтиётӣ нагирифтаед: Профил → Нусхаи эҳтиётӣ');
-        }
-      } catch { /* ignore */ }
-    }, 6500);
-    return () => clearTimeout(t);
-    // танҳо ҳангоми кушодани барнома
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Ҳавасмандии орзуҳо: марҳилаҳои 25/50/75/100% ва ҷашни харид
@@ -324,7 +310,7 @@ export default function App() {
     if (tab === 'accounts') return <Accounts {...props} {...privacy} onOpenAccount={openAccount} />;
     if (tab === 'history') return <History {...props} filter={filter} onFilter={setFilter} />;
     return (
-      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onToast={setToast} onOpenAuth={() => setAuthOpen(true)}
+      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onOpenAuth={() => setAuthOpen(true)}
         canInstall={installEvent !== null}
         install={() => installEvent?.prompt().then(() => setInstallEvent(null))} />
     );
@@ -340,6 +326,9 @@ export default function App() {
             </button>
           )}
           <h1>{title}</h1>
+          {tab === 'profile' && !sub && !acct && (
+            <SyncBadge onClick={() => setSyncOpen(true)} />
+          )}
           {infoKind && (
             <button className="icon-btn info-btn" onClick={() => setInfo(true)} aria-label="Маълумот">
               <InfoIcon />
@@ -371,6 +360,10 @@ export default function App() {
         {RIGHT.map(tabButton)}
       </nav>
 
+      {syncOpen && (
+        <SyncSheet onClose={() => setSyncOpen(false)} onToast={setToast}
+          onOpenAuth={() => { setSyncOpen(false); setAuthOpen(true); }} />
+      )}
       {authOpen && <AuthPage onClose={() => setAuthOpen(false)} onToast={setToast} />}
 
       {info && infoKind && <InfoSheet kind={infoKind} onClose={() => setInfo(false)} />}

@@ -381,7 +381,7 @@ function remoteInfo(remote: Remote) {
   return parsed ? { raw: parsed.raw, prefs: parsed.prefs } : null;
 }
 
-/** Маълумоти сервер ҷои маълумоти маҳаллиро мегирад (нусхаи маҳаллӣ худкор ба «Нусхаҳои худкор» меравад). */
+/** Маълумоти сервер ҷои маълумоти маҳаллиро мегирад (нусхаи маҳаллӣ худкор нигоҳ дошта мешавад). */
 async function applyRemote(remote: Remote, firstLogin: boolean) {
   const info = remoteInfo(remote);
   if (!info) throw new Error('Маълумоти сервер хонда нашуд');
@@ -390,7 +390,7 @@ async function applyRemote(remote: Remote, firstLogin: boolean) {
     markSynced(remote.rev, hash(info.raw));
     ls.set(NOTICE_KEY, firstLogin
       ? (hadLocal
-        ? '☁️ Маълумоти ҳисоби шумо бор шуд. Маълумоти пештараи ин дастгоҳ дар «Нусхаҳои худкор» нигоҳ дошта шуд.'
+        ? '☁️ Маълумоти ҳисоби шумо бор шуд. Маълумоти пештараи ин дастгоҳ ҳамчун нусха нигоҳ дошта шуд.'
         : '☁️ Маълумоти ҳисоби шумо бор шуд')
       : '☁️ Маълумот аз дастгоҳи дигар навсозӣ шуд');
   });
@@ -456,6 +456,7 @@ export async function syncNow(): Promise<void> {
       if (hasLocal) {
         try { await push(f, uid, 0); } catch (e) { if (e instanceof ConflictError) again = true; else throw e; }
       }
+      ls.set(LAST_KEY, String(Date.now()));
       set('idle');
       return;
     }
@@ -463,6 +464,7 @@ export async function syncNow(): Promise<void> {
       if (dirty) {
         try { await push(f, uid, remote.rev); } catch (e) { if (e instanceof ConflictError) again = true; else throw e; }
       }
+      ls.set(LAST_KEY, String(Date.now()));
       set('idle');
       return;
     }
