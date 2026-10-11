@@ -144,7 +144,7 @@ async function loginViaStart(env: Env, chat: number, code: string, fullName: str
   const { uid } = await resolveUid(env, chat);
   await fs.set(env, `botLogins/${code}`, { createdAt: String(d.createdAt), status: 'ok', uid, name: fullName });
   return send(env, chat, '✅ <b>Воридшавӣ анҷом ёфт!</b>\n\nБа барнома баргардед: ворид шудан худкор тамом мешавад.',
-    { inline_keyboard: [[{ text: '🌳 Кушодани барнома', url: appUrl(env) }]] });
+    { inline_keyboard: [[{ text: '🌳 Кушодани барнома', web_app: { url: appUrl(env) } }]] });
 }
 
 // ---------- Менюи асосӣ ----------
