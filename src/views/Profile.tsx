@@ -29,7 +29,6 @@ export default function Profile({ state, open, canInstall, install, standalone, 
   const sync = useSync();
   // Таҳрири акс: `pick` — аксҳои нави интихобшуда (ҳанӯз бор нашудааст), `removePhoto` — нест кардан
   const [pick, setPick] = useState<{ blob: Blob; url: string } | null>(null);
-  const [removePhoto, setRemovePhoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [photoErr, setPhotoErr] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -37,7 +36,6 @@ export default function Profile({ state, open, canInstall, install, standalone, 
   const closeEdit = () => {
     if (pick) URL.revokeObjectURL(pick.url);
     setPick(null);
-    setRemovePhoto(false);
     setPhotoErr('');
     setEditing(false);
   };
@@ -51,8 +49,7 @@ export default function Profile({ state, open, canInstall, install, standalone, 
       const blob = await squareJpeg(file);
       if (pick) URL.revokeObjectURL(pick.url);
       setPick({ blob, url: URL.createObjectURL(blob) });
-      setRemovePhoto(false);
-    } catch (err) {
+      } catch (err) {
       setPhotoErr(err instanceof Error ? err.message : 'Акс хонда нашуд');
     }
   };
@@ -76,11 +73,11 @@ export default function Profile({ state, open, canInstall, install, standalone, 
     e.preventDefault();
     setName(draft.trim());
     // Акс: нав бор мешавад ё нест мешавад; аксҳои кӯҳна дар Storage худкор нест мешаванд
-    if (pick || (removePhoto && sync.photo)) {
+    if (pick) {
       setSaving(true);
       setPhotoErr('');
       try {
-        await setAvatar(pick ? pick.blob : null);
+        await setAvatar(pick.blob);
       } catch (err) {
         setPhotoErr(err instanceof Error ? err.message : 'Акс нигоҳ дошта нашуд');
         setSaving(false);
@@ -192,10 +189,10 @@ export default function Profile({ state, open, canInstall, install, standalone, 
       )}
 
       {editing && (
-        <Sheet title="Профил" onClose={closeEdit}>
+        <Sheet title="Таҳрири маълумотҳо" onClose={closeEdit}>
           <form onSubmit={save}>
             {(() => {
-              const shown = removePhoto ? '' : pick ? pick.url : sync.photo;
+              const shown = pick ? pick.url : sync.photo;
               const letter = (draft || sync.name || sync.email).trim().charAt(0).toUpperCase() || '👤';
               return (
                 <div className="pe-photo">
@@ -207,18 +204,6 @@ export default function Profile({ state, open, canInstall, install, standalone, 
                       </svg>
                     </i>
                   </button>
-                  <div className="pe-btns">
-                    <button type="button" className="pe-link" onClick={() => fileRef.current?.click()}>
-                      {shown ? 'Иваз кардани акс' : 'Илова кардани акс'}
-                    </button>
-                    {(shown || (pick && sync.photo)) && (
-                      <button type="button" className="pe-link danger" onClick={() => {
-                        if (pick) URL.revokeObjectURL(pick.url);
-                        setPick(null);
-                        setRemovePhoto(true);
-                      }}>Нест кардани акс</button>
-                    )}
-                  </div>
                   <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
                 </div>
               );
