@@ -1,4 +1,6 @@
 import { dateOf, debtsText, reminderText, summaryText } from './report';
+import { NOTIFY, buildDigest } from './digest';
+import type { Flags, Seen } from './digest';
 import * as fs from './firestore';
 import { customToken } from './firestore';
 import type { Env } from './firestore';
@@ -42,7 +44,7 @@ const HELP =
   '/yodovari — ёдоварии имрӯз\n' +
   '/stop — ҷудо кардани бот аз аккаунт\n\n' +
   'Бо забони англисӣ: /summary, /debts, /reminders.\n\n' +
-  'Ёдоварӣ ҳар рӯз дар соати интихобшуда меояд (имрӯз, пагоҳ, пас аз 3 рӯз ва пардохтҳои гузашта). Соат ва хулосаи ҳафтаина дар ⚙️ Танзимот.';
+  'Огоҳиномаҳо ҳар рӯз дар соати интихобшуда меоянд (пардохтҳо, хулосаҳо, орзуҳо ва ғайра). Соат ва навъҳои огоҳӣ дар ⚙️ Танзимот → 🔔 Огоҳиномаҳо.';
 
 const NOT_LINKED =
   'Ин бот ҳанӯз ба аккаунти шумо пайваст нест.\n\n' +
@@ -52,47 +54,77 @@ const CODE_RE = /^[A-Z2-9]{10}$/;
 const LINK_TTL_MS = 15 * 60_000;
 
 // ---------- Танзимот (дар botChats/{chat}) ----------
-interface Prefs { remindOn: boolean; hour: number; weeklyOn: boolean }
+interface Prefs { hour: number; flags: Flags }
 const HOURS = [7, 9, 12, 18, 21];
 
-const prefsOf = (c: Record<string, unknown> | null): Prefs => ({
-  remindOn: c?.remindOn !== '0',
-  hour: typeof c?.hour === 'number' ? c.hour : 9,
-  weeklyOn: c?.weeklyOn !== '0',
-});
+/** `pay` ва `weekly` дар майдонҳои кӯҳна (remindOn, weeklyOn) нигоҳ дошта мешаванд; боқӣ — `n_<калид>`. */
+const prefsOf = (c: Record<string, unknown> | null): Prefs => {
+  const flags: Flags = {};
+  for (const n of NOTIFY) {
+    const raw = n.key === 'pay' ? c?.remindOn : n.key === 'weekly' ? c?.weeklyOn : c?.[`n_${n.key}`];
+    flags[n.key] = raw === undefined || raw === null ? n.def : raw !== '0';
+  }
+  return { hour: typeof c?.hour === 'number' ? c.hour : 9, flags };
+};
 
-async function savePrefs(env: Env, chat: number, patch: Partial<Prefs>): Promise<Prefs | null> {
-  const c = await fs.get(env, `botChats/${chat}`);
-  if (!c) return null;
-  const p = { ...prefsOf(c), ...patch };
-  await fs.set(env, `botChats/${chat}`, {
+const seenOf = (c: Record<string, unknown> | null): Seen | null => {
+  try { return typeof c?.seen === 'string' && c.seen ? (JSON.parse(c.seen) as Seen) : null; } catch { return null; }
+};
+
+async function writeChat(env: Env, chat: number, c: Record<string, unknown>, p: Prefs, seen: Seen | null) {
+  const doc: Record<string, string | number> = {
     uid: String(c.uid),
     linkedAt: String(c.linkedAt ?? new Date().toISOString()),
-    remindOn: p.remindOn ? '1' : '0',
     hour: p.hour,
-    weeklyOn: p.weeklyOn ? '1' : '0',
-  });
+    remindOn: p.flags.pay ? '1' : '0',
+    weeklyOn: p.flags.weekly ? '1' : '0',
+  };
+  for (const n of NOTIFY) if (n.key !== 'pay' && n.key !== 'weekly') doc[`n_${n.key}`] = p.flags[n.key] ? '1' : '0';
+  if (seen) doc.seen = JSON.stringify(seen);
+  await fs.set(env, `botChats/${chat}`, doc);
+}
+
+async function savePrefs(env: Env, chat: number, patch: { hour?: number; toggle?: string }): Promise<Prefs | null> {
+  const c = await fs.get(env, `botChats/${chat}`);
+  if (!c) return null;
+  const p = prefsOf(c);
+  if (patch.hour !== undefined) p.hour = patch.hour;
+  if (patch.toggle && patch.toggle in p.flags) p.flags[patch.toggle] = !p.flags[patch.toggle];
+  await writeChat(env, chat, c, p, seenOf(c));
   return p;
 }
 
 const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
-const onoff = (v: boolean) => (v ? 'фаъол ✅' : 'хомӯш ⛔');
 
 function settingsView(p: Prefs): { text: string; markup: Keyboard } {
+  const on = NOTIFY.filter(n => p.flags[n.key]).length;
   return {
     text:
       '⚙️ <b>Танзимот</b>\n\n' +
-      `⏰ Ёдоварии пардохтҳо: ${onoff(p.remindOn)}\n` +
-      `🕘 Соати ёдоварӣ: <b>${hh(p.hour)}</b> (вақти Тоҷикистон)\n` +
-      `📊 Хулосаи ҳафтаина (рӯзи душанбе): ${onoff(p.weeklyOn)}`,
+      `🕘 Соати огоҳиномаҳо: <b>${hh(p.hour)}</b> (вақти Тоҷикистон)\n` +
+      `🔔 Огоҳиномаҳо: <b>${on}</b> аз ${NOTIFY.length} фаъол\n\n` +
+      'Ҳамаи огоҳиҳои як рӯз дар як паём меояд.',
     markup: {
       inline_keyboard: [
-        [{ text: `⏰ Ёдоварӣ: ${p.remindOn ? 'хомӯш кардан' : 'фаъол кардан'}`, callback_data: 'tg_rem' }],
         HOURS.map(h => ({ text: h === p.hour ? `• ${hh(h)} •` : hh(h), callback_data: `h:${h}` })),
-        [{ text: `📊 Хулосаи ҳафтаина: ${p.weeklyOn ? 'хомӯш кардан' : 'фаъол кардан'}`, callback_data: 'tg_week' }],
+        [{ text: '🔔 Огоҳиномаҳо', callback_data: 'nt' }],
         [{ text: '✖️ Пӯшидан', callback_data: 'close' }],
       ],
     },
+  };
+}
+
+function notifyView(p: Prefs): { text: string; markup: Keyboard } {
+  const rows: Button[][] = [];
+  let group = '';
+  for (const n of NOTIFY) {
+    if (n.group !== group) { group = n.group; rows.push([{ text: `— ${group} —`, callback_data: 'noop' }]); }
+    rows.push([{ text: `${p.flags[n.key] ? '✅' : '⛔'} ${n.label}`, callback_data: `nt:${n.key}` }]);
+  }
+  rows.push([{ text: '⬅️ Танзимот', callback_data: 'sets' }, { text: '✖️ Пӯшидан', callback_data: 'close' }]);
+  return {
+    text: '🔔 <b>Огоҳиномаҳо</b>\n\nНавъеро пахш кунед: фаъол ✅ ё хомӯш ⛔ мешавад.\n«Ихтиёрӣ» одатан хомӯш аст.',
+    markup: { inline_keyboard: rows },
   };
 }
 
@@ -231,17 +263,17 @@ async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
   }
   if (data === 'close') return mid ? tg(env, 'deleteMessage', { chat_id: chat, message_id: mid }) : undefined;
 
-  if (data === 'set' || data === 'tg_rem' || data === 'tg_week' || data.startsWith('h:')) {
+  if (data === 'noop') return;
+  if (data === 'set' || data === 'sets' || data === 'nt' || data.startsWith('nt:') || data.startsWith('h:')) {
     const c = await fs.get(env, `botChats/${chat}`);
     if (!c) return send(env, chat, NOT_LINKED, { inline_keyboard: linkHelp(env)[1].inline_keyboard });
     let p = prefsOf(c);
-    if (data === 'tg_rem') p = (await savePrefs(env, chat, { remindOn: !p.remindOn })) ?? p;
-    else if (data === 'tg_week') p = (await savePrefs(env, chat, { weeklyOn: !p.weeklyOn })) ?? p;
+    if (data.startsWith('nt:')) p = (await savePrefs(env, chat, { toggle: data.slice(3) })) ?? p;
     else if (data.startsWith('h:')) {
       const h = Number(data.slice(2));
       if (HOURS.includes(h)) p = (await savePrefs(env, chat, { hour: h })) ?? p;
     }
-    const v = settingsView(p);
+    const v = data === 'nt' || data.startsWith('nt:') ? notifyView(p) : settingsView(p);
     if (data === 'set' || !mid) return send(env, chat, v.text, v.markup);
     return tg(env, 'editMessageText', { chat_id: chat, message_id: mid, text: v.text, parse_mode: 'HTML', reply_markup: v.markup });
   }
@@ -260,7 +292,8 @@ async function daily(env: Env, when = new Date()) {
   const tz = env.TIMEZONE ?? 'Asia/Dushanbe';
   const today = dateOf(tz, when);
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }).format(when));
-  const monday = new Date(`${today}T12:00:00Z`).getUTCDay() === 1;
+  const dayOfWeek = new Date(`${today}T12:00:00Z`).getUTCDay();
+  const dayOfMonth = Number(today.slice(8, 10));
   await cleanup(env).catch(e => console.log(`cleanup: ${e instanceof Error ? e.message : e}`));
   for (const c of await fs.list(env, 'botChats')) {
     try {
@@ -269,11 +302,21 @@ async function daily(env: Env, when = new Date()) {
       const chat = Number(c.id);
       const r = await stateOf(env, chat);
       if (typeof r === 'string') continue;
-      if (p.remindOn) {
-        const rem = reminderText(r.state, today);
-        if (rem) await send(env, chat, rem);
+
+      const rem = reminderText(r.state, today, { pay: p.flags.pay, overdue: p.flags.overdue });
+      if (rem) await send(env, chat, rem);
+
+      const prevSeen = seenOf(c.data);
+      const d = buildDigest(r.state, prevSeen, p.flags, today);
+      if (d.lines.length) await send(env, chat, `🔔 <b>Огоҳиномаҳои имрӯз</b>\n\n${d.lines.join('\n\n')}`);
+      await writeChat(env, chat, c.data, p, d.seen);
+
+      if (dayOfWeek === 1 && p.flags.weekly) await send(env, chat, summaryText(r.state, today));
+      if (dayOfMonth === 1 && p.flags.monthly) {
+        const last = new Date(`${today}T12:00:00Z`);
+        last.setUTCDate(0); // охирин рӯзи моҳи гузашта
+        await send(env, chat, summaryText(r.state, last.toISOString().slice(0, 10)));
       }
-      if (monday && p.weeklyOn) await send(env, chat, summaryText(r.state, today));
     } catch (e) {
       console.log(`daily ${c.id}: ${e instanceof Error ? e.message : e}`);
     }

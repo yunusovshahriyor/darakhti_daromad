@@ -32,11 +32,12 @@ const when = (days: number) =>
 
 const dueLine = (x: Due) => `• ${esc(x.title)} — ${money(x.toPay)}\n  ${when(x.days)} (${fmtDate(x.due)})`;
 
-/** Ёдоварии ҳаррӯза: имрӯз, пагоҳ, пас аз 3 рӯз ва гузаштаҳо. `null` — чизе нест. */
-export function reminderText(s: State, today: string): string | null {
-  const list = dues(s, today, 3).filter(x => x.days <= 1 || x.days === 3);
+/** Ёдоварии пардохтҳо: `pay` — имрӯз, пагоҳ, пас аз 3 рӯз; `overdue` — гузаштаҳо. `null` — чизе нест. */
+export function reminderText(s: State, today: string, o: { pay?: boolean; overdue?: boolean } = { pay: true, overdue: true }): string | null {
+  const list = dues(s, today, 3).filter(x => (o.overdue && x.days < 0) || (o.pay && (x.days === 0 || x.days === 1 || x.days === 3)));
   if (!list.length) return null;
-  return `⏰ <b>Ёдоварии пардохтҳо</b>\n\n${list.map(dueLine).join('\n')}`;
+  const head = o.overdue && !o.pay ? '⚠️ <b>Пардохти дер шуда</b>' : '⏰ <b>Ёдоварии пардохтҳо</b>';
+  return `${head}\n\n${list.map(dueLine).join('\n')}`;
 }
 
 export function debtsText(s: State, today: string): string {
