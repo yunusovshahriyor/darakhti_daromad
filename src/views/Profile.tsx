@@ -177,11 +177,11 @@ export default function Profile({ state, open, canInstall, install, standalone, 
           <h3 className="group-title"><span>Барнома</span></h3>
           <div className="cells">
             {inTelegram() ? (
-              <button className="cell tap link" onClick={() => openInBrowser(location.origin + location.pathname)}>
+              <button className="cell tap link" onClick={() => openInBrowser(`${location.origin}${location.pathname}?install=1`)}>
                 <div className="ic">📲</div>
                 <div className="grow">
-                  <b>Насб кардан дар браузер</b>
-                  <small>Дар браузер кушода мешавад: менюи (⋮) → «Install app»</small>
+                  <b>Насб кардани барнома</b>
+                  <small>Саҳифаи насб дар браузер кушода мешавад</small>
                 </div>
                 <ChevronIcon />
               </button>
