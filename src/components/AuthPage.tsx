@@ -106,12 +106,6 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
             <button role="tab" aria-selected={mode === 'up'} className={mode === 'up' ? 'on' : ''} onClick={() => { setMode('up'); setErr(''); setInfo(''); }}>Сабти ном</button>
           </div>
 
-          <button type="button" className="auth-google" disabled={busy !== ''} onClick={() => void run('google', signInGoogle)}>
-            {busy === 'google' ? <span className="spin" /> : <GoogleG />}
-            <span>Бо Google идома додан</span>
-          </button>
-
-          <div className="auth-or"><span>ё бо почта</span></div>
 
           <form onSubmit={submit} noValidate>
             <label className="auth-field">
@@ -149,6 +143,13 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
               {busy === 'form' ? <span className="spin" /> : mode === 'in' ? 'Даромадан' : 'Ҳисоб сохтан'}
             </button>
           </form>
+
+          <div className="auth-or"><span>ё</span></div>
+
+          <button type="button" className="auth-google" disabled={busy !== ''} onClick={() => void run('google', signInGoogle)}>
+            {busy === 'google' ? <span className="spin" /> : <GoogleG />}
+            <span>Бо Google идома додан</span>
+          </button>
         </div>
 
         <ul className="auth-perks">
