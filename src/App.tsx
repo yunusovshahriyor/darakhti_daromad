@@ -8,7 +8,7 @@ import InfoSheet from './components/InfoSheet';
 import {
   BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
-import { useHistoryLayer } from './components/useHistoryLayer';
+import { setRootBackHandler, useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
 import { loadState, saveState } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
@@ -229,6 +229,43 @@ export default function App() {
     const t = setTimeout(() => setToast(''), 2400);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // «Бозгашт»-и телефон: аз саҳифаи дигар → ба «Асосӣ»; дар «Асосӣ» бори аввал огоҳӣ, бори дуюм баромадан.
+  // Барои ин як сабти «посбон» (guard) дар таърих мемонем, то бозгашти аввал онро бигирад.
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  useEffect(() => {
+    const guard = () => history.pushState({ guard: true }, '');
+    if (!history.state?.guard && !history.state?.layer) guard();
+    let armed = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const disarm = (restore: boolean) => {
+      if (!armed) return;
+      armed = false;
+      if (timer) clearTimeout(timer);
+      if (restore) guard();
+    };
+    setRootBackHandler(() => {
+      if (tabRef.current !== 'home') {
+        setSub(null);
+        setAcct(null);
+        setTab('home');
+        guard();
+        return;
+      }
+      armed = true;
+      setToast('Барои баромадан боз як маротиба «Бозгашт»-ро пахш кунед');
+      timer = setTimeout(() => disarm(true), 2200);
+    });
+    // Корбар дар вақти интизорӣ чизеро пахш кард: посбонро барқарор мекунем (пеш аз он ки қабати нав илова шавад)
+    const onDown = () => disarm(true);
+    document.addEventListener('pointerdown', onDown, true);
+    return () => {
+      setRootBackHandler(null);
+      document.removeEventListener('pointerdown', onDown, true);
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
 
   useHistoryLayer(sub !== null, () => setSub(null), reuseSub);
   useHistoryLayer(acct !== null, () => setAcct(null), reuseAcct);

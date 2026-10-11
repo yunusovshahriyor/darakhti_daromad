@@ -7,6 +7,10 @@ interface Layer {
 
 const stack: Layer[] = [];
 let skip = 0;
+let rootHandler: (() => void) | null = null;
+
+/** Тугмаи «Бозгашт» вақте ягон қабат (варақа/зерсаҳифа) кушода нест: тавассути ин коркунанда идора мешавад. */
+export const setRootBackHandler = (fn: (() => void) | null) => { rootHandler = fn; };
 
 // Як шунавандаи ягона: тугмаи «Бозгашт» танҳо қабати болоиро мебандад.
 window.addEventListener('popstate', () => {
@@ -18,6 +22,8 @@ window.addEventListener('popstate', () => {
   if (top) {
     top.popped = true;
     top.cb();
+  } else {
+    rootHandler?.();
   }
 });
 
