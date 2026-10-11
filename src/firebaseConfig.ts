@@ -19,4 +19,4 @@ export const EMBEDDED_CONFIG: FirebaseOptions | null = {
  * Оммавӣ аст. Бо он «Google One Tap» (равзанаи интихоби ҳисоб дар болои барнома) фаъол мешавад.
  * Агар холӣ бошад, воридшавӣ бо равзанаи оддии Google (popup) кор мекунад.
  */
-export const GOOGLE_CLIENT_ID = '';
+export const GOOGLE_CLIENT_ID = '21659404718-jd3c7vpsnjphfnlogjrq2udja3amv68g.apps.googleusercontent.com';
