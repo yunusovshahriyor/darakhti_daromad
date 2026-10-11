@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { BOT_API } from '../firebaseConfig';
-import { resetPassword, signIn, signInGoogle, signUp, telegramLoginPoll, telegramLoginStart, useSync } from '../sync';
+import { beginTelegramLogin, cancelTelegramLogin, resetPassword, signIn, signInGoogle, signUp, telegramLoginStart, useSync } from '../sync';
 import { openTelegramLink } from '../tg';
 import { useHistoryLayer } from './useHistoryLayer';
 
@@ -81,6 +81,7 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
     try {
       const r = await telegramLoginStart();
       setTgWait(r);
+      beginTelegramLogin(r.code, msg => { setTgWait(null); setErr(msg); });
       if (inTg) openTelegramLink(r.url);
       else if (w) w.location.href = r.url;
     } catch (e) {
@@ -88,19 +89,6 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
       throw e;
     }
   };
-  useEffect(() => {
-    if (!tgWait) return;
-    let alive = true;
-    const t = setInterval(() => {
-      telegramLoginPoll(tgWait.code).catch(e => {
-        if (!alive) return;
-        setTgWait(null);
-        setErr(e instanceof Error ? e.message : 'Хатои номаълум');
-      });
-    }, 2000);
-    return () => { alive = false; clearInterval(t); };
-  }, [tgWait]);
-
   const run = async (kind: 'form' | 'google' | 'reset' | 'tg', fn: () => Promise<void>) => {
     setBusy(kind);
     setErr('');
@@ -192,10 +180,10 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
           {BOT_API && (tgWait ? (
             <div className="auth-tg-wait" role="status">
               <span className="spin" />
-              <p>Дар Telegram «Start» ва «Ҳа, ворид шавам»-ро пахш кунед, баъд ба ин ҷо баргардед.</p>
+              <p>Дар Telegram тугмаи «Start»-ро пахш кунед, ворид шудан худкор анҷом меёбад.</p>
               <a href={tgWait.url} target="_blank" rel="noreferrer"
                 onClick={e => { if (window.Telegram?.WebApp) { e.preventDefault(); openTelegramLink(tgWait.url); } }}>Кушодани Telegram</a>
-              <button type="button" onClick={() => setTgWait(null)}>Бекор кардан</button>
+              <button type="button" onClick={() => { cancelTelegramLogin(); setTgWait(null); }}>Бекор кардан</button>
             </div>
           ) : (
             <button type="button" className="auth-google auth-telegram" disabled={busy !== ''} onClick={() => void run('tg', startTelegram)}>

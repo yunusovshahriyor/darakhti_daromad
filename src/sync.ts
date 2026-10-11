@@ -509,6 +509,7 @@ export async function syncNow(): Promise<void> {
 
 /** Аз main.tsx пеш аз рендер: гӯш кардани тағйирот, баргашт ба барнома ва шабака. */
 export function initSync() {
+  resumeTelegramLogin();
   // Тозакунии калидҳои Supabase-и кӯҳна
   ['darakhti:sbcfg', 'darakhti:sbsess', 'darakhti:sbbase', 'darakhti:sbsynced', 'darakhti:sblast'].forEach(ls.del);
   savedListeners.add(() => { if (getConfig() && curUser) schedule(PUSH_DELAY); });
@@ -664,16 +665,65 @@ export async function telegramAutoLogin(initData: string): Promise<void> {
   if (tgId) ls.set(TG_ID_KEY, tgId);
 }
 
-/** Браузер: кодро месозад; корбар дар бот тасдиқ мекунад. */
+/** Браузер: кодро месозад; корбар дар бот «Start» мепахшад ва воридшавӣ худкор анҷом меёбад. */
 export async function telegramLoginStart(): Promise<{ code: string; url: string }> {
   return botPost('/auth/start', {});
 }
 
 /** `true` — ворид шуд; `false` — ҳанӯз интизор; хато — дархост кӯҳна шуд. */
-export async function telegramLoginPoll(code: string): Promise<boolean> {
+async function telegramLoginPoll(code: string): Promise<boolean> {
   const r = await botPost<{ status: 'pending' | 'gone' | 'ok'; token?: string; name?: string }>('/auth/poll', { code });
   if (r.status === 'gone') throw new Error('Дархост кӯҳна шуд. Аз нав кӯшиш кунед');
   if (r.status !== 'ok' || !r.token) return false;
   await signInWithToken(r.token, r.name ?? '');
   return true;
+}
+
+// Пурсиш дар замина: ҳатто агар корбар барои «Start» ба Telegram рафта бошад ё саҳифа аз нав боз шавад, воридшавӣ тамом мешавад
+const TG_LOGIN_KEY = 'darakhti:tg-login';
+const TG_LOGIN_TTL = 10 * 60_000;
+let tgTimer: ReturnType<typeof setInterval> | null = null;
+let tgTick: (() => void) | null = null;
+
+export function cancelTelegramLogin() {
+  if (tgTimer) clearInterval(tgTimer);
+  tgTimer = null;
+  tgTick = null;
+  ls.del(TG_LOGIN_KEY);
+}
+
+function pollTelegramLogin(code: string, started: number, onGone?: (msg: string) => void) {
+  if (tgTimer) clearInterval(tgTimer);
+  let working = false;
+  const tick = async () => {
+    if (working) return;
+    if (Date.now() - started > TG_LOGIN_TTL) { cancelTelegramLogin(); onGone?.('Вақт гузашт. Аз нав кӯшиш кунед'); return; }
+    working = true;
+    try {
+      if (await telegramLoginPoll(code)) cancelTelegramLogin();
+    } catch (e) {
+      // хатои шабака: пурсишро давом медиҳем; «кӯҳна шуд»: қатъ
+      if (e instanceof Error && e.message.startsWith('Дархост кӯҳна')) { cancelTelegramLogin(); onGone?.(e.message); }
+    } finally { working = false; }
+  };
+  tgTick = () => { void tick(); };
+  tgTimer = setInterval(tgTick, 2000);
+  void tick();
+}
+
+export function beginTelegramLogin(code: string, onGone?: (msg: string) => void) {
+  ls.set(TG_LOGIN_KEY, JSON.stringify({ code, ts: Date.now() }));
+  pollTelegramLogin(code, Date.now(), onGone);
+}
+
+/** Пас аз кушодани барнома: агар воридшавӣ тавассути Telegram оғоз шуда буд, давом медиҳем. */
+export function resumeTelegramLogin() {
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tgTick?.(); });
+  }
+  try {
+    const v = JSON.parse(ls.get(TG_LOGIN_KEY) ?? 'null') as { code: string; ts: number } | null;
+    if (!v || Date.now() - v.ts > TG_LOGIN_TTL) { ls.del(TG_LOGIN_KEY); return; }
+    pollTelegramLogin(v.code, v.ts);
+  } catch { ls.del(TG_LOGIN_KEY); }
 }

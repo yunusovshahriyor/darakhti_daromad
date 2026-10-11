@@ -136,29 +136,15 @@ const isLinked = async (env: Env, chat: number) => {
 // ---------- Воридшавӣ ба барнома тавассути бот ----------
 const fresh = (d: Record<string, unknown> | null) => !!d && Date.now() - Date.parse(String(d.createdAt)) <= LOGIN_TTL_MS;
 
-async function askLogin(env: Env, chat: number, code: string) {
+async function loginViaStart(env: Env, chat: number, code: string, fullName: string) {
   const d = LOGIN_RE.test(code) ? await fs.get(env, `botLogins/${code}`) : null;
   if (!d || d.status !== 'pending' || !fresh(d)) {
-    return send(env, chat, '⌛ Дархости воридшавӣ кӯҳна шудааст ё ёфт нашуд. Дар барнома «Ворид шудан бо Telegram»-ро аз нав пахш кунед.');
+    return send(env, chat, '⌛ Дархости воридшавӣ кӯҳна шудааст ё ёфт нашуд. Дар барнома «Бо Telegram идома додан»-ро аз нав пахш кунед.');
   }
-  return send(env, chat,
-    '🔐 <b>Ворид шудан ба «Дарахти даромад»?</b>\n\n' +
-    'Агар шумо худатон дар барнома «Ворид шудан бо Telegram»-ро пахш кардаед, тасдиқ кунед. ' +
-    'Агар касе ин пайвандро ба шумо фиристода бошад, <b>бекор кунед</b>.',
-    { inline_keyboard: [[{ text: '✅ Ҳа, ворид шавам', callback_data: `lg:${code}` }, { text: '✖️ Не', callback_data: `lgx:${code}` }]] });
-}
-
-async function confirmLogin(env: Env, q: NonNullable<Update['callback_query']>, code: string, ok: boolean) {
-  const chat = q.message!.chat.id;
-  const mid = q.message!.message_id;
-  const edit = (text: string) => tg(env, 'editMessageText', { chat_id: chat, message_id: mid, text, parse_mode: 'HTML' });
-  const d = LOGIN_RE.test(code) ? await fs.get(env, `botLogins/${code}`) : null;
-  if (!ok) { if (d) await fs.del(env, `botLogins/${code}`); return edit('✖️ Воридшавӣ бекор шуд.'); }
-  if (!d || d.status !== 'pending' || !fresh(d)) return edit('⌛ Дархост кӯҳна шудааст. Дар барнома аз нав кӯшиш кунед.');
-  const { uid } = await resolveUid(env, q.from.id ?? chat);
-  const name = [q.from.first_name, q.from.last_name].filter(Boolean).join(' ');
-  await fs.set(env, `botLogins/${code}`, { createdAt: String(d.createdAt), status: 'ok', uid, name });
-  return edit('✅ <b>Тайёр!</b> Ба барнома баргардед: воридшавӣ худкор анҷом меёбад.');
+  const { uid } = await resolveUid(env, chat);
+  await fs.set(env, `botLogins/${code}`, { createdAt: String(d.createdAt), status: 'ok', uid, name: fullName });
+  return send(env, chat, '✅ <b>Воридшавӣ анҷом ёфт!</b>\n\nБа барнома баргардед: ворид шудан худкор тамом мешавад.',
+    { inline_keyboard: [[{ text: '🌳 Кушодани барнома', url: appUrl(env) }]] });
 }
 
 // ---------- Менюи асосӣ ----------
@@ -203,12 +189,12 @@ async function report(env: Env, chat: number, kind: 'sum' | 'debts' | 'rem') {
   return send(env, chat, reminderText(r.state, today) ?? '✅ Имрӯз ва дар 3 рӯзи наздик пардохт нест.');
 }
 
-async function onMessage(env: Env, chat: number, text: string, name: string) {
+async function onMessage(env: Env, chat: number, text: string, name: string, fullName: string) {
   const [cmdRaw, ...rest] = text.trim().split(/\s+/);
   const cmd = cmdRaw.split('@')[0].toLowerCase();
 
   if (cmd === '/start') {
-    if (rest[0]?.startsWith('login_')) return askLogin(env, chat, rest[0].slice(6));
+    if (rest[0]?.startsWith('login_')) return loginViaStart(env, chat, rest[0].slice(6), fullName);
     if (rest[0]) await send(env, chat, await link(env, chat, rest[0]));
     return sendMenu(env, chat, name);
   }
@@ -236,8 +222,6 @@ async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
 
   if (data === 'linked') return answer('Аккаунт пайваст аст ✅');
   await answer();
-  if (data.startsWith('lg:')) return confirmLogin(env, q, data.slice(3), true);
-  if (data.startsWith('lgx:')) return confirmLogin(env, q, data.slice(4), false);
   if (data === 'sum' || data === 'debts' || data === 'rem') return report(env, chat, data);
   if (data === 'help') return send(env, chat, HELP);
   if (data === 'link') {
@@ -348,7 +332,7 @@ export default {
     const m = u.message;
     const q = u.callback_query;
     if (m?.text && m.chat.type === 'private') {
-      ctx.waitUntil(onMessage(env, m.chat.id, m.text, m.from?.first_name ?? '').catch(e => {
+      ctx.waitUntil(onMessage(env, m.chat.id, m.text, m.from?.first_name ?? '', [m.from?.first_name, m.from?.last_name].filter(Boolean).join(' ')).catch(e => {
         console.log(`message: ${e instanceof Error ? e.stack : e}`);
         return send(env, m.chat.id, '⚠️ Хатои муваққатӣ. Баъдтар кӯшиш кунед.');
       }));
