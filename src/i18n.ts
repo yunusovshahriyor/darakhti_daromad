@@ -120,8 +120,8 @@ function core(text: string, depth = 0): string {
 }
 
 /** Матнро тарҷума мекунад (фосилаҳои аввал ва охир нигоҳ дошта мешаванд). */
-export function tr(text: string): string {
-  const conv = activeCode() !== BASE;
+export function tr(text: string, keepUnit = false): string {
+  const conv = activeCode() !== BASE && !keepUnit;
   if ((active === 'tg' && !conv) || !text || !cyr.test(text)) return text;
   const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(text);
   if (!m || !m[2]) return text;
@@ -141,7 +141,7 @@ function textNode(n: Text) {
   if (parent && SKIP.has(parent.tagName)) return;
   const v = n.data;
   if (done.get(n) === v) return;
-  const out = tr(v);
+  const out = tr(v, !!parent?.closest('[data-nocur]'));
   if (out !== v) { n.data = out; done.set(n, out); }
 }
 

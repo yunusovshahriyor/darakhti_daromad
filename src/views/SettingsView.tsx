@@ -178,7 +178,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
           </button>
           <button className="cell tap link" onClick={() => setCurOpen(true)}>
             <div className="ic">💱</div>
-            <div className="grow"><b>Асъор</b><small>{state.currency ?? 'TJS'}</small></div>
+            <div className="grow"><b>Қурби асъор</b><small>{state.currency ?? 'TJS'}</small></div>
             <ChevronIcon />
           </button>
           <button className="cell tap link" onClick={() => setLookOpen(true)}>

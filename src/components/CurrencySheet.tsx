@@ -47,7 +47,8 @@ export default function CurrencySheet({ state, setState, onClose }: Props & { on
 
   if (!target || !to) {
     return (
-      <Sheet title="Асъор" onClose={onClose}>
+      <Sheet title="Қурби асъор" onClose={onClose}>
+        <div data-nocur>
         <p className="note">Ҳамаи маблағҳо дар як асъор нигоҳ дошта мешаванд. Агар асъорро иваз кунед, ҳамаи маълумот бо қурби имрӯза табдил меёбад.</p>
         <div className="cells">
           {CURRENCIES.map(c => (
@@ -58,12 +59,14 @@ export default function CurrencySheet({ state, setState, onClose }: Props & { on
             </button>
           ))}
         </div>
+        </div>
       </Sheet>
     );
   }
 
   return (
     <Sheet title="Иваз кардани асъор" onClose={onClose}>
+      <div data-nocur>
       <div className="cur-flow">
         <span>{lbl(cur)}</span><i>→</i><span>{lbl(to.code)}</span>
       </div>
@@ -89,6 +92,7 @@ export default function CurrencySheet({ state, setState, onClose }: Props & { on
           <button className="btn secondary" onClick={() => setTarget(null)} disabled={busy}>Қафо</button>
         </>
       )}
+      </div>
     </Sheet>
   );
 }
