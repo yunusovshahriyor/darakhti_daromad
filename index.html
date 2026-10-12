@@ -8,16 +8,46 @@
   <meta name="theme-color" content="#13201a" media="(prefers-color-scheme: dark)">
   <meta name="color-scheme" content="light dark">
   <meta name="msapplication-navbutton-color" content="#13201a">
-  <link rel="manifest" href="%BASE_URL%manifest.webmanifest">
+  <link rel="manifest" href="%BASE_URL%manifest-tg.webmanifest" id="manifest">
   <link rel="icon" href="%BASE_URL%icons/icon-192.png">
   <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Дарахти даромад">
+  <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="%BASE_URL%splash/splash-1290x2796.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="%BASE_URL%splash/splash-1179x2556.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="%BASE_URL%splash/splash-1284x2778.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="%BASE_URL%splash/splash-1170x2532.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="%BASE_URL%splash/splash-1125x2436.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="%BASE_URL%splash/splash-1242x2688.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="%BASE_URL%splash/splash-828x1792.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="%BASE_URL%splash/splash-1242x2208.jpg">
+  <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="%BASE_URL%splash/splash-750x1334.jpg">
   <meta name="format-detection" content="telephone=no">
 </head>
 <body>
+  <style>
+    #splash{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#eef3ee;transition:opacity .35s ease}
+    #splash img{width:min(52vw,230px);height:auto}
+    #splash.off{opacity:0;pointer-events:none}
+    @media (prefers-color-scheme: dark){#splash{background:#0b1410}}
+  </style>
+  <div id="splash"><img id="splash-img" alt=""></div>
+  <script>
+    (function () {
+      var l = 'tg';
+      try { var v = localStorage.getItem('darakhti:lang'); if (v === 'tg' || v === 'ru' || v === 'en') l = v; else { var n = (navigator.language || '').toLowerCase(); l = n.indexOf('ru') === 0 ? 'ru' : n.indexOf('en') === 0 ? 'en' : 'tg'; } } catch (e) {}
+      var b = '%BASE_URL%';
+      document.getElementById('splash-img').src = b + 'logo-' + l + '.png';
+      document.getElementById('manifest').href = b + 'manifest-' + l + '.webmanifest';
+      var names = { tg: 'Дарахти даромад', ru: 'Дерево дохода', en: 'Income Tree' };
+      document.title = names[l];
+      var m = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if (m) m.content = names[l];
+      document.documentElement.lang = l;
+      setTimeout(function () { var s = document.getElementById('splash'); if (s) s.className = 'off'; }, 8000);
+    })();
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

@@ -1,9 +1,9 @@
-const CACHE = 'daromad-v4';
+const CACHE = 'daromad-v5';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(['./', 'manifest.webmanifest', 'icons/icon-192.png'])),
+    caches.open(CACHE).then(c => c.addAll(['./', 'manifest-tg.webmanifest', 'icons/icon-192.png'])),
   );
 });
 
