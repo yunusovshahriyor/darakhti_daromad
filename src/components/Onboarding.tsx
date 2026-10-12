@@ -6,6 +6,13 @@ import { ONBOARD } from '../onboardText';
 
 type Mode = 'system' | 'free';
 
+/** Нишона: пас аз иваз шудани забон (саҳифа аз нав бор мешавад) муқаддима боз кушода мешавад. */
+export const INTRO_RESUME_KEY = 'darakhti:intro-resume';
+const changeLang = (l: Parameters<typeof setLang>[0]) => {
+  try { sessionStorage.setItem(INTRO_RESUME_KEY, '1'); } catch { /* ignore */ }
+  setLang(l);
+};
+
 /** Муқаддимаи кӯтоҳ (4 экран): хуш омадед, чӣ тавр кор мекунад, интихоби услуб, оғоз. */
 export default function Onboarding({ mode, onPick, onClose, onGuide, onAddIncome, onTelegram }: {
   mode: Mode | undefined;
@@ -50,7 +57,7 @@ export default function Onboarding({ mode, onPick, onClose, onGuide, onAddIncome
           <p>{t.s1[1]}</p>
           <div className="ob-langs" role="group" aria-label={t.lang}>
             {LANGS.map(l => (
-              <button key={l.id} className={l.id === lang ? 'on' : ''} onClick={() => l.id !== lang && setLang(l.id)}>{l.name}</button>
+              <button key={l.id} className={l.id === lang ? 'on' : ''} onClick={() => l.id !== lang && changeLang(l.id)}>{l.name}</button>
             ))}
           </div>
         </section>

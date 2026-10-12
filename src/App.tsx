@@ -3,7 +3,7 @@ import AddSheet from './components/AddSheet';
 import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
-import Onboarding from './components/Onboarding';
+import Onboarding, { INTRO_RESUME_KEY } from './components/Onboarding';
 import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
@@ -121,8 +121,12 @@ export default function App() {
   useEffect(() => { const t = setTimeout(() => setSettled(true), 1500); return () => clearTimeout(t); }, []);
   const fresh = state.mode === undefined && !stateObjHasData(state);
   // Муқаддима (онбординг): автоматӣ барои корбари нав, ва бо дархост аз саҳифаи «Системаҳои кор»
-  const [intro, setIntro] = useState(false);
-  const introShown = useRef(false);
+  // Агар забон аз дохили муқаддима иваз шуда бошад, саҳифа аз нав бор мешавад ва муқаддима боз кушода мешавад
+  const [intro, setIntro] = useState(() => {
+    try { return sessionStorage.getItem(INTRO_RESUME_KEY) === '1'; } catch { return false; }
+  });
+  useEffect(() => { try { sessionStorage.removeItem(INTRO_RESUME_KEY); } catch { /* ignore */ } }, []);
+  const introShown = useRef(intro);
   useEffect(() => {
     if (fresh && settled && !wantTg && !authOpen && sync.status !== 'syncing' && !introShown.current) {
       introShown.current = true;
