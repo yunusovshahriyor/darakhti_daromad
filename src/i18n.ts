@@ -59,6 +59,34 @@ const cyr = /[Ѐ-ӿ]/;
 const lower1 = (x: string) => x.charAt(0).toLowerCase() + x.slice(1);
 const upper1 = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 
+// Номи моҳҳо дар сатрҳои омехта («Октябр 2026», «5–11 Окт», «06 октябр 2026»)
+const M_TG = ['январ', 'феврал', 'март', 'апрел', 'май', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр'];
+const M_SH = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const M_RU = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+const M_RU_G = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const M_RU_S = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+const M_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const M_EN_S = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_RE = /(?<![\p{L}])(январ|феврал|март|апрел|май|июн|июл|август|сентябр|октябр|ноябр|декабр|янв|фев|мар|апр|авг|сен|окт|ноя|дек)(?![\p{L}])/giu;
+
+function monthWords(text: string): string {
+  return text.replace(MONTH_RE, (w: string, _g: string, off: number, all: string) => {
+    const lw = w.toLowerCase();
+    let i = M_TG.indexOf(lw);
+    const after = all.slice(off + w.length);
+    const before = all.slice(0, off);
+    // «Июн»/«Июл»/«Май»/«Март»: пур, агар баъдаш сол ояд; дар ҳолати дигар — кӯтоҳ
+    const yearNext = /^\s+\d{4}/.test(after);
+    const full = i >= 0 && (lw !== 'июн' && lw !== 'июл' || yearNext);
+    if (i < 0) i = M_SH.indexOf(lw);
+    if (i < 0) return w;
+    let out: string;
+    if (active === 'en') out = full ? M_EN[i] : M_EN_S[i];
+    else out = full ? (/\d\s+$/.test(before) ? M_RU_G[i] : M_RU[i]) : M_RU_S[i];
+    return w.charAt(0) === w.charAt(0).toLowerCase() ? lower1(out) : out;
+  });
+}
+
 /** Як порча: ибораи дақиқ, шабакаи ибора, ҳарфи хурд/калон, ҷудокунандаҳо (« · », « — », вергул). */
 function core(text: string, depth = 0): string {
   const hit = exact.get(text);
@@ -87,7 +115,7 @@ function core(text: string, depth = 0): string {
     const t = /^(.*?)(\s*[·:—]+)$/.exec(text);
     if (t && t[1]) { const x = core(t[1], depth + 1); if (x !== t[1]) return x + t[2]; }
   }
-  return text;
+  return monthWords(text);
 }
 
 /** Матнро тарҷума мекунад (фосилаҳои аввал ва охир нигоҳ дошта мешаванд). */
