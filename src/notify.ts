@@ -21,7 +21,7 @@ export const NOTIFY: NotifyDef[] = [
 export const NOTIFY_HOURS = [7, 9, 12, 18, 21];
 export const NOTIFY_GROUPS: NotifyDef['group'][] = ['Ҳатмӣ', 'Тавсияшаванда', 'Ихтиёрӣ'];
 
-export interface NotifyPrefs { hour: number; flags: Record<string, boolean> }
+export interface NotifyPrefs { hour: number; flags: Record<string, boolean>; /** Забони интихобшуда (барнома ва бот). */ lang?: 'tg' | 'ru' | 'en' }
 
 export const defaultPrefs = (): NotifyPrefs => ({
   hour: 9,
@@ -29,13 +29,14 @@ export const defaultPrefs = (): NotifyPrefs => ({
 });
 
 /** Ҳуҷҷати Firestore (users/{uid}/bot/prefs): `hour` + як boolean барои ҳар калид. */
-export const prefsToDoc = (p: NotifyPrefs): Record<string, number | boolean> =>
-  ({ hour: p.hour, ...p.flags });
+export const prefsToDoc = (p: NotifyPrefs): Record<string, number | boolean | string> =>
+  ({ hour: p.hour, ...p.flags, ...(p.lang ? { lang: p.lang } : {}) });
 
 export function prefsFromDoc(d: Record<string, unknown> | null | undefined): NotifyPrefs {
   const base = defaultPrefs();
   if (!d) return base;
   for (const n of NOTIFY) if (typeof d[n.key] === 'boolean') base.flags[n.key] = d[n.key] as boolean;
   if (typeof d.hour === 'number' && NOTIFY_HOURS.includes(d.hour)) base.hour = d.hour;
+  if (d.lang === 'tg' || d.lang === 'ru' || d.lang === 'en') base.lang = d.lang;
   return base;
 }

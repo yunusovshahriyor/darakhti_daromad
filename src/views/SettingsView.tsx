@@ -3,7 +3,10 @@ import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { useHistoryLayer } from '../components/useHistoryLayer';
-import { hasUnsynced, signOutAndWipe, syncNow, useSync } from '../sync';
+import Sheet from '../components/Sheet';
+import { LANGS, currentLang, setLang } from '../i18n';
+import type { Lang } from '../i18n';
+import { hasUnsynced, saveLangToAccount, signOutAndWipe, syncNow, useSync } from '../sync';
 import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isRemainderNode } from '../model';
 import { emptyState } from '../storage';
 import type { DistNode } from '../types';
@@ -21,6 +24,14 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
   const [closed, setClosed] = useState(readClosed);
   const [page, setPage] = useState<'menu' | 'accounts'>('menu');
   const sync = useSync();
+  const [langOpen, setLangOpen] = useState(false);
+  const lang = currentLang();
+  const chooseLang = async (l: Lang) => {
+    if (l === lang) { setLangOpen(false); return; }
+    // Забон ба аккаунт сабт мешавад (то бот низ ҳамин забонро истифода барад); бекор шудан ё хатогӣ монеъ намешавад
+    await Promise.race([saveLangToAccount(l).catch(() => {}), new Promise(r => setTimeout(r, 1500))]);
+    setLang(l);
+  };
   const signed = sync.configured && sync.status !== 'signedout' && sync.status !== 'off' && sync.email !== '';
   // «Бозгашт»-и телефон аз зерсаҳифаи «Ҳисобҳо ва фоизҳо» ба менюи танзимот бармегардонад
   useHistoryLayer(page === 'accounts', () => setPage('menu'));
@@ -129,6 +140,11 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
       <>
         <h3 className="group-title"><span>Танзимот</span></h3>
         <div className="cells">
+          <button className="cell tap link" onClick={() => setLangOpen(true)}>
+            <div className="ic">🌐</div>
+            <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
+            <ChevronIcon />
+          </button>
           <button className="cell tap link" onClick={() => setPage('accounts')}>
             <div className="ic">🧩</div>
             <div className="grow"><b>Ҳисобҳо ва фоизҳо</b><small>{accountCount} ҳисоб · тақсими даромад</small></div>
@@ -146,6 +162,20 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
         <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
 
         {confirmDialog}
+
+        {langOpen && (
+          <Sheet title="Интихоби забон" onClose={() => setLangOpen(false)}>
+            <div className="cells">
+              {LANGS.map(l => (
+                <button key={l.id} className="cell tap" onClick={() => void chooseLang(l.id)}>
+                  <div className="grow"><b>{l.name}</b></div>
+                  {l.id === lang && <span className="lang-on">✓</span>}
+                </button>
+              ))}
+            </div>
+            <p className="note">Забон ба аккаунт сабт мешавад: бот низ бо ҳамин забон менависад.</p>
+          </Sheet>
+        )}
       </>
     );
   }

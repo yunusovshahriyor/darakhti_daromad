@@ -21,7 +21,8 @@ service cloud.firestore {
     // Танзимоти огоҳиномаҳои Telegram: барнома ва бот ҳарду менависанд. Ҳамаи калидҳо ҳатмӣ ва boolean, соат аз рӯйхат.
     match /users/{uid}/bot/prefs {
       allow create, update: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['hour', 'pay', 'overdue', 'weekly', 'monthly', 'noentry', 'dreams', 'debtpaid', 'autosave', 'goals', 'loans', 'bigexp', 'catover', 'evening', 'tips'])
+        && request.resource.data.keys().hasOnly(['hour', 'pay', 'overdue', 'weekly', 'monthly', 'noentry', 'dreams', 'debtpaid', 'autosave', 'goals', 'loans', 'bigexp', 'catover', 'evening', 'tips', 'lang'])
+        && (!('lang' in request.resource.data) || request.resource.data.lang in ['tg', 'ru', 'en'])
         && request.resource.data.hour in [7, 9, 12, 18, 21]
         && request.resource.data.pay is bool && request.resource.data.overdue is bool
         && request.resource.data.weekly is bool && request.resource.data.monthly is bool

@@ -3,6 +3,7 @@ import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 import type { Auth, User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import { BOT_API, EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
+import { LANG_KEY } from './i18n';
 import { prefsFromDoc, prefsToDoc } from './notify';
 import type { NotifyPrefs } from './notify';
 import {
@@ -323,7 +324,7 @@ export const hasUnsynced = (): boolean => !!curUser && stateHasData() && localHa
  */
 export async function signOutAndWipe(): Promise<void> {
   await signOut();
-  await wipeAllLocal([CFG_KEY, DEVICE_KEY, EMU_KEY]);
+  await wipeAllLocal([CFG_KEY, DEVICE_KEY, EMU_KEY, LANG_KEY]);
   location.reload();
 }
 
@@ -629,6 +630,13 @@ export async function telegramPrefsSet(p: NotifyPrefs): Promise<void> {
   if (!f || !curUser) throw new Error('Аввал ба аккаунт ворид шавед');
   const { doc, setDoc } = f.fsM;
   await setDoc(doc(f.db, 'users', curUser.uid, 'bot', 'prefs'), prefsToDoc(p));
+}
+
+/** Забони интихобшударо ба аккаунт сабт мекунад (бот низ бо ҳамин забон менависад). Хатогӣ муҳим нест. */
+export async function saveLangToAccount(lang: 'tg' | 'ru' | 'en'): Promise<void> {
+  if (!curUser) return;
+  const p = await telegramPrefsGet();
+  await telegramPrefsSet({ ...p, lang });
 }
 
 export async function telegramUnlink(): Promise<void> {
