@@ -154,6 +154,8 @@ export type AppMode = 'system' | 'free';
 
 export interface State {
   mode?: AppMode;
+  /** Рамзи асъор (ISO): TJS — пешфарз. Ҳамаи маблағҳо дар ҳамин асъор нигоҳ дошта мешаванд. */
+  currency?: string;
   accounts: AccountDef[];
   tree: DistNode;
   incomes: Income[];

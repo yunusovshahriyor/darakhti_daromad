@@ -1687,3 +1687,8 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
 .look-ac small { font-size: .7rem; }
 .look-ac.on { border-color: var(--primary); }
 .look-preview { padding-bottom: 6px; }
+
+/* ---------- Асъор ---------- */
+.cur-ic { font-weight: 800; font-size: .95rem; }
+.cur-flow { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 4px 0 12px; font-size: 1.6rem; font-weight: 800; }
+.cur-flow i { font-style: normal; color: var(--primary); }

@@ -940,5 +940,15 @@
 "Кабуд": "Blue",
 "Бунафш": "Purple",
 "Норинҷӣ": "Orange",
-"Гулобӣ": "Pink"
+"Гулобӣ": "Pink",
+"Асъор": "Currency",
+"Ҳамаи маблағҳо дар як асъор нигоҳ дошта мешаванд. Агар асъорро иваз кунед, ҳамаи маълумот бо қурби имрӯза табдил меёбад.": "All amounts are stored in one currency. If you change the currency, all data is converted at today's rate.",
+"Иваз кардани асъор": "Change currency",
+"Қурби имрӯза гирифта истодааст…": "Fetching today's rate…",
+"Қурбро аз интернет гирифта нашуд. Онро дастӣ нависед ё баъдтар кӯшиш кунед.": "Could not get the rate from the internet. Enter it manually or try later.",
+"Пас аз табдил:": "After conversion:",
+"Табдил додан": "Convert",
+"Табдил шуда истодааст…": "Converting…",
+"Қурби расмӣ: {0} · {1}": "Rate: {0} · {1}",
+"Даромад, хароҷот, қарзҳо, орзуҳо ва ҳамаи ҳисобҳо бо қурби имрӯза табдил меёбанд. Пеш аз ин нусхаи захиравӣ сохта мешавад. Баъдан маблағҳо тағйир намеёбанд.": "Income, expenses, debts, dreams and all accounts are converted at today's rate. A backup copy is created first. Afterwards the amounts no longer change."
 }

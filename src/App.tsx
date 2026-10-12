@@ -3,6 +3,7 @@ import AddSheet from './components/AddSheet';
 import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
+import { BASE, activeCode, setActiveCode } from './currency';
 import Onboarding, { INTRO_RESUME_KEY } from './components/Onboarding';
 import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
@@ -116,6 +117,12 @@ export default function App() {
   const prevBal = useRef<Alloc | null>(null);
 
   useEffect(() => saveState(state), [state]);
+
+  // Асъор: нусхаи localStorage барои translator; агар аз дастгоҳи дигар (синхронизатсия) иваз шуда бошад — саҳифа аз нав бор мешавад
+  useEffect(() => {
+    const code = state.currency ?? BASE;
+    if (code !== activeCode()) { setActiveCode(code); location.reload(); }
+  }, [state.currency]);
 
   // Корбари нав (бе маълумот ва бе интихоб): аввал услуби кор интихоб мешавад. Каме интизор мешавем, то синхронизатсия
   // маълумоти аккаунти мавҷударо биёрад.

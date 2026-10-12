@@ -4,6 +4,7 @@
  * аз луғат (`src/i18n/*.json`) иваз мешаванд. Матнҳои шаблонӣ бо `{0}`, `{1}` (қиматҳои динамикӣ) шабакаи ибора мешаванд.
  * Иваз кардани забон саҳифаро аз нав мекушояд.
  */
+import { BASE, activeCode, swapUnit } from './currency';
 export type Lang = 'tg' | 'ru' | 'en';
 export const LANGS: { id: Lang; name: string }[] = [
   { id: 'tg', name: 'Тоҷикӣ' },
@@ -120,11 +121,13 @@ function core(text: string, depth = 0): string {
 
 /** Матнро тарҷума мекунад (фосилаҳои аввал ва охир нигоҳ дошта мешаванд). */
 export function tr(text: string): string {
-  if (active === 'tg' || !text || !cyr.test(text)) return text;
+  const conv = activeCode() !== BASE;
+  if ((active === 'tg' && !conv) || !text || !cyr.test(text)) return text;
   const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(text);
   if (!m || !m[2]) return text;
   const src = m[2].replace(/\s+/g, ' ');
-  const out = core(src);
+  let out = active === 'tg' ? src : core(src);
+  if (conv) out = swapUnit(out);
   return out === src ? text : m[1] + out + m[3];
 }
 
@@ -171,9 +174,11 @@ function walk(root: Node) {
 export async function initI18n(): Promise<void> {
   active = currentLang();
   document.documentElement.lang = active;
-  if (active === 'tg') return;
-  const mod = active === 'ru' ? await import('./i18n/ru.json') : await import('./i18n/en.json');
-  build(mod.default as Record<string, string>);
+  if (active === 'tg' && activeCode() === BASE) return;
+  if (active !== 'tg') {
+    const mod = active === 'ru' ? await import('./i18n/ru.json') : await import('./i18n/en.json');
+    build(mod.default as Record<string, string>);
+  }
   document.title = tr(document.title);
   walk(document.body);
   new MutationObserver(list => {

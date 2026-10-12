@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
+import CurrencySheet from '../components/CurrencySheet';
 import FreeAccounts from '../components/FreeAccounts';
+import { defOf } from '../currency';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { useHistoryLayer } from '../components/useHistoryLayer';
 import Sheet from '../components/Sheet';
@@ -36,6 +38,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const sync = useSync();
   const [langOpen, setLangOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
+  const [curOpen, setCurOpen] = useState(false);
   const [mode, setMode] = useState<ThemeMode>(getTheme);
   const [accent, setAccent] = useState<Accent>(getAccent);
   const MODES: [ThemeMode, string, string][] = [['auto', 'Худкор', '🌓'], ['light', 'Равшан', '☀️'], ['dark', 'Торик', '🌙']];
@@ -173,6 +176,11 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
             <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
             <ChevronIcon />
           </button>
+          <button className="cell tap link" onClick={() => setCurOpen(true)}>
+            <div className="ic">💱</div>
+            <div className="grow"><b>Асъор</b><small>{state.currency ?? 'TJS'}</small></div>
+            <ChevronIcon />
+          </button>
           <button className="cell tap link" onClick={() => setLookOpen(true)}>
             <div className="ic">🎨</div>
             <div className="grow"><b>Замина</b><small>{MODES.find(m => m[0] === mode)?.[1]} · {ACCENTS[accent].name}</small></div>
@@ -190,6 +198,8 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
         <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
 
         {confirmDialog}
+
+        {curOpen && <CurrencySheet state={state} setState={setState} onClose={() => setCurOpen(false)} />}
 
         {lookOpen && (
           <Sheet title="Замина" onClose={() => setLookOpen(false)}>

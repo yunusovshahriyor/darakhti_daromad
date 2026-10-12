@@ -6,6 +6,7 @@ import * as fs from './firestore';
 import { customToken } from './firestore';
 import type { Env } from './firestore';
 import type { State } from '../../src/types';
+import { swapUnit } from '../../src/currency';
 import { LOGIN_RE, LOGIN_TTL_MS, newCode, resolveUid, verifyInitData } from './auth';
 import { isLang, langFromCode, makeT } from './i18n';
 import type { Lang, TFn } from './i18n';
@@ -268,9 +269,10 @@ async function report(env: Env, chat: number, kind: 'sum' | 'debts' | 'rem', t: 
   const r = await stateOf(env, chat, t);
   if ('msg' in r) return send(env, chat, r.msg, r.unlinked ? { inline_keyboard: linkHelp(t, env)[1].inline_keyboard } : undefined);
   const today = dateOf(env.TIMEZONE ?? 'Asia/Dushanbe');
-  if (kind === 'sum') return send(env, chat, summaryText(t, r.state, today));
-  if (kind === 'debts') return send(env, chat, debtsText(t, r.state, today));
-  return send(env, chat, reminderText(t, r.state, today) ?? t("✅ Имрӯз ва дар 3 рӯзи наздик пардохт нест."));
+  const cu = (x: string) => swapUnit(x, r.state.currency ?? 'TJS');
+  if (kind === 'sum') return send(env, chat, cu(summaryText(t, r.state, today)));
+  if (kind === 'debts') return send(env, chat, cu(debtsText(t, r.state, today)));
+  return send(env, chat, cu(reminderText(t, r.state, today) ?? t("✅ Имрӯз ва дар 3 рӯзи наздик пардохт нест.")));
 }
 
 async function unlinkChat(env: Env, chat: number) {
@@ -381,19 +383,20 @@ async function daily(env: Env, when = new Date()) {
       const r = await stateOf(env, chat, t);
       if ('msg' in r) continue;
 
+      const cu = (x: string) => swapUnit(x, r.state.currency ?? 'TJS');
       const rem = reminderText(t, r.state, today, { pay: p.flags.pay, overdue: p.flags.overdue });
-      if (rem) await send(env, chat, rem);
+      if (rem) await send(env, chat, cu(rem));
 
       const prevSeen = seenOf(c.data);
       const d = buildDigest(t, r.state, prevSeen, p.flags, today);
-      if (d.lines.length) await send(env, chat, t("🔔 <b>Огоҳиномаҳои имрӯз</b>\n\n{0}", d.lines.join('\n\n')));
+      if (d.lines.length) await send(env, chat, cu(t("🔔 <b>Огоҳиномаҳои имрӯз</b>\n\n{0}", d.lines.join('\n\n'))));
       await writeChat(env, chat, c.data, d.seen);
 
-      if (dayOfWeek === 1 && p.flags.weekly) await send(env, chat, summaryText(t, r.state, today));
+      if (dayOfWeek === 1 && p.flags.weekly) await send(env, chat, cu(summaryText(t, r.state, today)));
       if (dayOfMonth === 1 && p.flags.monthly) {
         const last = new Date(`${today}T12:00:00Z`);
         last.setUTCDate(0); // охирин рӯзи моҳи гузашта
-        await send(env, chat, summaryText(t, r.state, last.toISOString().slice(0, 10)));
+        await send(env, chat, cu(summaryText(t, r.state, last.toISOString().slice(0, 10))));
       }
     } catch (e) {
       console.log(`daily ${c.id}: ${e instanceof Error ? e.message : e}`);
