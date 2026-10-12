@@ -88,5 +88,10 @@
 "🤝 <b>Ба шумо қарздоранд:</b> {0}\n{1}": "🤝 <b>Owed to you:</b> {0}\n{1}",
 "🤝 {0} {1} рӯз аст, ки {2}-ро барнагардондааст.": "🤝 {0} has not returned {2} for {1} days.",
 "дӯст": "friend",
-"хароҷот": "expense"
+"хароҷот": "expense",
+"🔄 Иваз кардани аккаунт": "🔄 Switch account",
+"🔄 <b>Иваз кардани аккаунт</b>\n\nБот аз аккаунти ҷорӣ ҷудо мешавад. Маълумоти шумо дар сервер мемонад.": "🔄 <b>Switch account</b>\n\nThe bot will be disconnected from the current account. Your data stays on the server.",
+"✅ Ҳа, иваз кардан": "✅ Yes, switch",
+"✖️ Бекор кардан": "✖️ Cancel",
+"✅ Бот ҷудо шуд. Акнун:\n\n1️⃣ Дар барнома: Танзимот → «Баромад аз аккаунт».\n2️⃣ Ба аккаунти дигар ворид шавед.\n3️⃣ Дар Профил «Telegram-бот»-ро интихоб кунед: бот ба аккаунти нав пайваст мешавад.": "✅ The bot is disconnected. Now:\n\n1️⃣ In the app: Settings → “Sign out”.\n2️⃣ Sign in to another account.\n3️⃣ In Profile choose “Telegram bot”: the bot connects to the new account."
 }

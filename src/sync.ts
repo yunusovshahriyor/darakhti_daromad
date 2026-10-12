@@ -23,6 +23,7 @@ const FLAG_KEY = 'darakhti:cloud-on'; // корбар пештар ворид ш
 const EMAIL_KEY = 'darakhti:cloud-email';
 const NAME_KEY = 'darakhti:cloud-name';
 const PHOTO_KEY = 'darakhti:cloud-photo';
+const SIGNED_OUT_KEY = 'darakhti:signed-out'; // корбар худаш баромад: Mini App ӯро худкор ворид намекунад
 const TG_ID_KEY = 'darakhti:tg-id'; // кадом корбари Telegram сессияи ҷорӣ барои ӯ сохта шудааст
 const BASE_KEY = 'darakhti:cloud-base'; // rev-и сервер дар синхронизатсияи охирин
 const SYNCED_KEY = 'darakhti:cloud-synced'; // ҳэши мазмуни маҳаллӣ дар синхронизатсияи охирин
@@ -151,6 +152,7 @@ function onAuth(u: User | null) {
   if (u) {
     curUser = { uid: u.uid, email: u.email ?? (u.uid.startsWith('tg_') || u.providerData.length === 0 ? 'Telegram' : ''), name: u.displayName ?? '', photo: u.photoURL ?? '' };
     ls.set(FLAG_KEY, '1');
+    ls.del(SIGNED_OUT_KEY);
     ls.set(EMAIL_KEY, curUser.email);
     ls.set(NAME_KEY, curUser.name);
     ls.set(PHOTO_KEY, curUser.photo);
@@ -322,9 +324,10 @@ export const hasUnsynced = (): boolean => !!curUser && stateHasData() && localHa
  * Баромад аз аккаунт + пок кардани ҳамаи маълумоти ин дастгоҳ (то корбари дигар маълумоти пештараро набинад),
  * баъд барнома аз нав боз мешавад. Танзимоти техникӣ (DEVICE/CFG) мемонад.
  */
-export async function signOutAndWipe(): Promise<void> {
+export async function signOutAndWipe(byUser = true): Promise<void> {
   await signOut();
-  await wipeAllLocal([CFG_KEY, DEVICE_KEY, EMU_KEY, LANG_KEY]);
+  await wipeAllLocal([CFG_KEY, DEVICE_KEY, EMU_KEY, LANG_KEY, SIGNED_OUT_KEY]);
+  if (byUser) ls.set(SIGNED_OUT_KEY, '1');
   location.reload();
 }
 
@@ -672,7 +675,7 @@ async function signInWithToken(token: string, name: string): Promise<void> {
  * корбари дигар тааллуқ дошта бошад: ҳар дафъа санҷида, лозим бошад иваз мекунем.
  */
 export async function telegramAutoLogin(initData: string): Promise<void> {
-  if (!BOT_API || !initData) return;
+  if (!BOT_API || !initData || ls.get(SIGNED_OUT_KEY)) return;
   const f = await loadAuthed();
   if (!f) return;
   let tgId = '';
@@ -684,7 +687,7 @@ export async function telegramAutoLogin(initData: string): Promise<void> {
   if (curUser?.uid === r.uid) { if (tgId) ls.set(TG_ID_KEY, tgId); return; }
   if (curUser) {
     // Аккаунти дигар: баромад, маълумоти маҳаллии кӯҳна ба нусхаҳои худкор меравад, барнома аз нав боз мешавад ва ворид мешавад
-    await signOutAndWipe();
+    await signOutAndWipe(false);
     return;
   }
   await signInWithToken(r.token, r.name);

@@ -215,6 +215,7 @@ function menu(t: TFn, env: Env, linked: boolean): Keyboard {
       [linked
         ? { text: t("✅ Аккаунт пайваст аст"), callback_data: 'linked' }
         : { text: t("🔗 Пайваст кардани аккаунт"), callback_data: 'link' }],
+      ...(linked ? [[{ text: t("🔄 Иваз кардани аккаунт"), callback_data: 'swa' }]] : []),
       [{ text: t("❓ Кӯмак"), callback_data: 'help' }],
     ],
   };
@@ -247,6 +248,15 @@ async function report(env: Env, chat: number, kind: 'sum' | 'debts' | 'rem', t: 
   return send(env, chat, reminderText(t, r.state, today) ?? t("✅ Имрӯз ва дар 3 рӯзи наздик пардохт нест."));
 }
 
+async function unlinkChat(env: Env, chat: number) {
+  const c = await fs.get(env, `botChats/${chat}`);
+  if (c) { await fs.del(env, `users/${c.uid}/bot/link`); await fs.del(env, `botChats/${chat}`); }
+}
+
+const switchAsk = (env: Env, chat: number, t: TFn) => send(env, chat,
+  t("🔄 <b>Иваз кардани аккаунт</b>\n\nБот аз аккаунти ҷорӣ ҷудо мешавад. Маълумоти шумо дар сервер мемонад."),
+  { inline_keyboard: [[{ text: t("✅ Ҳа, иваз кардан"), callback_data: 'swy' }], [{ text: t("✖️ Бекор кардан"), callback_data: 'close' }]] });
+
 async function onMessage(env: Env, chat: number, text: string, name: string, fullName: string, code?: string) {
   const lang = await resolveLang(env, chat, code);
   const t = makeT(lang);
@@ -263,10 +273,10 @@ async function onMessage(env: Env, chat: number, text: string, name: string, ful
   if (!cmd.startsWith('/') && CODE_RE.test(cmdRaw.toUpperCase()) && rest.length === 0) return send(env, chat, await link(env, chat, cmdRaw, t, code));
 
   if (cmd === '/stop') {
-    const c = await fs.get(env, `botChats/${chat}`);
-    if (c) { await fs.del(env, `users/${c.uid}/bot/link`); await fs.del(env, `botChats/${chat}`); }
+    await unlinkChat(env, chat);
     return send(env, chat, t("👋 Бот аз аккаунт ҷудо шуд. Барои пайвастани дубора /start-ро пахш кунед."));
   }
+  if (cmd === '/switch' || cmd === '/akkaunt') return switchAsk(env, chat, t);
   if (cmd === '/xulosa' || cmd === '/summary') return report(env, chat, 'sum', t);
   if (cmd === '/qarzho' || cmd === '/debts') return report(env, chat, 'debts', t);
   if (cmd === '/yodovari' || cmd === '/reminders') return report(env, chat, 'rem', t);
@@ -290,6 +300,14 @@ async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
     if (await isLinked(env, chat)) return send(env, chat, t("✅ Аккаунт аллакай пайваст аст."));
     const [text, markup] = linkHelp(t, env);
     return send(env, chat, text, markup);
+  }
+  if (data === 'swa') return switchAsk(env, chat, t);
+  if (data === 'swy') {
+    await unlinkChat(env, chat);
+    if (mid) await tg(env, 'deleteMessage', { chat_id: chat, message_id: mid });
+    return send(env, chat,
+      t("✅ Бот ҷудо шуд. Акнун:\n\n1️⃣ Дар барнома: Танзимот → «Баромад аз аккаунт».\n2️⃣ Ба аккаунти дигар ворид шавед.\n3️⃣ Дар Профил «Telegram-бот»-ро интихоб кунед: бот ба аккаунти нав пайваст мешавад."),
+      { inline_keyboard: [[{ text: t("🌳 Кушодани барнома"), web_app: { url: appUrl(env, '?tg=link') } }]] });
   }
   if (data === 'close') return mid ? tg(env, 'deleteMessage', { chat_id: chat, message_id: mid }) : undefined;
 
