@@ -959,5 +959,20 @@
 "Табрик!": "Congratulations!",
 "Қулфи барнома": "App lock",
 "Фаъол: PIN": "On: PIN",
-"Хомӯш": "Off"
+"Хомӯш": "Off",
+"🔁 Такрор кардан": "🔁 Repeat",
+"Не": "No",
+"Мӯҳлати навбатӣ: {0}. Дар ҳамон рӯз барнома ёдрас мекунад ва бо тасдиқи шумо сабт мекунад.": "Next due: {0}. On that day the app reminds you and records the expense after your confirmation.",
+"🔁 Вақти пардохт расид": "🔁 Payment due",
+"Сабт": "Record",
+"Гузаштан": "Skip",
+"ва боз {0} ададӣ": "and {0} more",
+"Хароҷоти такрорӣ": "Recurring expenses",
+"Иҷора, интернет, обуна": "Rent, internet, subscriptions",
+"{0} ададӣ": "{0} items",
+"Ҳоло хароҷоти такрорӣ нест. Ҳангоми сабти хароҷот «🔁 Такрор кардан»-ро интихоб кунед (масалан иҷора, интернет, обуна): барнома дар мӯҳлат ёдрас мекунад.": "No recurring expenses yet. When recording an expense choose “🔁 Repeat” (for example rent, internet, subscriptions): the app reminds you on time.",
+"Ҳар моҳ, рӯзи {0}": "Every month, day {0}",
+"{0} · навбатӣ {1}": "{0} · next {1}",
+"{0} смн · мӯҳлат {1}": "{0} smn · due {1}",
+"Маблағ: {0} смн дар як давра (ҷамъ).": "Total: {0} smn per period."
 }

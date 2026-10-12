@@ -113,14 +113,17 @@ export default function App() {
   const [addKind, setAddKind] = useState<'income' | 'expense' | undefined>(() => {
     try {
       const k = new URLSearchParams(location.search).get('add');
+      if (k !== null) {
+        // Параметрро фавран тоза мекунем (то қабати таърихи варақа суроғаи тозаро нигоҳ дорад)
+        const u = new URL(location.href);
+        u.searchParams.delete('add');
+        history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+      }
       return k === 'income' || k === 'expense' ? k : undefined;
     } catch { return undefined; }
   });
   const [adding, setAdding] = useState(addKind !== undefined);
-  useEffect(() => {
-    if (addKind === undefined) return;
-    try { history.replaceState(history.state, '', location.pathname + location.hash); } catch { /* ignore */ }
-  }, [addKind]);
+
   const [info, setInfo] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
@@ -426,7 +429,7 @@ export default function App() {
     if (sub === 'guide') return <SystemGuide {...props} onToast={setToast} onIntro={() => setIntro(true)} />;
     if (tab === 'home') {
       return (
-        <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => go('profile')}
+        <Dashboard {...props} {...privacy} onToast={setToast} onNavigate={go} onProfile={() => go('profile')}
           onOpenAccount={openAccount} />
       );
     }

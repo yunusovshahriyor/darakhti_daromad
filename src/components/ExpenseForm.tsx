@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import { addPeriod, newRecurring } from '../recurring';
 import { expenseHints, quickAmounts, recentExpenses, smartCategory } from '../suggest';
 import { ACCOUNTS, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
@@ -19,6 +20,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
   // Агар категория дастӣ интихоб нашуда бошад, аз эзоҳ худкор пешниҳод мешавад
   const [manual, setManual] = useState(false);
   const [amount, setAmount] = useState('');
+  const [every, setEvery] = useState<'' | 'week' | 'month'>('');
   const [date, setDate] = useState(today);
 
   const bal = balancesOf(state);
@@ -43,9 +45,11 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
     if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account])} сомонӣ мавҷуд аст. Ба ҳар ҳол харҷ мекунед?`, ok: 'Харҷ кардан' }))) return;
     const expense = { id: uid(), account, title: note.trim() || category || ACCOUNTS[account].name, amount: num, date,
       ...(category ? { category } : {}) };
+    const rec = every ? newRecurring({ title: expense.title, amount: num, account, category: category ?? undefined, every, date }) : null;
     setState(s => ({
       ...s,
       expenses: [...s.expenses, expense].sort((a, b) => b.date.localeCompare(a.date)),
+      ...(rec ? { recurring: [...(s.recurring ?? []), rec] } : {}),
     }));
     onDone('Хароҷот сабт шуд ✓');
   };
@@ -72,6 +76,15 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
             if (!manual) setCategory(smartCategory(state, e.target.value));
           }} />
       </Field>
+      <div className="rec-pick">
+        <div className="chips-label">🔁 Такрор кардан</div>
+        <div className="rec-chips">
+          {([['', 'Не'], ['week', 'Ҳар ҳафта'], ['month', 'Ҳар моҳ']] as const).map(([v, n]) => (
+            <button key={v} type="button" className={v === every ? 'qa on' : 'qa'} onClick={() => setEvery(v)}>{n}</button>
+          ))}
+        </div>
+        {every && <small className="rec-note">{`Мӯҳлати навбатӣ: ${addPeriod(date, every)}. Дар ҳамон рӯз барнома ёдрас мекунад ва бо тасдиқи шумо сабт мекунад.`}</small>}
+      </div>
       {hints.length > 0 && (
         <div className="hint-row">
           {hints.map(h => (

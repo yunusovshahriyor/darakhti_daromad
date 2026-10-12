@@ -2,6 +2,7 @@ import { brand } from '../brand';
 import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
 import AccountScopeSheet from '../components/AccountScopeSheet';
+import RecurringDue from '../components/RecurringDue';
 import { Count, useCountUp } from '../useCountUp';
 import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, FilterIcon, PersonIcon } from '../components/Icons';
 import PeriodSheet from '../components/PeriodSheet';
@@ -36,7 +37,8 @@ function readPeriod(): { kind: PeriodKind; offset: number } {
   } catch { /* ignore */ }
   return { kind: 'month', offset: 0 };
 }
-export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, onProfile, onOpenAccount }: Props & Privacy & {
+export default function Dashboard({ state, setState, hidden, onToggleHidden, onNavigate, onProfile, onOpenAccount, onToast }: Props & Privacy & {
+  onToast: (m: string) => void;
   onNavigate: (t: Tab, filter?: HistoryFilter) => void;
   onProfile: () => void;
   onOpenAccount: (id: AccountId) => void;
@@ -112,6 +114,8 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         </div>
         <button className="avatar-btn" onClick={onProfile} aria-label="Профил"><PersonIcon /></button>
       </header>
+
+      <RecurringDue state={state} setState={setState} onToast={onToast} />
 
       <div className="period-nav">
         <button className="pn-btn" onClick={() => setOffset(o => o - 1)} aria-label="Давраи пештара">

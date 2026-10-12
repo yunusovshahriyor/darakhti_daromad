@@ -127,6 +127,7 @@ export function convertState(s: State, k: number, to: string): State {
     debts: s.debts.map(d => convDebt(d, k)),
     loans: s.loans.map(l => ({ ...l, amount: r2(l.amount * k), returned: r2(l.returned * k) })),
     dreams: s.dreams.map(d => convDream(d, k)),
+    recurring: s.recurring?.map(r => ({ ...r, amount: r2(r.amount * k) })),
     goals: Object.fromEntries(Object.entries(s.goals).map(([id, v]) => [id, r2((v ?? 0) * k)])),
   };
 }

@@ -152,10 +152,25 @@ export interface Transfer {
 /** «system» — системаи Саидмурод Давлатов (ҳисобҳо ва фоизҳо); «free» — ҳисобҳои худи корбар бе фоиз. Агар нест — system. */
 export type AppMode = 'system' | 'free';
 
+/** Хароҷоти такрорӣ (иҷора, интернет, обуна): дар мӯҳлат барнома ёдрас мекунад ва бо тасдиқи шумо сабт мекунад. */
+export interface Recurring {
+  id: number;
+  title: string;
+  amount: number;
+  account: AccountId;
+  category?: string;
+  every: 'week' | 'month';
+  /** Рӯзи моҳ, ки аз он ҳисоб мешавад (барои «ҳар моҳ»). */
+  day?: number;
+  /** Мӯҳлати навбатӣ (сана). */
+  next: string;
+}
+
 export interface State {
   mode?: AppMode;
   /** Рамзи асъор (ISO): TJS — пешфарз. Ҳамаи маблағҳо дар ҳамин асъор нигоҳ дошта мешаванд. */
   currency?: string;
+  recurring?: Recurring[];
   accounts: AccountDef[];
   tree: DistNode;
   incomes: Income[];

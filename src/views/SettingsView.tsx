@@ -3,6 +3,7 @@ import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import CurrencySheet from '../components/CurrencySheet';
 import LockSheet from '../components/LockSheet';
+import RecurringSheet from '../components/RecurringSheet';
 import { isLockOn } from '../lock';
 import FreeAccounts from '../components/FreeAccounts';
 import { defOf } from '../currency';
@@ -43,6 +44,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const [lookOpen, setLookOpen] = useState(false);
   const [curOpen, setCurOpen] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
+  const [recOpen, setRecOpen] = useState(false);
   const [lockTick, setLockTick] = useState(0);
   const [haptic, setHaptic] = useState(hapticOn);
   const [mode, setMode] = useState<ThemeMode>(getTheme);
@@ -182,6 +184,11 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
             <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
             <ChevronIcon />
           </button>
+          <button className="cell tap link" onClick={() => setRecOpen(true)}>
+            <div className="ic">🔁</div>
+            <div className="grow"><b>Хароҷоти такрорӣ</b><small>{(state.recurring ?? []).length ? `${(state.recurring ?? []).length} ададӣ` : 'Иҷора, интернет, обуна'}</small></div>
+            <ChevronIcon />
+          </button>
           <button className="cell tap link" onClick={() => setCurOpen(true)}>
             <div className="ic">💱</div>
             <div className="grow"><b>Қурби асъор</b><small>{state.currency ?? 'TJS'}</small></div>
@@ -210,6 +217,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
 
         {confirmDialog}
 
+        {recOpen && <RecurringSheet state={state} setState={setState} onClose={() => setRecOpen(false)} />}
         {lockOpen && <LockSheet onClose={() => setLockOpen(false)} onChange={() => setLockTick(x => x + 1)} />}
         {curOpen && <CurrencySheet state={state} setState={setState} onClose={() => setCurOpen(false)} />}
 
