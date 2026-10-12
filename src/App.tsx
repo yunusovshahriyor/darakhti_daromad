@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
 import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
@@ -418,8 +418,8 @@ export default function App() {
         </header>
       )}
 
-      <div className={refreshing ? 'ptr spin' : 'ptr'}
-        style={{ transform: `translate(-50%, ${pull - 48}px)`, opacity: Math.min(1, pull / 40) }}>
+      <div className={refreshing ? 'ptr busy' : 'ptr'}
+        style={{ transform: `translate(-50%, ${pull - 48}px)`, opacity: Math.min(1, pull / 40), '--rot': `${pull * 4}deg` } as CSSProperties}>
         <RefreshIcon />
       </div>
 
