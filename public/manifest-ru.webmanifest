@@ -28,5 +28,33 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Доход",
+      "short_name": "Доход",
+      "description": "Добавить доход",
+      "url": "./?add=income",
+      "icons": [
+        {
+          "src": "icons/icon-ru-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Расход",
+      "short_name": "Расход",
+      "description": "Добавить расход",
+      "url": "./?add=expense",
+      "icons": [
+        {
+          "src": "icons/icon-ru-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }

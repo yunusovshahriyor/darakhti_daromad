@@ -28,5 +28,33 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Даромад",
+      "short_name": "Даромад",
+      "description": "Илова кардани даромад",
+      "url": "./?add=income",
+      "icons": [
+        {
+          "src": "icons/icon-tg-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Хароҷот",
+      "short_name": "Хароҷот",
+      "description": "Илова кардани хароҷот",
+      "url": "./?add=expense",
+      "icons": [
+        {
+          "src": "icons/icon-tg-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }

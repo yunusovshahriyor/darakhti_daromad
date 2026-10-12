@@ -28,5 +28,33 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Income",
+      "short_name": "Income",
+      "description": "Add income",
+      "url": "./?add=income",
+      "icons": [
+        {
+          "src": "icons/icon-en-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Expense",
+      "short_name": "Expense",
+      "description": "Add expense",
+      "url": "./?add=expense",
+      "icons": [
+        {
+          "src": "icons/icon-en-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
