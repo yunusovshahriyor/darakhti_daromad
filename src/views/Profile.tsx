@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { CSSProperties, ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { squareJpeg } from '../image';
 import { setAvatar, useSync } from '../sync';
 import Field from '../components/Field';
@@ -137,9 +137,9 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
           <b><Count value={incomeMonth} /> <i>смн</i></b>
         </div>
         <div className="pf-bars">
-          {months.map(m => (
+          {months.map((m, idx) => (
             <div key={m.key} className="pf-bar">
-              <span style={{ height: `${Math.max(4, (m.total / max) * 100)}%` }} className={m.total ? '' : 'zero'} />
+              <span style={{ height: `${Math.max(4, (m.total / max) * 100)}%`, '--i': idx } as CSSProperties} className={m.total ? '' : 'zero'} />
               <small>{m.label.slice(0, 3)}</small>
             </div>
           ))}

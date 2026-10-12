@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 export interface Seg {
   id: string;
@@ -15,11 +15,13 @@ export default function Donut({ segs, label, sub, blur = false }: { segs: Seg[];
   return (
     <svg viewBox="0 0 120 120" className="donut" role="img" aria-label="Диаграмма">
       <circle cx="60" cy="60" r={R} fill="none" stroke="var(--border)" strokeWidth="16" />
-      {total > 0 && segs.map(s => {
+      {total > 0 && segs.map((s, i) => {
         const len = (s.value / total) * C;
         const gap = segs.length > 1 ? 1.5 : 0;
         const el = (
           <circle key={s.id} cx="60" cy="60" r={R} fill="none" stroke={s.color} strokeWidth="16"
+            className="donut-seg"
+            style={{ '--len': Math.max(0, len - gap), '--circ': C, '--i': i } as CSSProperties}
             strokeDasharray={`${Math.max(0, len - gap)} ${C}`} strokeDashoffset={-acc}
             transform="rotate(-90 60 60)" />
         );

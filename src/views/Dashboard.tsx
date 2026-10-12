@@ -229,10 +229,10 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         <h3 className="group-title">Афзоиши даромад · 6 моҳ</h3>
         <div className="card">
           <div className="chart">
-            {months.map(m => (
+            {months.map((m, idx) => (
               <div className="col" key={m.key}>
                 <span className="val">{m.total && !hidden ? fmt(m.total) : ''}</span>
-                <div className="bar" style={{ height: `${(m.total / max) * 100}%` }} />
+                <div className="bar" style={{ height: `${(m.total / max) * 100}%`, '--i': idx } as CSSProperties} />
                 <span className="lbl">{m.label}</span>
               </div>
             ))}
