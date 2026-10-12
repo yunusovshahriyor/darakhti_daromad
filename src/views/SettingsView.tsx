@@ -19,11 +19,18 @@ const readClosed = (): string[] => {
   try { return JSON.parse(localStorage.getItem(CLOSED_KEY) ?? '[]') as string[]; } catch { return []; }
 };
 
-export default function SettingsView({ state, setState, onToast, onGuide }: Props & { onToast: (m: string) => void; onGuide: () => void }) {
+export type SettingsPage = 'menu' | 'accounts';
+
+export default function SettingsView({ state, setState, onToast, onGuide, page, setPage }: Props & {
+  onToast: (m: string) => void;
+  onGuide: () => void;
+  /** Зерсаҳифа дар App нигоҳ дошта мешавад: сарлавҳа ва тугмаи «бозгашт» дар ActionBar. */
+  page: SettingsPage;
+  setPage: (p: SettingsPage) => void;
+}) {
   const [editId, setEditId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [closed, setClosed] = useState(readClosed);
-  const [page, setPage] = useState<'menu' | 'accounts'>('menu');
   const sync = useSync();
   const [langOpen, setLangOpen] = useState(false);
   const free = isFree(state);
@@ -192,9 +199,6 @@ export default function SettingsView({ state, setState, onToast, onGuide }: Prop
   if (free) {
     return (
       <>
-        <button className="set-back tap" onClick={() => setPage('menu')}>
-          <span className="chev-back"><ChevronIcon /></span> Танзимот
-        </button>
         <FreeAccounts state={state} setState={setState} onToast={onToast} />
       </>
     );
@@ -202,10 +206,6 @@ export default function SettingsView({ state, setState, onToast, onGuide }: Prop
 
   return (
     <>
-      <button className="set-back tap" onClick={() => setPage('menu')}>
-        <span className="chev-back"><ChevronIcon /></span> Танзимот
-      </button>
-      <h3 className="group-title"><span>Ҳисобҳо ва фоизҳо</span></h3>
       <div className="cells tree">
         {row(root, -1)}
       </div>

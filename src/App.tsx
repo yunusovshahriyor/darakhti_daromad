@@ -27,6 +27,7 @@ import History, { HistoryFilter } from './views/History';
 import type { Sub, Tab } from './views/props';
 import Profile from './views/Profile';
 import SettingsView from './views/SettingsView';
+import type { SettingsPage } from './views/SettingsView';
 
 const LEFT: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: 'home', label: 'Асосӣ', icon: <GridIcon /> },
@@ -94,6 +95,8 @@ export default function App() {
   const [wantTg, setWantTg] = useState(() => new URLSearchParams(location.search).get('tg') === 'link');
   const [tab, setTab] = useState<Tab>(wantTg ? 'profile' : nav0.tab);
   const [sub, setSub] = useState<Sub | null>(nav0.sub);
+  const [setPageName, setSetPageName] = useState<SettingsPage>('menu');
+  useEffect(() => { if (sub !== 'settings') setSetPageName('menu'); }, [sub]);
   const [acct, setAcct] = useState<AccountId | null>(nav0.acct);
   const [filter, setFilter] = useState<HistoryFilter>(readFilter);
   const [pull, setPull] = useState(0);
@@ -353,7 +356,8 @@ export default function App() {
 
   const infoKind = !acct && (sub === 'debts' || sub === 'dreams' || sub === 'settings') ? sub : null;
   const home = tab === 'home' && !sub && !acct;
-  const title = acct ? ACCOUNTS[acct].name : sub ? SUB_TITLES[sub] : TITLES[tab];
+  const inAccPage = !acct && sub === 'settings' && setPageName === 'accounts';
+  const title = acct ? ACCOUNTS[acct].name : inAccPage ? (state.mode === 'free' ? 'Ҳисобҳо' : 'Ҳисобҳо ва фоизҳо') : sub ? SUB_TITLES[sub] : TITLES[tab];
   const props = { state, setState };
   const privacy = { hidden, onToggleHidden: () => setHidden(h => !h) };
 
@@ -371,7 +375,7 @@ export default function App() {
     }
     if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
     if (sub === 'debts') return <Debts {...props} onToast={setToast} />;
-    if (sub === 'settings') return <SettingsView {...props} onToast={setToast} onGuide={() => setSub('guide')} />;
+    if (sub === 'settings') return <SettingsView {...props} onToast={setToast} onGuide={() => setSub('guide')} page={setPageName} setPage={setSetPageName} />;
     if (sub === 'guide') return <SystemGuide {...props} onToast={setToast} onIntro={() => setIntro(true)} />;
     if (tab === 'home') {
       return (
@@ -397,7 +401,7 @@ export default function App() {
       {!home && (
         <header className="appbar">
           {(sub || acct) && (
-            <button className="icon-btn" onClick={() => { setSub(null); setAcct(null); }} aria-label="Бозгашт">
+            <button className="icon-btn" onClick={() => { if (inAccPage) { setSetPageName('menu'); return; } setSub(null); setAcct(null); }} aria-label="Бозгашт">
               <BackIcon />
             </button>
           )}
