@@ -1692,3 +1692,35 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
 .cur-ic { font-weight: 800; font-size: .95rem; }
 .cur-flow { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 4px 0 12px; font-size: 1.6rem; font-weight: 800; }
 .cur-flow i { font-style: normal; color: var(--primary); }
+
+/* ---------- Хабар додан дар бораи хато ---------- */
+.fb { display: flex; flex-direction: column; gap: 14px; padding-bottom: 6px; }
+.fb-lead { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.5; }
+.fb-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fb-type { font: inherit; color: var(--text); background: var(--bg); border: 2px solid var(--border); border-radius: 16px; padding: 12px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: border-color .15s, background .15s; }
+.fb-type span { font-size: 1.4rem; }
+.fb-type b { font-size: .82rem; }
+.fb-type.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--bg)); }
+.fb-field { display: flex; flex-direction: column; gap: 6px; font-size: .8rem; font-weight: 700; color: var(--muted); }
+.fb-field textarea, .fb-field input { font: inherit; font-weight: 400; font-size: .95rem; color: var(--text); background: var(--bg); border: 1.5px solid var(--border); border-radius: 14px; padding: 12px 14px; width: 100%; box-sizing: border-box; resize: vertical; line-height: 1.45; }
+.fb-field textarea:focus, .fb-field input:focus { outline: none; border-color: var(--primary); }
+.fb-count { align-self: flex-end; font-weight: 500; font-size: .74rem; color: var(--muted); }
+.fb-count.warn { color: #d97706; }
+.fb-tech { background: var(--bg); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.fb-switch { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.fb-switch .grow { display: flex; flex-direction: column; gap: 3px; }
+.fb-switch b { font-size: .9rem; color: var(--text); }
+.fb-switch small { color: var(--muted); font-weight: 400; font-size: .78rem; line-height: 1.4; }
+.fb-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.fb-switch i { flex: none; width: 46px; height: 28px; border-radius: 99px; background: color-mix(in srgb, var(--muted) 35%, transparent); position: relative; transition: background .2s; }
+.fb-switch i::after { content: ''; position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); transition: transform .2s; }
+.fb-switch input:checked + i { background: var(--primary); }
+.fb-switch input:checked + i::after { transform: translateX(18px); }
+.fb-more { align-self: flex-start; font: inherit; font-size: .8rem; font-weight: 700; color: var(--primary); background: none; border: 0; padding: 2px 0; cursor: pointer; }
+.fb-pre { margin: 0; max-height: 150px; overflow: auto; font-size: .68rem; line-height: 1.4; background: var(--surface); border-radius: 10px; padding: 10px; white-space: pre-wrap; word-break: break-all; color: var(--muted); }
+.fb-done { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 18px 8px 6px; }
+.fb-done h3 { margin: 6px 0 0; font-size: 1.4rem; }
+.fb-done p { margin: 0 0 8px; color: var(--muted); line-height: 1.5; max-width: 320px; }
+.fb-done .btn { width: 100%; }
+.fb-check { width: 76px; height: 76px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; animation: fb-pop .45s cubic-bezier(.3,1.5,.5,1); box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 45%, transparent); }
+@keyframes fb-pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }

@@ -757,3 +757,9 @@ export function resumeTelegramLogin() {
     pollTelegramLogin(v.code, v.ts);
   } catch { ls.del(TG_LOGIN_KEY); }
 }
+
+/** Хабар дар бораи хато: тавассути бот ба Firestore сабт мешавад (ва ба админ дар Telegram меравад, агар танзим шуда бошад). */
+export async function sendFeedback(p: { type: string; text: string; contact: string; lang: string; tech: unknown }): Promise<void> {
+  if (!BOT_API) throw new Error('nobot');
+  await botPost('/feedback', { ...p, uid: curUser?.uid ?? '' });
+}

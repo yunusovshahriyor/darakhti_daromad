@@ -12,6 +12,8 @@ TIMEZONE = "Asia/Dushanbe"
 BOT_USERNAME = "darakhti_daromad_bot"
 MINIAPP_SHORTNAME = ""
 APP_URL = "https://yunusovshahriyor.github.io/darakhti_daromad/"
+# Чати Telegram-и админ барои хабарҳо дар бораи хато (бо фармони /id дар бот гиред; холӣ — танҳо дар Firestore сабт мешавад)
+ADMIN_CHAT_ID = ""
 
 # Сирриҳо (дар GitHub Secrets ва тавассути workflow ба Cloudflare мераванд):
 #   TELEGRAM_TOKEN, WEBHOOK_SECRET, FIREBASE_SERVICE_ACCOUNT

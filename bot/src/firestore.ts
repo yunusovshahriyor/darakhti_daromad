@@ -7,6 +7,8 @@ export interface Env {
   FIREBASE_PROJECT_ID: string;
   TIMEZONE?: string;
   APP_URL: string;
+  /** Чати админ дар Telegram (ихтиёрӣ): хабарҳо дар бораи хато ба ин ҷо мераванд. Рақами чатро бо фармони /id гиред. */
+  ADMIN_CHAT_ID?: string;
   BOT_USERNAME: string;
   /** Қисқа номи Mini App дар @BotFather (/newapp), масалан «app». Агар холӣ бошад, воридшавӣ тавассути /start-и бот. */
   MINIAPP_SHORTNAME?: string;

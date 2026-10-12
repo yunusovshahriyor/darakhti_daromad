@@ -4,6 +4,7 @@ import { setAvatar, useSync } from '../sync';
 import Field from '../components/Field';
 import { ChevronIcon, PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
+import FeedbackSheet from '../components/FeedbackSheet';
 import TelegramSheet from '../components/TelegramSheet';
 import { inTelegram, openInBrowser } from '../tg';
 import { fmt, inPeriod, monthlyIncome, periodAt } from '../model';
@@ -32,6 +33,7 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
   const [name, setName] = useState(readName);
   const [editing, setEditing] = useState(false);
   const [tgOpen, setTgOpen] = useState(!!autoTelegram);
+  const [fbOpen, setFbOpen] = useState(false);
   useEffect(() => { if (autoTelegram) onTelegramShown?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [draft, setDraft] = useState('');
   const sync = useSync();
@@ -176,6 +178,11 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
           <div className="grow"><b>Саҳифаи шиносоӣ</b><small>Муқаддимаи кӯтоҳ дар бораи барнома</small></div>
           <ChevronIcon />
         </button>
+        <button className="cell tap link" onClick={() => setFbOpen(true)}>
+          <div className="ic">🐞</div>
+          <div className="grow"><b>Хабар додан дар бораи хато</b><small>Хато, пешниҳод ё савол</small></div>
+          <ChevronIcon />
+        </button>
       </div>
 
       {!standalone && (
@@ -215,6 +222,7 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
         </>
       )}
 
+      {fbOpen && <FeedbackSheet state={state} onClose={() => setFbOpen(false)} />}
       {tgOpen && <TelegramSheet onClose={() => setTgOpen(false)} onOpenAuth={onOpenAuth} />}
 
       {editing && (

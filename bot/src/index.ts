@@ -296,6 +296,7 @@ async function onMessage(env: Env, chat: number, text: string, name: string, ful
     return sendMenu(env, chat, name, lang, t);
   }
   if (cmd === '/menu') return sendMenu(env, chat, name, lang, t);
+  if (cmd === '/id') return send(env, chat, `ID: <code>${chat}</code>`);
   if (cmd === '/help') return send(env, chat, help(t));
   if (!cmd.startsWith('/') && CODE_RE.test(cmdRaw.toUpperCase()) && rest.length === 0) return send(env, chat, await link(env, chat, cmdRaw, t, code));
 
@@ -406,6 +407,8 @@ async function daily(env: Env, when = new Date()) {
 
 const ALLOWED_ORIGINS = ['https://yunusovshahriyor.github.io', 'http://localhost:4173', 'http://localhost:5173'];
 
+const FB_HITS = new Map<string, number[]>();
+
 async function api(req: Request, env: Env, path: string): Promise<Response> {
   const origin = req.headers.get('origin') ?? '';
   const cors: Record<string, string> = ALLOWED_ORIGINS.includes(origin)
@@ -415,7 +418,32 @@ async function api(req: Request, env: Env, path: string): Promise<Response> {
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...cors } });
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
   try {
-    const body = (await req.json().catch(() => ({}))) as { initData?: string; code?: string };
+    const body = (await req.json().catch(() => ({}))) as { initData?: string; code?: string } & Record<string, unknown>;
+
+    // Хабар дар бораи хато / пешниҳод / савол
+    if (path === '/feedback') {
+      const ip = req.headers.get('cf-connecting-ip') ?? 'x';
+      const now = Date.now();
+      const hits = (FB_HITS.get(ip) ?? []).filter(x => now - x < 60_000);
+      if (hits.length >= 3) return json({ error: 'rate' }, 429);
+      FB_HITS.set(ip, [...hits, now]);
+      const text = String(body.text ?? '').trim().slice(0, 1000);
+      if (text.length < 10) return json({ error: 'short' }, 400);
+      const type = ['bug', 'idea', 'question'].includes(String(body.type)) ? String(body.type) : 'bug';
+      const contact = String(body.contact ?? '').slice(0, 120);
+      const uid = String(body.uid ?? '').slice(0, 60);
+      const lang = String(body.lang ?? '').slice(0, 5);
+      const tech = body.tech ? JSON.stringify(body.tech).slice(0, 2500) : '';
+      const id = `${now}_${Math.random().toString(36).slice(2, 8)}`;
+      await fs.set(env, `feedback/${id}`, { createdAt: new Date(now).toISOString(), type, text, contact, uid, lang, tech });
+      if (env.ADMIN_CHAT_ID) {
+        const icon = type === 'bug' ? '🐞' : type === 'idea' ? '💡' : '💬';
+        const msg = `${icon} <b>${type}</b> · ${esc(lang)}${uid ? ` · <code>${esc(uid)}</code>` : ''}\n\n${esc(text)}` +
+          (contact ? `\n\n📨 ${esc(contact)}` : '') + (tech ? `\n\n<code>${esc(tech.slice(0, 700))}</code>` : '');
+        await send(env, env.ADMIN_CHAT_ID, msg.slice(0, 4000)).catch(() => {});
+      }
+      return json({ ok: true });
+    }
 
     // Mini App: воридшавии худкор бо initData-и имзошудаи Telegram
     if (path === '/auth/telegram') {
@@ -465,7 +493,7 @@ async function api(req: Request, env: Env, path: string): Promise<Response> {
 export default {
   async fetch(req: Request, env: Env, ctx: Ctx): Promise<Response> {
     const url = new URL(req.url);
-    if (url.pathname.startsWith('/auth/')) return api(req, env, url.pathname);
+    if (url.pathname.startsWith('/auth/') || url.pathname === '/feedback') return api(req, env, url.pathname);
     if (req.method !== 'POST' || url.pathname !== '/webhook') return new Response('Дарахти даромад — бот', { status: 200 });
     if (req.headers.get('x-telegram-bot-api-secret-token') !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });
     const u = (await req.json()) as Update;
