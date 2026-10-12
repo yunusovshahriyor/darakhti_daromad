@@ -1,0 +1,57 @@
+name: Publish Telegram post
+
+# Дастӣ иҷро мешавад (Actions → Run workflow) — танҳо баъди тасдиқи муаллиф.
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Файли пост (масалан posts/2026-10-12-salom.html), матн дар формати Telegram HTML'
+        required: true
+      photo:
+        description: 'Ихтиёрӣ: роҳи акс дар репо (масалан posts/img/a.jpg)'
+        required: false
+      dry_run:
+        description: 'true = танҳо санҷиш, ба канал намефиристад'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Send to Telegram channel
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          POST_FILE: ${{ inputs.file }}
+          PHOTO: ${{ inputs.photo }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          case "$POST_FILE" in posts/*.html) ;; *) echo "Файл бояд posts/*.html бошад"; exit 1;; esac
+          case "$POST_FILE$PHOTO" in *..*) echo "Роҳи нодуруст"; exit 1;; esac
+          [ -f "$POST_FILE" ] || { echo "Файл ёфт нашуд: $POST_FILE"; exit 1; }
+          [ -n "$CHANNEL_ID" ] || { echo "Сирри CHANNEL_ID танзим нашудааст"; exit 1; }
+          LEN=$(wc -m < "$POST_FILE")
+          echo "Матн: $LEN аломат"
+          if [ "$DRY_RUN" = "true" ]; then echo "dry_run — ирсол намешавад"; exit 0; fi
+
+          if [ -n "$PHOTO" ]; then
+            [ "$LEN" -le 1024 ] || { echo "Барои акс матн ≤1024 аломат бошад"; exit 1; }
+            RESP=$(curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto" \
+              -F chat_id="$CHANNEL_ID" -F parse_mode=HTML \
+              -F caption="$(cat "$POST_FILE")" -F photo=@"$PHOTO")
+          else
+            [ "$LEN" -le 4096 ] || { echo "Матн ≤4096 аломат бошад"; exit 1; }
+            RESP=$(jq -n --arg chat "$CHANNEL_ID" --rawfile text "$POST_FILE" \
+              '{chat_id:$chat,text:$text,parse_mode:"HTML",link_preview_options:{is_disabled:false}}' |
+              curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+                -H 'Content-Type: application/json' -d @-)
+          fi
+          echo "$RESP" | jq '{ok, error_code, description, message_id: .result.message_id}'
+          [ "$(echo "$RESP" | jq -r .ok)" = "true" ]
