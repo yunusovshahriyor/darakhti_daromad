@@ -4,6 +4,7 @@ import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
 import { BASE, activeCode, setActiveCode } from './currency';
+import { nav, refresh, success, warn } from './haptic';
 import Onboarding, { INTRO_RESUME_KEY } from './components/Onboarding';
 import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
@@ -252,7 +253,7 @@ export default function App() {
       const goal = state.goals[id];
       if (goal && prev[id] < goal && bal[id] >= goal) {
         setToast(`🎉 «${ACCOUNTS[id].name}» ба мақсад расид!`);
-        navigator.vibrate?.([30, 40, 30]);
+        warn();
         break;
       }
     }
@@ -274,6 +275,10 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return;
+    // Ҳис кардани муваффақият: ларзиш; пардохти пурраи қарз, харид ва расидан ба мақсад — ҷашн
+    if (toast.includes('🎉') && !toast.includes('тайёр аст')) {
+      setCelebration({ title: 'Табрик!', text: toast.replace('🎉', '').trim() });
+    } else if (toast.includes('✓')) success();
     const t = setTimeout(() => setToast(''), toast === EXIT_MSG ? 3000 : 2400);
     return () => clearTimeout(t);
   }, [toast]);
@@ -319,7 +324,7 @@ export default function App() {
   useHistoryLayer(acct !== null, () => setAcct(null), reuseAcct);
 
   const go = (t: Tab, f?: HistoryFilter) => {
-    if (t !== tab) navigator.vibrate?.(8);
+    if (t !== tab) nav();
     setSub(null);
     setAcct(null);
     setTab(t);
@@ -353,7 +358,7 @@ export default function App() {
     if (pull >= 52) {
       setRefreshing(true);
       setPull(56);
-      navigator.vibrate?.(10);
+      refresh();
       setTimeout(() => window.location.reload(), 450);
     } else {
       setPull(0);

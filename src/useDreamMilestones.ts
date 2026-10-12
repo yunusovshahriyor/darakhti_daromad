@@ -1,3 +1,4 @@
+import { warn } from './haptic';
 import { useEffect } from 'react';
 import { balancesOf, fundDreams } from './model';
 import type { State } from './types';
@@ -49,7 +50,7 @@ export function useDreamMilestones(
     write(MS_KEY, map);
     if (message) {
       toast(message);
-      navigator.vibrate?.([30, 40, 30]);
+      warn();
     }
 
     const seen = read<number[]>(BOUGHT_KEY);

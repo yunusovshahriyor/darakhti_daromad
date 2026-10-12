@@ -8,6 +8,7 @@ import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { useHistoryLayer } from '../components/useHistoryLayer';
 import Sheet from '../components/Sheet';
 import { ACCENTS, getAccent, getTheme, setTheme } from '../theme';
+import { hapticOn, setHapticOn, success } from '../haptic';
 import type { Accent, ThemeMode } from '../theme';
 import { LANGS, currentLang, setLang } from '../i18n';
 import type { Lang } from '../i18n';
@@ -39,6 +40,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const [langOpen, setLangOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
   const [curOpen, setCurOpen] = useState(false);
+  const [haptic, setHaptic] = useState(hapticOn);
   const [mode, setMode] = useState<ThemeMode>(getTheme);
   const [accent, setAccent] = useState<Accent>(getAccent);
   const MODES: [ThemeMode, string, string][] = [['auto', 'Худкор', '🌓'], ['light', 'Равшан', '☀️'], ['dark', 'Торик', '🌙']];
@@ -220,6 +222,11 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
                 </button>
               ))}
             </div>
+            <label className="fb-switch look-haptic">
+              <span className="grow"><b>Ларзиш ҳангоми амалҳо</b><small>Ларзиши нарм ҳангоми сабт, пардохт ва табрик (Android)</small></span>
+              <input type="checkbox" checked={haptic} onChange={e => { setHaptic(e.target.checked); setHapticOn(e.target.checked); if (e.target.checked) success(); }} />
+              <i aria-hidden />
+            </label>
             <div className="look-preview"><button className="btn" type="button">{ACCENTS[accent].name}</button></div>
           </Sheet>
         )}

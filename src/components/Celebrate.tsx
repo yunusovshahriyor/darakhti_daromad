@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { celebrate } from '../haptic';
 
 const PIECES = ['🎉', '✨', '🎊', '⭐', '💚', '🌟'];
 
@@ -13,7 +14,7 @@ export default function Celebrate({ title, text, onClose }: { title: string; tex
   })), []);
 
   useEffect(() => {
-    navigator.vibrate?.([40, 50, 40, 50, 80]);
+    celebrate();
     const t = setTimeout(onClose, 4200);
     return () => clearTimeout(t);
   }, [onClose]);

@@ -1753,3 +1753,5 @@ html.boot .chart .bar, html.boot .pf-bar span, html.boot .chart .val { --base: 3
 html.boot .donut-seg { --base: 340ms; }
 @keyframes donut-draw { from { stroke-dasharray: 0 var(--circ); } to { stroke-dasharray: var(--len) var(--circ); } }
 @media (prefers-reduced-motion: reduce) { .chart .bar, .pf-bar span, .chart .val, .donut-seg { animation: none; } }
+
+.look-haptic { background: var(--bg); border-radius: 16px; padding: 12px 14px; margin-bottom: 14px; }

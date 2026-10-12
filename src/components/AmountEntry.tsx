@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tap } from '../haptic';
 import { today } from '../model';
 import DatePickerSheet from './DatePickerSheet';
 
@@ -43,7 +44,7 @@ export default function AmountEntry({ value, onChange, date, onDate, sign, locke
   const [picking, setPicking] = useState(false);
 
   const press = (k: string) => {
-    navigator.vibrate?.(5);
+    tap();
     if (k === 'back') return onChange(value.slice(0, -1));
     if (k === ',') return onChange(value.includes('.') ? value : `${value || '0'}.`);
     const [i, f] = value.split('.');

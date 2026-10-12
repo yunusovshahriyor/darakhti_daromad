@@ -953,5 +953,8 @@
 "Даромад, хароҷот, қарзҳо, орзуҳо ва ҳамаи ҳисобҳо бо қурби имрӯза табдил меёбанд. Пеш аз ин нусхаи захиравӣ сохта мешавад. Баъдан маблағҳо тағйир намеёбанд.": "Income, expenses, debts, dreams and all accounts are converted at today's rate. A backup copy is created first. Afterwards the amounts no longer change.",
 "Қурби асъор": "Currency rate",
 "Хабар додан дар бораи хато": "Report a problem",
-"Хато, пешниҳод ё савол": "Bug, idea or question"
+"Хато, пешниҳод ё савол": "Bug, idea or question",
+"Ларзиш ҳангоми амалҳо": "Haptic feedback",
+"Ларзиши нарм ҳангоми сабт, пардохт ва табрик (Android)": "Gentle vibration on saving, payments and celebrations (Android)",
+"Табрик!": "Congratulations!"
 }
