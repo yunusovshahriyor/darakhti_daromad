@@ -7,11 +7,13 @@ import { initSync } from './sync';
 import { initTelegram, loginCodeFromLaunch } from './tg';
 import TelegramLoginComplete from './components/TelegramLoginComplete';
 import { initI18n } from './i18n';
+import { brand } from './brand';
 import './style.css';
 
 const installMode = new URLSearchParams(location.search).get('install') === '1';
 
 const boot = () => {
+  document.title = brand().name;
   const root = document.getElementById('root')!;
   const loginCode = loginCodeFromLaunch();
   if (loginCode) {

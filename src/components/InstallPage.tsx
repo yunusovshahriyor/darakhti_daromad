@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { brand } from '../brand';
 
 interface InstallEvent extends Event {
   prompt: () => Promise<void>;
@@ -49,6 +50,8 @@ export default function InstallPage() {
           ))}
         </div>
       </div>
+
+      <img className="inst-logo" src={brand().logo} alt={brand().name} />
 
       {done ? (
         <>

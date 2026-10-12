@@ -1,3 +1,4 @@
+import { brand } from '../brand';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { BOT_API } from '../firebaseConfig';
 import { beginTelegramLogin, cancelTelegramLogin, resetPassword, signIn, signInGoogle, signUp, telegramLoginStart, useSync } from '../sync';
@@ -119,7 +120,7 @@ export default function AuthPage({ onClose, onToast }: { onClose: () => void; on
 
       <div className="auth-inner">
         <div className="auth-brand">
-          <div className="auth-logo">даромад<i>.</i></div>
+          <img className="auth-logo-img" src={brand().logo} alt={brand().name} />
           <h1>{mode === 'in' ? 'Хуш омадед' : 'Ҳисоби нав созед'}</h1>
           <p>{mode === 'in'
             ? 'Ворид шавед ва маълумоти худро дар ҳар дастгоҳ бубинед.'

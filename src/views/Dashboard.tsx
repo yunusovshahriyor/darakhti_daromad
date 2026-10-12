@@ -1,3 +1,4 @@
+import { brand } from '../brand';
 import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
 import AccountScopeSheet from '../components/AccountScopeSheet';
@@ -101,8 +102,11 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
     <>
       <header className="home-head">
         <div className="brand">
-          <div className="logo">даромад<i>.</i></div>
-          <small>содда. устувор.</small>
+          <img className="brand-logo" src={brand().logo} alt="" />
+          <div className="brand-text">
+            <div className="logo">{brand().name}<i>.</i></div>
+            <small>{brand().tag}</small>
+          </div>
         </div>
         <button className="avatar-btn" onClick={onProfile} aria-label="Профил"><PersonIcon /></button>
       </header>
