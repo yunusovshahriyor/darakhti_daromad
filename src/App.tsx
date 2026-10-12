@@ -354,7 +354,8 @@ export default function App() {
     (navigator as Navigator & { standalone?: boolean }).standalone === true;
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  const infoKind = !acct && (sub === 'debts' || sub === 'dreams' || sub === 'settings') ? sub : null;
+  // Маълумоти фоизҳо танҳо дар саҳифаи «Ҳисобҳо ва фоизҳо» (на дар менюи Танзимот ва на дар ҳолати «ба тарзи худам»)
+  const infoKind = !acct && (sub === 'debts' || sub === 'dreams' || (sub === 'settings' && setPageName === 'accounts' && state.mode !== 'free')) ? sub : null;
   const home = tab === 'home' && !sub && !acct;
   const inAccPage = !acct && sub === 'settings' && setPageName === 'accounts';
   const title = acct ? ACCOUNTS[acct].name : inAccPage ? (state.mode === 'free' ? 'Ҳисобҳо' : 'Ҳисобҳо ва фоизҳо') : sub ? SUB_TITLES[sub] : TITLES[tab];
