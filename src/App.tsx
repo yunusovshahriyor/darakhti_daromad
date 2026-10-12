@@ -378,7 +378,7 @@ export default function App() {
     if (tab === 'accounts') return <Accounts {...props} {...privacy} onOpenAccount={openAccount} />;
     if (tab === 'history') return <History {...props} filter={filter} onFilter={setFilter} />;
     return (
-      <Profile {...props} open={setSub} standalone={standalone} ios={ios} onOpenAuth={() => setAuthOpen(true)} autoTelegram={wantTg}
+      <Profile {...props} open={setSub} onIntro={() => setIntro(true)} standalone={standalone} ios={ios} onOpenAuth={() => setAuthOpen(true)} autoTelegram={wantTg}
         onTelegramShown={() => {
           setWantTg(false);
           try { history.replaceState(history.state, '', location.pathname + location.hash); } catch { /* ignore */ }

@@ -17,6 +17,7 @@ const readName = (): string => {
 
 interface ProfileProps extends Props {
   open: (s: Sub) => void;
+  onIntro: () => void;
   canInstall: boolean;
   install: () => void;
   standalone: boolean;
@@ -27,7 +28,7 @@ interface ProfileProps extends Props {
   onTelegramShown?: () => void;
 }
 
-export default function Profile({ state, open, canInstall, install, standalone, ios, onOpenAuth, autoTelegram, onTelegramShown }: ProfileProps) {
+export default function Profile({ state, open, onIntro, canInstall, install, standalone, ios, onOpenAuth, autoTelegram, onTelegramShown }: ProfileProps) {
   const [name, setName] = useState(readName);
   const [editing, setEditing] = useState(false);
   const [tgOpen, setTgOpen] = useState(!!autoTelegram);
@@ -163,6 +164,11 @@ export default function Profile({ state, open, canInstall, install, standalone, 
         <button className="cell tap link" onClick={() => setTgOpen(true)}>
           <div className="ic">✈️</div>
           <div className="grow"><b>Telegram-бот</b><small>Ёдоварии пардохтҳо ва хулоса</small></div>
+          <ChevronIcon />
+        </button>
+        <button className="cell tap link" onClick={onIntro}>
+          <div className="ic">👋</div>
+          <div className="grow"><b>Саҳифаи шиносоӣ</b><small>Муқаддимаи кӯтоҳ дар бораи барнома</small></div>
           <ChevronIcon />
         </button>
         <button className="cell tap link" onClick={() => open('guide')}>
