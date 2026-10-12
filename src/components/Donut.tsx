@@ -9,7 +9,7 @@ export interface Seg {
 const R = 44;
 const C = 2 * Math.PI * R;
 
-export default function Donut({ segs, label, sub }: { segs: Seg[]; label: ReactNode; sub: string }) {
+export default function Donut({ segs, label, sub, blur = false }: { segs: Seg[]; label: ReactNode; sub: string; blur?: boolean }) {
   const total = segs.reduce((s, x) => s + x.value, 0);
   let acc = 0;
   return (
@@ -26,7 +26,7 @@ export default function Donut({ segs, label, sub }: { segs: Seg[]; label: ReactN
         acc += len;
         return el;
       })}
-      <text x="60" y="58" textAnchor="middle" className="donut-val">{label}</text>
+      <text x="60" y="58" textAnchor="middle" className={blur ? 'donut-val amt-blur' : 'donut-val'}>{blur ? '8 888' : label}</text>
       <text x="60" y="74" textAnchor="middle" className="donut-sub">{sub}</text>
     </svg>
   );

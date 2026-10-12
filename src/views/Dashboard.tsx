@@ -191,7 +191,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
           <h2>Аз рӯи ҳисобҳо</h2>
           <button className="link-btn" onClick={() => onNavigate('history', 'expense')}>Муфассал</button>
         </div>
-        <Donut segs={segs} label={mask(fmt(aSpent))} sub="смн" />
+        <Donut segs={segs} label={fmt(aSpent)} blur={hidden} sub="смн" />
         {segs.length === 0 ? (
           <p className="muted center">Дар ин давра хароҷот нест.</p>
         ) : (

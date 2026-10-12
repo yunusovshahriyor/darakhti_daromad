@@ -40,5 +40,5 @@ export function useCountUp(target: number, duration = 900): number {
 /** Маълумоти аниматсияшаванда: `<Count value={x} hidden={…} />`. */
 export function Count({ value, hidden = false }: { value: number; hidden?: boolean }) {
   const v = useCountUp(value);
-  return <>{hidden ? '••••' : fmt(v)}</>;
+  return hidden ? <span className="amt-blur" aria-label="•••">8 888</span> : <>{fmt(v)}</>;
 }
