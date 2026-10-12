@@ -121,7 +121,11 @@ export default function App() {
   // Асъор: нусхаи localStorage барои translator; агар аз дастгоҳи дигар (синхронизатсия) иваз шуда бошад — саҳифа аз нав бор мешавад
   useEffect(() => {
     const code = state.currency ?? BASE;
-    if (code !== activeCode()) { setActiveCode(code); location.reload(); }
+    if (code !== activeCode()) {
+      setActiveCode(code);
+      // Агар хотира дастнорас бошад (реҷаи махфӣ), аз нав бор кардан давр мезанад: фақат вақте, ки сабт шуд
+      if (activeCode() === code) location.reload();
+    }
   }, [state.currency]);
 
   // Корбари нав (бе маълумот ва бе интихоб): аввал услуби кор интихоб мешавад. Каме интизор мешавем, то синхронизатсия
