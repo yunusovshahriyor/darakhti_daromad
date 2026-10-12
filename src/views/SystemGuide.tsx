@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useConfirm } from '../components/ConfirmSheet';
+import VideoPlayer from '../components/VideoPlayer';
 import { GUIDE, TRAINING_ID, TRAINING_URL } from '../guideText';
 import { currentLang } from '../i18n';
 import { DEFAULT_ACCOUNTS, allocate, defaultTree, fmt, isFree, toFreeMode, toSystemMode } from '../model';
@@ -23,7 +24,6 @@ export default function SystemGuide({ state, setState, onToast }: Props & { onTo
     if (inTelegram()) { e.preventDefault(); openInBrowser(TRAINING_URL); }
   };
   const [ask, confirmDialog] = useConfirm();
-  const [play, setPlay] = useState(false);
   const swap = async () => {
     const ok = await ask({ title: g.confirmTitle, text: free ? g.confirmToSystem : g.confirmToFree, ok: g.confirmOk });
     if (!ok) return;
@@ -58,19 +58,8 @@ export default function SystemGuide({ state, setState, onToast }: Props & { onTo
           <span className="gc-ic">🎬</span>
           <div><b>{g.videoTitle}</b><p>{g.videoText}</p></div>
         </div>
-        <div className="gv-frame">
-          {play ? (
-            <iframe src={`https://www.youtube-nocookie.com/embed/${TRAINING_ID}?autoplay=1&rel=0&playsinline=1`}
-              title={g.videoTitle} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin" />
-          ) : (
-            <button className="gv-poster" onClick={() => setPlay(true)} aria-label={g.playHint}
-              style={{ backgroundImage: `url(https://i.ytimg.com/vi/${TRAINING_ID}/hqdefault.jpg)` }}>
-              <span className="gv-play"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>
-              <small>{g.playHint}</small>
-            </button>
-          )}
-        </div>
+        <VideoPlayer videoId={TRAINING_ID} title={g.videoTitle}
+          labels={{ play: g.vPlay, pause: g.vPause, stop: g.vStop, expand: g.vExpand, shrink: g.vShrink, hint: g.playHint }} />
         <a className="gv-link" href={TRAINING_URL} target="_blank" rel="noopener noreferrer" onClick={open}>{g.videoFallback}</a>
       </section>
 

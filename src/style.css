@@ -1533,12 +1533,24 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
 .guide-video { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .gv-head { display: flex; gap: 10px; }
 .gv-head p { margin: 4px 0 0; color: var(--muted); font-size: .86rem; line-height: 1.45; }
-.gv-frame { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #000; }
-.gv-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.gv-poster { position: absolute; inset: 0; width: 100%; border: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: #fff; font: inherit; }
-.gv-poster::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)); }
-.gv-play { position: relative; width: 62px; height: 62px; border-radius: 50%; background: #ff0033; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
-.gv-poster small { position: relative; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.vp { display: flex; flex-direction: column; gap: 8px; }
+.vp-stage { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #000; }
+.vp-host, .vp-host iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.vp-shield { position: absolute; inset: 0; z-index: 2; }
+.vp-poster { position: absolute; inset: 0; z-index: 3; width: 100%; border: 0; background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; cursor: pointer; color: #fff; font: inherit; }
+.vp-poster::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.55)); }
+.vp-play { position: relative; width: 62px; height: 62px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.vp-play svg { width: 30px; height: 30px; }
+.vp-poster small { position: relative; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.vp-bar { display: flex; align-items: center; gap: 8px; }
+.vp-bar button { width: 46px; height: 40px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+.vp-bar button:disabled { opacity: .4; cursor: default; }
+.vp-grow { flex: 1; }
+.vp.big { position: fixed; inset: 0; z-index: 9000; background: #000; justify-content: center; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); gap: 0; }
+.vp.big .vp-stage { border-radius: 0; flex: none; width: 100%; max-height: calc(100% - 64px); }
+.vp.big .vp-bar { padding: 10px 14px; background: #000; }
+.vp.big .vp-bar button { background: rgba(255,255,255,.12); border-color: transparent; color: #fff; }
+@media (orientation: landscape) { .vp.big .vp-stage { width: auto; height: calc(100% - 64px); max-width: 100%; margin: 0 auto; } }
 .gv-link { align-self: center; font-size: .8rem; color: var(--muted); text-decoration: underline; }
 .gc-ic { font-size: 1.8rem; }
 .guide-cmp { display: flex; flex-direction: column; gap: 10px; }

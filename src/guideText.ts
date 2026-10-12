@@ -4,7 +4,7 @@ export interface GuideText {
   heroTitle: string; heroText: string;
   videoTitle: string; videoText: string; videoBtn: string;
   cards: [{ icon: string; title: string; text: string }, { icon: string; title: string; text: string }];
-  badgeOn: string; tapSwitch: string; confirmTitle: string; confirmToFree: string; confirmToSystem: string; confirmOk: string; playHint: string; videoFallback: string;
+  badgeOn: string; tapSwitch: string; confirmTitle: string; confirmToFree: string; confirmToSystem: string; confirmOk: string; playHint: string; vPlay: string; vPause: string; vStop: string; vExpand: string; vShrink: string; videoFallback: string;
   nowOn: string; nowFree: string; switchToFree: string; switchToSystem: string; switched: string; switchedFree: string;
   cmpTitle: string; cmpHead: [string, string, string];
   cmp: [string, string, string][];
@@ -29,6 +29,7 @@ const tg: GuideText = {
   confirmToSystem: 'Системаи Давлатов фаъол мешавад: даромади нав аз рӯи фоиз тақсим мешавад. Ҳисобҳои худатон бо 0% илова мешаванд. Маълумоти шумо намемирад.',
   confirmOk: 'Иваз кардан',
   playHint: 'Видеоро дар дохили барнома тамошо кунед',
+  vPlay: 'Оғоз', vPause: 'Таваққуф', vStop: 'Қатъ', vExpand: 'Калон кардан', vShrink: 'Хурд кардан',
   videoFallback: 'Агар видео кушода нашавад, дар YouTube кушоед',
   heroTitle: 'Ду системаи кор',
   heroText: 'Барнома бо ду тарз кор карда метавонад. Онро ҳар вақт дар Танзимот иваз кардан мумкин аст: маълумоти шумо намемирад.',
@@ -104,6 +105,7 @@ const ru: GuideText = {
   confirmToSystem: 'Система Давлатова будет включена: новый доход разделится по процентам. Созданные вами счета добавятся с 0%. Ваши данные не пропадут.',
   confirmOk: 'Сменить',
   playHint: 'Смотрите видео прямо в приложении',
+  vPlay: 'Старт', vPause: 'Пауза', vStop: 'Стоп', vExpand: 'Увеличить', vShrink: 'Уменьшить',
   videoFallback: 'Если видео не открывается, откройте на YouTube',
   heroTitle: 'Две системы работы',
   heroText: 'Приложение может работать двумя способами. Их можно переключить в любой момент в Настройках: ваши данные не пропадут.',
@@ -179,6 +181,7 @@ const en: GuideText = {
   confirmToSystem: "Davlatov's system will be turned on: new income is split by percentages. Accounts you created are added at 0%. Your data is not lost.",
   confirmOk: 'Change',
   playHint: 'Watch the video right in the app',
+  vPlay: 'Play', vPause: 'Pause', vStop: 'Stop', vExpand: 'Enlarge', vShrink: 'Shrink',
   videoFallback: "If the video doesn't open, open it on YouTube",
   heroTitle: 'Two ways to work',
   heroText: 'The app can work in two ways. You can switch any time in Settings: your data is not lost.',
