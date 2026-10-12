@@ -1781,3 +1781,19 @@ html.boot .donut-seg { --base: 340ms; }
 .lock-status .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
 .lock-status .dot.on { background: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 25%, transparent); }
 .lock-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Суммаҳои тез ва «Аз нав ҳамон» ---------- */
+.quick-amts { display: flex; gap: 8px; margin: 0 0 10px; overflow-x: auto; scrollbar-width: none; }
+.quick-amts::-webkit-scrollbar { display: none; }
+.qa { flex: 1 0 auto; font: inherit; font-weight: 700; font-size: .95rem; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; transition: background .12s, border-color .12s, transform .1s; }
+.qa:active { transform: scale(.95); }
+.qa.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--bg)); color: var(--primary); }
+.repeat-row { display: flex; gap: 8px; margin: 0 0 12px; overflow-x: auto; scrollbar-width: none; }
+.repeat-row::-webkit-scrollbar { display: none; }
+.rp { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: .86rem; font-weight: 600; padding: 9px 14px; border-radius: 14px; border: 1.5px dashed color-mix(in srgb, var(--primary) 55%, var(--border)); background: color-mix(in srgb, var(--primary) 7%, var(--bg)); color: var(--text); cursor: pointer; max-width: 80%; }
+.rp i { font-style: normal; color: var(--primary); font-weight: 800; }
+.rp span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp small { color: var(--muted); font-weight: 600; }
+.hint-row { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 12px; }
+.hint-chip { font: inherit; font-size: .8rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+.hint-chip small { color: var(--muted); }

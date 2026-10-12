@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { guessCategory } from '../categories';
+import { expenseHints, quickAmounts, recentExpenses, smartCategory } from '../suggest';
 import { ACCOUNTS, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
@@ -22,6 +22,17 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
   const [date, setDate] = useState(today);
 
   const bal = balancesOf(state);
+  const recent = recentExpenses(state.expenses);
+  const hints = expenseHints(state.expenses, note).filter(h => h.title.trim().toLowerCase() !== note.trim().toLowerCase());
+  const quick = quickAmounts(state.expenses.filter(e => !e.debtId && !e.dreamId && !e.loanId).map(e => e.amount), state.currency ?? 'TJS', false);
+  const hidden = hiddenAccounts(state);
+  const apply = (title: string, amountV: number, cat: string | undefined, acc: string, fill = true) => {
+    const generic = title === cat || title === ACCOUNTS[acc]?.name;
+    setNote(generic ? '' : title);
+    if (cat) { setCategory(cat); setManual(true); }
+    if (fill) setAmount(String(amountV));
+    if (ACCOUNTS[acc] && !hidden.includes(acc)) setAccount(acc);
+  };
   const num = parseFloat(amount) || 0;
   const over = num > bal[account] + 0.005;
 
@@ -41,7 +52,16 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
 
   return (
     <form onSubmit={onSubmit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
+      {recent.length > 0 && (
+        <div className="repeat-row">
+          {recent.map(r => (
+            <button key={r.id} type="button" className="rp" onClick={() => apply(r.title, r.amount, r.category, r.account)}>
+              <i>↻</i><span>{r.title} <small>· {fmt(r.amount)} смн</small></span>
+            </button>
+          ))}
+        </div>
+      )}
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" quick={quick} />
       <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal} spentBy={spent(state.expenses)}
         hidden={hiddenAccounts(state)} />
       <CategoryChips state={state} setState={setState} value={category} onChange={c => { setCategory(c); setManual(true); }} />
@@ -49,9 +69,18 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount }:
         <input value={note} placeholder="Масалан, такси ба кор"
           onChange={e => {
             setNote(e.target.value);
-            if (!manual) setCategory(guessCategory(e.target.value, state.categories));
+            if (!manual) setCategory(smartCategory(state, e.target.value));
           }} />
       </Field>
+      {hints.length > 0 && (
+        <div className="hint-row">
+          {hints.map(h => (
+            <button key={h.title} type="button" className="hint-chip" onClick={() => apply(h.title, h.amount, h.category, h.account, !num)}>
+              {h.title} <small>· {fmt(h.amount)}</small>
+            </button>
+          ))}
+        </div>
+      )}
       {over && num > 0 && (
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[account])}).</div>
       )}

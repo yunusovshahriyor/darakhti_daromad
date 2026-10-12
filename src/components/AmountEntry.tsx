@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { tap } from '../haptic';
-import { today } from '../model';
+import { fmt, today } from '../model';
 import DatePickerSheet from './DatePickerSheet';
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
@@ -29,7 +29,9 @@ function shown(value: string) {
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'back'];
 
 /** Маблағ бо тугмачаҳои рақамӣ + сана: тарҳи барномаи мобилӣ. */
-export default function AmountEntry({ value, onChange, date, onDate, sign, locked = false, dateLabel = 'Санаи амалиёт' }: {
+export default function AmountEntry({ value, onChange, date, onDate, sign, locked = false, dateLabel = 'Санаи амалиёт', quick }: {
+  /** Суммаҳои тез (тугмаҳо болои клавиатура). */
+  quick?: number[];
   /** Номи сатри сана. */
   dateLabel?: string;
   /** Маблағ тағйир намеёбад (амалиёти вобаста ба қарз/орзу): тугмачаҳои рақамӣ нест. */
@@ -58,6 +60,15 @@ export default function AmountEntry({ value, onChange, date, onDate, sign, locke
       <div className={`amount-big${value ? '' : ' empty'}${sign === '+' ? ' pos' : sign === '−' ? ' neg' : ''}`}>
         {sign && value ? <span className="sg">{sign}</span> : null}{shown(value)} <small>смн</small>
       </div>
+
+      {!locked && quick && quick.length > 0 && (
+        <div className="quick-amts" role="group">
+          {quick.map(q => (
+            <button key={q} type="button" className={Number(value) === q ? 'qa on' : 'qa'}
+              onClick={() => { tap(); onChange(String(q)); }}>{fmt(q)}</button>
+          ))}
+        </div>
+      )}
 
       {!locked && (
       <div className="keypad">
