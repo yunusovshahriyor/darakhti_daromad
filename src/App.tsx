@@ -8,7 +8,7 @@ import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
-  BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, RefreshIcon, WalletIcon,
+  BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, WalletIcon,
 } from './components/Icons';
 import { setRootBackHandler, useHistoryLayer } from './components/useHistoryLayer';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, newFreeAccounts, syncCatalog, toFreeMode, toSystemMode, today, uid } from './model';
@@ -420,7 +420,11 @@ export default function App() {
 
       <div className={refreshing ? 'ptr busy' : 'ptr'}
         style={{ transform: `translate(-50%, ${pull - 48}px)`, opacity: Math.min(1, pull / 40), '--rot': `${pull * 4}deg` } as CSSProperties}>
-        <RefreshIcon />
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
+          <circle className="ptr-track" cx="12" cy="12" r="9" />
+          <circle className="ptr-arc" cx="12" cy="12" r="9" pathLength="100"
+            style={{ strokeDashoffset: refreshing ? 25 : 100 - Math.min(100, (pull / 52) * 72) }} />
+        </svg>
       </div>
 
       <main className={home ? 'screen home' : 'screen'} key={`${acct ?? ''}${sub ?? ''}${tab}`}

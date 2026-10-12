@@ -642,9 +642,12 @@ input[type='date'] { min-height: 50px; }
   background: var(--surface); color: var(--primary); box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
   pointer-events: none; opacity: 0;
 }
-.ptr svg { transform: rotate(var(--rot, 0deg)); }
-.ptr.busy svg { animation: ptr-spin .8s linear infinite; }
-@keyframes ptr-spin { to { transform: rotate(360deg); } }
+.ptr svg { transform: rotate(var(--rot, 0deg)); overflow: visible; }
+.ptr circle { fill: none; stroke-width: 2.6; }
+.ptr-track { stroke: color-mix(in srgb, var(--primary) 18%, transparent); }
+.ptr-arc { stroke: var(--primary); stroke-linecap: round; stroke-dasharray: 100; transform-origin: 12px 12px; transform: rotate(-90deg); }
+.ptr.busy svg { animation: ptr-spin .75s linear infinite; }
+@keyframes ptr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* ---------- Варақаи маълумот (ℹ️) ---------- */
 .appbar .info-btn { margin-left: auto; margin-right: -8px; color: var(--primary); }
