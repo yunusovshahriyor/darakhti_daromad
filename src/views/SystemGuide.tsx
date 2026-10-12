@@ -63,60 +63,86 @@ export default function SystemGuide({ state, setState, onToast }: Props & { onTo
         <a className="gv-link" href={TRAINING_URL} target="_blank" rel="noopener noreferrer" onClick={open}>{g.videoFallback}</a>
       </section>
 
-      <h3 className="group-title"><span>{g.cmpTitle}</span></h3>
-      <div className="guide-cmp">
-        {g.cmp.map(([k, a, b]) => (
-          <div className="gcmp-row" key={k}>
-            <b>{k}</b>
-            <div className={free ? 'gcmp-col' : 'gcmp-col on'}><small>{g.cmpHead[1]}</small>{a}</div>
-            <div className={free ? 'gcmp-col on' : 'gcmp-col'}><small>{g.cmpHead[2]}</small>{b}</div>
+      <section className="gs">
+        <header className="gs-head"><span className="gs-ic">⚖️</span><h3>{g.cmpTitle}</h3></header>
+        <div className="gcmp">
+          <div className="gcmp-h">
+            <span />
+            <b className={free ? '' : 'on'}>🌳 {g.cmpHead[1]}</b>
+            <b className={free ? 'on' : ''}>💼 {g.cmpHead[2]}</b>
           </div>
-        ))}
-      </div>
+          {g.cmp.map(([k, a, b]) => (
+            <div className="gcmp-r" key={k}>
+              <em>{k}</em>
+              <p className={free ? '' : 'on'}>{a}</p>
+              <p className={free ? 'on' : ''}>{b}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-      <h3 className="group-title"><span>🌳 {g.sysTitle}</span></h3>
-      <p className="guide-p">{g.sysIntro}</p>
+      <section className="gs">
+        <header className="gs-head"><span className="gs-ic">🌳</span><h3>{g.sysTitle}</h3></header>
+        <p className="gs-p">{g.sysIntro}</p>
+        <h4 className="gs-sub">{g.stepsTitle}</h4>
+        <ol className="gsteps">
+          {g.steps.map(([t, d]) => (
+            <li key={t}><b>{t}</b><span>{d}</span></li>
+          ))}
+        </ol>
+      </section>
 
-      <h4 className="guide-h">{g.stepsTitle}</h4>
-      <ol className="guide-steps">
-        {g.steps.map(([t, d]) => (
-          <li key={t}><b>{t}</b><span>{d}</span></li>
-        ))}
-      </ol>
+      <section className="gs">
+        <header className="gs-head"><span className="gs-ic">🧮</span><h3>{g.calcTitle}</h3></header>
+        <p className="gs-p">{g.calcHint}</p>
+        <div className="gcalc">
+          <label className="gcalc-in">
+            <span>{g.calcLabel}</span>
+            <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} />
+          </label>
+          <button className={debt ? 'gcalc-chip on' : 'gcalc-chip'} onClick={() => setDebt(d => !d)} aria-pressed={debt}>
+            {debt ? '✓ ' : ''}{g.calcDebt}
+          </button>
+        </div>
+        <div className="gsplit">
+          {SPLIT_ORDER.map(id => {
+            const p = pct[id] ?? 0;
+            return (
+              <div className={p > 0 ? 'gsplit-r' : 'gsplit-r zero'} key={id}>
+                <span className="gsplit-ic">{ICON[id]}</span>
+                <div className="gsplit-m">
+                  <div className="gsplit-t"><b>{g.tree[id]}</b><span>{fmt(Math.round((split[id] ?? 0) * 100) / 100)}</span></div>
+                  <div className="gsplit-bar"><i style={{ width: `${Math.min(100, p * 2.2)}%` }} /></div>
+                  <small>{fmt(Math.round(p * 100) / 100)}%</small>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="gs-note">{g.calcNote}</p>
+      </section>
 
-      <h4 className="guide-h">{g.calcTitle}</h4>
-      <p className="guide-p">{g.calcHint}</p>
-      <label className="guide-calc">
-        <span>{g.calcLabel}</span>
-        <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} />
-      </label>
-      <label className="guide-check"><input type="checkbox" checked={debt} onChange={e => setDebt(e.target.checked)} /> {g.calcDebt}</label>
-      <div className="cells guide-split">
-        {SPLIT_ORDER.map(id => (
-          <div className="cell" key={id}>
-            <div className="ic">{ICON[id]}</div>
-            <div className="grow"><b>{g.tree[id]}</b><small>{fmt(Math.round((pct[id] ?? 0) * 100) / 100)}%</small></div>
-            <b>{fmt(Math.round((split[id] ?? 0) * 100) / 100)}</b>
-          </div>
-        ))}
-      </div>
-      <p className="note">{g.calcNote}</p>
+      <section className="gs">
+        <header className="gs-head"><span className="gs-ic">📌</span><h3>{g.rulesTitle}</h3></header>
+        <ul className="grules">{g.rules.map(r => <li key={r}>{r}</li>)}</ul>
+      </section>
 
-      <h4 className="guide-h">{g.rulesTitle}</h4>
-      <ul className="guide-list">{g.rules.map(r => <li key={r}>{r}</li>)}</ul>
+      <section className="gs">
+        <header className="gs-head"><span className="gs-ic">💼</span><h3>{g.freeTitle}</h3></header>
+        <p className="gs-p">{g.freeIntro}</p>
+        <ul className="grules">{g.free.map(r => <li key={r}>{r}</li>)}</ul>
+      </section>
 
-      <h3 className="group-title"><span>💼 {g.freeTitle}</span></h3>
-      <p className="guide-p">{g.freeIntro}</p>
-      <ul className="guide-list">{g.free.map(r => <li key={r}>{r}</li>)}</ul>
+      <section className="gs">
+        <header className="gs-head"><span className="gs-ic">💬</span><h3>{g.faqTitle}</h3></header>
+        <div className="gfaq">
+          {g.faq.map(([q, a]) => (
+            <details key={q}><summary>{q}</summary><p>{a}</p></details>
+          ))}
+        </div>
+      </section>
 
-      <h3 className="group-title"><span>{g.faqTitle}</span></h3>
-      <div className="guide-faq">
-        {g.faq.map(([q, a]) => (
-          <details key={q}><summary>{q}</summary><p>{a}</p></details>
-        ))}
-      </div>
-
-      <p className="note">{g.note}</p>
+      <p className="gs-foot">{g.note}</p>
       {confirmDialog}
     </div>
   );
