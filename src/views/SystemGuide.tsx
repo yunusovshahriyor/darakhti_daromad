@@ -3,6 +3,7 @@ import { useConfirm } from '../components/ConfirmSheet';
 import VideoPlayer from '../components/VideoPlayer';
 import { GUIDE, TRAINING_ID, TRAINING_URL } from '../guideText';
 import { currentLang } from '../i18n';
+import { ONBOARD } from '../onboardText';
 import { DEFAULT_ACCOUNTS, allocate, defaultTree, fmt, isFree, toFreeMode, toSystemMode } from '../model';
 import { openInBrowser, inTelegram } from '../tg';
 import type { Props } from './props';
@@ -11,7 +12,7 @@ const SPLIT_ORDER = ['charity', 'parents', 'future', 'debt', 'fun', 'capital', '
 const ICON = Object.fromEntries(DEFAULT_ACCOUNTS.map(a => [a.id, a.icon]));
 
 /** Саҳифаи шарҳ: ду система, тарзи кори системаи Давлатов, калкулятор, саволҳо ва гузариш аз як система ба дигар. */
-export default function SystemGuide({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
+export default function SystemGuide({ state, setState, onToast, onIntro }: Props & { onToast: (m: string) => void; onIntro: () => void }) {
   const g = GUIDE[currentLang()];
   const free = isFree(state);
   const [amount, setAmount] = useState('1000');
@@ -142,6 +143,7 @@ export default function SystemGuide({ state, setState, onToast }: Props & { onTo
         </div>
       </section>
 
+      <button className="btn secondary" onClick={onIntro}>{ONBOARD[currentLang()].replay}</button>
       <p className="gs-foot">{g.note}</p>
       {confirmDialog}
     </div>

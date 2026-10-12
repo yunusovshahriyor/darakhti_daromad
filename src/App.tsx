@@ -3,7 +3,7 @@ import AddSheet from './components/AddSheet';
 import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
-import ModeChooser from './components/ModeChooser';
+import Onboarding from './components/Onboarding';
 import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
@@ -11,8 +11,8 @@ import {
   BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
 import { setRootBackHandler, useHistoryLayer } from './components/useHistoryLayer';
-import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, newFreeAccounts, syncCatalog, toFreeMode, today, uid } from './model';
-import { loadState, saveState, stateObjHasData } from './storage';
+import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, newFreeAccounts, syncCatalog, toFreeMode, toSystemMode, today, uid } from './model';
+import { emptyState, loadState, saveState, stateObjHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
 import { setSyncNotifier, takeNotice, useSync } from './sync';
@@ -120,9 +120,24 @@ export default function App() {
   const [settled, setSettled] = useState(false);
   useEffect(() => { const t = setTimeout(() => setSettled(true), 1500); return () => clearTimeout(t); }, []);
   const fresh = state.mode === undefined && !stateObjHasData(state);
-  const showChooser = fresh && settled && !wantTg && !authOpen && sync.status !== 'syncing';
+  // Муқаддима (онбординг): автоматӣ барои корбари нав, ва бо дархост аз саҳифаи «Системаҳои кор»
+  const [intro, setIntro] = useState(false);
+  const introShown = useRef(false);
+  useEffect(() => {
+    if (fresh && settled && !wantTg && !authOpen && sync.status !== 'syncing' && !introShown.current) {
+      introShown.current = true;
+      setIntro(true);
+    }
+  }, [fresh, settled, wantTg, authOpen, sync.status]);
   const pickMode = (m: 'system' | 'free') =>
-    setState(s => (m === 'free' ? { ...toFreeMode(s), accounts: newFreeAccounts() } : { ...s, mode: 'system' }));
+    setState(s => {
+      // Бе маълумот: ҳолати тоза аз нав сохта мешавад; бо маълумот: гузариш, ки маълумотро нигоҳ медорад
+      if (!stateObjHasData(s)) {
+        const base = emptyState();
+        return m === 'free' ? { ...toFreeMode(base), accounts: newFreeAccounts() } : { ...base, mode: 'system' };
+      }
+      return m === 'free' ? toFreeMode(s) : toSystemMode(s);
+    });
 
   // Ҳамаи қарзҳо пардохт шуданд: боқимондаи «Пардохти қарз» ба «Сармоя» мегузарад
   useEffect(() => {
@@ -353,7 +368,7 @@ export default function App() {
     if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
     if (sub === 'debts') return <Debts {...props} onToast={setToast} />;
     if (sub === 'settings') return <SettingsView {...props} onToast={setToast} onGuide={() => setSub('guide')} />;
-    if (sub === 'guide') return <SystemGuide {...props} onToast={setToast} />;
+    if (sub === 'guide') return <SystemGuide {...props} onToast={setToast} onIntro={() => setIntro(true)} />;
     if (tab === 'home') {
       return (
         <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => go('profile')}
@@ -406,7 +421,12 @@ export default function App() {
       </main>
 
       {toast && <div className="toast">{toast}</div>}
-      {showChooser && !sub && <ModeChooser onPick={pickMode} onGuide={() => { setAcct(null); setSub('guide'); }} />}
+      {intro && (
+        <Onboarding mode={state.mode} onPick={pickMode} onClose={() => setIntro(false)}
+          onGuide={() => { setAcct(null); setSub('guide'); }}
+          onAddIncome={() => setAdding(true)}
+          onTelegram={() => { setSub(null); setAcct(null); setWantTg(true); setTab('profile'); }} />
+      )}
       {celebration && <Celebrate title={celebration.title} text={celebration.text} onClose={() => setCelebration(null)} />}
 
       <nav className="tabbar">
