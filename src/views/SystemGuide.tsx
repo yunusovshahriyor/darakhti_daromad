@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { GUIDE, TRAINING_URL } from '../guideText';
+import { useConfirm } from '../components/ConfirmSheet';
+import { GUIDE, TRAINING_ID, TRAINING_URL } from '../guideText';
 import { currentLang } from '../i18n';
 import { DEFAULT_ACCOUNTS, allocate, defaultTree, fmt, isFree, toFreeMode, toSystemMode } from '../model';
 import { openInBrowser, inTelegram } from '../tg';
@@ -21,7 +22,11 @@ export default function SystemGuide({ state, setState, onToast }: Props & { onTo
   const open = (e: React.MouseEvent) => {
     if (inTelegram()) { e.preventDefault(); openInBrowser(TRAINING_URL); }
   };
-  const swap = () => {
+  const [ask, confirmDialog] = useConfirm();
+  const [play, setPlay] = useState(false);
+  const swap = async () => {
+    const ok = await ask({ title: g.confirmTitle, text: free ? g.confirmToSystem : g.confirmToFree, ok: g.confirmOk });
+    if (!ok) return;
     setState(s => (isFree(s) ? toSystemMode(s) : toFreeMode(s)));
     onToast(free ? g.switched : g.switchedFree);
   };
@@ -29,19 +34,44 @@ export default function SystemGuide({ state, setState, onToast }: Props & { onTo
   return (
     <div className="guide">
       <section className="guide-hero">
+        <span className="gh-glow" aria-hidden />
         <h2>{g.heroTitle}</h2>
         <p>{g.heroText}</p>
-        <div className="guide-now">{free ? g.nowFree : g.nowOn}</div>
-        <button className="btn" onClick={swap}>{free ? g.switchToSystem : g.switchToFree}</button>
+        <div className="gh-modes">
+          {g.cards.map((c, i) => {
+            const on = (i === 1) === free;
+            return (
+              <button key={c.title} className={on ? 'gh-mode on' : 'gh-mode'} onClick={on ? undefined : swap}
+                aria-pressed={on} disabled={on}>
+                <span className="gm-ic">{c.icon}</span>
+                <b>{c.title}</b>
+                <small>{c.text}</small>
+                <span className="gm-tag">{on ? `✓ ${g.badgeOn}` : `${g.tapSwitch} →`}</span>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
-      <section className="guide-card video">
-        <div className="gc-ic">🎬</div>
-        <div>
-          <b>{g.videoTitle}</b>
-          <p>{g.videoText}</p>
-          <a className="btn secondary" href={TRAINING_URL} target="_blank" rel="noopener noreferrer" onClick={open}>{g.videoBtn}</a>
+      <section className="guide-video">
+        <div className="gv-head">
+          <span className="gc-ic">🎬</span>
+          <div><b>{g.videoTitle}</b><p>{g.videoText}</p></div>
         </div>
+        <div className="gv-frame">
+          {play ? (
+            <iframe src={`https://www.youtube-nocookie.com/embed/${TRAINING_ID}?autoplay=1&rel=0&playsinline=1`}
+              title={g.videoTitle} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin" />
+          ) : (
+            <button className="gv-poster" onClick={() => setPlay(true)} aria-label={g.playHint}
+              style={{ backgroundImage: `url(https://i.ytimg.com/vi/${TRAINING_ID}/hqdefault.jpg)` }}>
+              <span className="gv-play"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden><path d="M8 5v14l11-7z" fill="currentColor" /></svg></span>
+              <small>{g.playHint}</small>
+            </button>
+          )}
+        </div>
+        <a className="gv-link" href={TRAINING_URL} target="_blank" rel="noopener noreferrer" onClick={open}>{g.videoFallback}</a>
       </section>
 
       <h3 className="group-title"><span>{g.cmpTitle}</span></h3>
@@ -98,6 +128,7 @@ export default function SystemGuide({ state, setState, onToast }: Props & { onTo
       </div>
 
       <p className="note">{g.note}</p>
+      {confirmDialog}
     </div>
   );
 }

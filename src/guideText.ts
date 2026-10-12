@@ -3,6 +3,8 @@ import type { Lang } from './i18n';
 export interface GuideText {
   heroTitle: string; heroText: string;
   videoTitle: string; videoText: string; videoBtn: string;
+  cards: [{ icon: string; title: string; text: string }, { icon: string; title: string; text: string }];
+  badgeOn: string; tapSwitch: string; confirmTitle: string; confirmToFree: string; confirmToSystem: string; confirmOk: string; playHint: string; videoFallback: string;
   nowOn: string; nowFree: string; switchToFree: string; switchToSystem: string; switched: string; switchedFree: string;
   cmpTitle: string; cmpHead: [string, string, string];
   cmp: [string, string, string][];
@@ -17,6 +19,17 @@ export interface GuideText {
 }
 
 const tg: GuideText = {
+  cards: [
+    { icon: '🌳', title: 'Системаи Саидмурод Давлатов', text: 'Даромад худкор аз рӯи фоиз тақсим мешавад: ҷамъ кардан ва афзун кардани маблағ бо тартиб.' },
+    { icon: '💼', title: 'Ба тарзи худам', text: 'Ҳисобҳои худатон, бе фоиз ва бе тақсими худкор: танҳо назорати даромад ва хароҷот.' },
+  ],
+  badgeOn: 'Фаъол', tapSwitch: 'Гузаштан',
+  confirmTitle: 'Иваз кардани система',
+  confirmToFree: 'Системаи Давлатов хомӯш мешавад: даромади нав бе фоиз ба ҳисоби интихобшуда меравад. Маълумот ва фоизҳои шумо нигоҳ дошта мешаванд.',
+  confirmToSystem: 'Системаи Давлатов фаъол мешавад: даромади нав аз рӯи фоиз тақсим мешавад. Ҳисобҳои худатон бо 0% илова мешаванд. Маълумоти шумо намемирад.',
+  confirmOk: 'Иваз кардан',
+  playHint: 'Видеоро дар дохили барнома тамошо кунед',
+  videoFallback: 'Агар видео кушода нашавад, дар YouTube кушоед',
   heroTitle: 'Ду системаи кор',
   heroText: 'Барнома бо ду тарз кор карда метавонад. Онро ҳар вақт дар Танзимот иваз кардан мумкин аст: маълумоти шумо намемирад.',
   videoTitle: 'Тренинги Саидмурод Давлатов',
@@ -81,6 +94,17 @@ const tg: GuideText = {
 };
 
 const ru: GuideText = {
+  cards: [
+    { icon: '🌳', title: 'Система Саидмурода Давлатова', text: 'Доход делится автоматически по процентам: накопление и приумножение денег по чёткой схеме.' },
+    { icon: '💼', title: 'По-своему', text: 'Ваши счета, без процентов и автоматического деления: просто учёт доходов и расходов.' },
+  ],
+  badgeOn: 'Включено', tapSwitch: 'Перейти',
+  confirmTitle: 'Смена системы',
+  confirmToFree: 'Система Давлатова будет выключена: новый доход пойдёт без процентов на выбранный счёт. Ваши данные и проценты сохранятся.',
+  confirmToSystem: 'Система Давлатова будет включена: новый доход разделится по процентам. Созданные вами счета добавятся с 0%. Ваши данные не пропадут.',
+  confirmOk: 'Сменить',
+  playHint: 'Смотрите видео прямо в приложении',
+  videoFallback: 'Если видео не открывается, откройте на YouTube',
   heroTitle: 'Две системы работы',
   heroText: 'Приложение может работать двумя способами. Их можно переключить в любой момент в Настройках: ваши данные не пропадут.',
   videoTitle: 'Тренинг Саидмурода Давлатова',
@@ -145,6 +169,17 @@ const ru: GuideText = {
 };
 
 const en: GuideText = {
+  cards: [
+    { icon: '🌳', title: "Saidmurod Davlatov's system", text: 'Income is split automatically by percentages: saving and growing money on a clear scheme.' },
+    { icon: '💼', title: 'My own way', text: 'Your own accounts, no percentages and no automatic split: just tracking income and expenses.' },
+  ],
+  badgeOn: 'On', tapSwitch: 'Switch',
+  confirmTitle: 'Change system',
+  confirmToFree: "Davlatov's system will be turned off: new income goes to the chosen account with no percentages. Your data and percentages are kept.",
+  confirmToSystem: "Davlatov's system will be turned on: new income is split by percentages. Accounts you created are added at 0%. Your data is not lost.",
+  confirmOk: 'Change',
+  playHint: 'Watch the video right in the app',
+  videoFallback: "If the video doesn't open, open it on YouTube",
   heroTitle: 'Two ways to work',
   heroText: 'The app can work in two ways. You can switch any time in Settings: your data is not lost.',
   videoTitle: "Saidmurod Davlatov's training",
@@ -209,4 +244,5 @@ const en: GuideText = {
 };
 
 export const GUIDE: Record<Lang, GuideText> = { tg, ru, en };
-export const TRAINING_URL = 'https://youtu.be/RZX5LzXsCZI?si=b027iNG3sfkTStHs';
+export const TRAINING_ID = 'RZX5LzXsCZI';
+export const TRAINING_URL = 'https://youtu.be/RZX5LzXsCZI?si=qv-jCFL0hi54XMcZ';
