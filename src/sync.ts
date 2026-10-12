@@ -6,6 +6,7 @@ import { BOT_API, EMBEDDED_CONFIG, GOOGLE_CLIENT_ID } from './firebaseConfig';
 import { LANG_KEY } from './i18n';
 import { prefsFromDoc, prefsToDoc } from './notify';
 import type { NotifyPrefs } from './notify';
+import { ACCENT_KEY, THEME_KEY } from './theme';
 import {
   localRaw, makeBackup, parseBackup, restoreRaw, savedListeners, stateHasData, stateObjHasData, wipeAllLocal,
 } from './storage';
@@ -326,7 +327,7 @@ export const hasUnsynced = (): boolean => !!curUser && stateHasData() && localHa
  */
 export async function signOutAndWipe(byUser = true): Promise<void> {
   await signOut();
-  await wipeAllLocal([CFG_KEY, DEVICE_KEY, EMU_KEY, LANG_KEY, SIGNED_OUT_KEY]);
+  await wipeAllLocal([CFG_KEY, DEVICE_KEY, EMU_KEY, LANG_KEY, SIGNED_OUT_KEY, THEME_KEY, ACCENT_KEY]);
   if (byUser) ls.set(SIGNED_OUT_KEY, '1');
   location.reload();
 }

@@ -31,11 +31,13 @@
     #splash{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#eef3ee;transition:opacity .35s ease}
     #splash img{width:min(52vw,230px);height:auto}
     #splash.off{opacity:0;pointer-events:none}
-    @media (prefers-color-scheme: dark){#splash{background:#0b1410}}
+    @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #splash{background:#0b1410}}
+    :root[data-theme="dark"] #splash{background:#0b1410}
   </style>
   <div id="splash"><img id="splash-img" alt=""></div>
   <script>
     (function () {
+      try { var t = localStorage.getItem('darakhti:theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
       var l = 'tg';
       try { var v = localStorage.getItem('darakhti:lang'); if (v === 'tg' || v === 'ru' || v === 'en') l = v; else { var n = (navigator.language || '').toLowerCase(); l = n.indexOf('ru') === 0 ? 'ru' : n.indexOf('en') === 0 ? 'en' : 'tg'; } } catch (e) {}
       var b = '%BASE_URL%';

@@ -8,6 +8,7 @@ import { initTelegram, loginCodeFromLaunch } from './tg';
 import TelegramLoginComplete from './components/TelegramLoginComplete';
 import { initI18n } from './i18n';
 import { brand } from './brand';
+import { initTheme } from './theme';
 import './style.css';
 
 const installMode = new URLSearchParams(location.search).get('install') === '1';
@@ -20,6 +21,7 @@ const hideSplash = () => {
 };
 
 const boot = () => {
+  initTheme();
   document.title = brand().name;
   const root = document.getElementById('root')!;
   const loginCode = loginCodeFromLaunch();

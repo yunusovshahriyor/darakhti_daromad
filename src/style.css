@@ -19,7 +19,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0b1410;
     --bg-outer: #060b09;
     --surface: #13201a;
@@ -33,6 +33,21 @@
     --blob-2: rgba(120, 110, 60, .22);
     --glass: rgba(255, 255, 255, .06);
   }
+}
+
+:root[data-theme="dark"] {
+    --bg: #0b1410;
+    --bg-outer: #060b09;
+    --surface: #13201a;
+    --text: #e6f0ea;
+    --muted: #8aa093;
+    --border: #22332a;
+    --primary: #35c28d;
+    --primary-2: #2aa377;
+    --success: #35c28d;
+    --blob-1: rgba(53, 194, 141, .22);
+    --blob-2: rgba(120, 110, 60, .22);
+    --glass: rgba(255, 255, 255, .06);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -261,7 +276,8 @@ input[type='date'] { min-height: 50px; }
 .alert { background: rgba(245, 158, 11, .14); color: #b45309; border-radius: 14px; padding: 12px 14px; margin: 12px 0 0; font-size: .9rem; }
 .alert.danger { background: rgba(239, 68, 68, .12); color: var(--danger); }
 .note { color: var(--muted); font-size: .8rem; margin: 10px 6px 0; }
-@media (prefers-color-scheme: dark) { .alert:not(.danger) { color: #fbbf24; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .alert:not(.danger) { color: #fbbf24; } }
+:root[data-theme="dark"] .alert:not(.danger) { color: #fbbf24; }
 
 .setting { cursor: text; }
 .setting input { width: 84px; height: 40px; text-align: right; flex: none; }
@@ -1658,3 +1674,16 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
 .ob-dots { display: flex; justify-content: center; gap: 7px; }
 .ob-dots i { width: 8px; height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--muted) 35%, transparent); transition: width .25s, background .25s; }
 .ob-dots i.on { width: 24px; background: var(--primary); }
+
+/* ---------- Замина (мавзӯ ва ранг) ---------- */
+.look-h { margin: 6px 2px 8px; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.look-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.look-mode { font: inherit; color: var(--text); background: var(--bg); border: 2px solid var(--border); border-radius: 16px; padding: 14px 6px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.look-mode span { font-size: 1.5rem; }
+.look-mode.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--bg)); }
+.look-accents { display: flex; gap: 8px; margin-bottom: 14px; }
+.look-ac { flex: 1; font: inherit; color: var(--text); background: var(--bg); border: 2px solid var(--border); border-radius: 16px; padding: 10px 2px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.look-ac i { width: 28px; height: 28px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 2px rgba(255,255,255,.35); }
+.look-ac small { font-size: .7rem; }
+.look-ac.on { border-color: var(--primary); }
+.look-preview { padding-bottom: 6px; }

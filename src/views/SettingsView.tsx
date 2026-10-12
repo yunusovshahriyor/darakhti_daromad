@@ -5,6 +5,8 @@ import FreeAccounts from '../components/FreeAccounts';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { useHistoryLayer } from '../components/useHistoryLayer';
 import Sheet from '../components/Sheet';
+import { ACCENTS, getAccent, getTheme, setTheme } from '../theme';
+import type { Accent, ThemeMode } from '../theme';
 import { LANGS, currentLang, setLang } from '../i18n';
 import type { Lang } from '../i18n';
 import { hasUnsynced, saveLangToAccount, signOutAndWipe, syncNow, useSync } from '../sync';
@@ -33,6 +35,11 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const [closed, setClosed] = useState(readClosed);
   const sync = useSync();
   const [langOpen, setLangOpen] = useState(false);
+  const [lookOpen, setLookOpen] = useState(false);
+  const [mode, setMode] = useState<ThemeMode>(getTheme);
+  const [accent, setAccent] = useState<Accent>(getAccent);
+  const MODES: [ThemeMode, string, string][] = [['auto', 'Худкор', '🌓'], ['light', 'Равшан', '☀️'], ['dark', 'Торик', '🌙']];
+  const pickLook = (m: ThemeMode, a: Accent) => { setMode(m); setAccent(a); setTheme(m, a); };
   const free = isFree(state);
   const lang = currentLang();
   const chooseLang = async (l: Lang) => {
@@ -166,6 +173,11 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
             <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
             <ChevronIcon />
           </button>
+          <button className="cell tap link" onClick={() => setLookOpen(true)}>
+            <div className="ic">🎨</div>
+            <div className="grow"><b>Замина</b><small>{MODES.find(m => m[0] === mode)?.[1]} · {ACCENTS[accent].name}</small></div>
+            <ChevronIcon />
+          </button>
           {signed && (
             <button className="cell tap link" onClick={logout}>
               <div className="ic">↪️</div>
@@ -178,6 +190,29 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
         <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
 
         {confirmDialog}
+
+        {lookOpen && (
+          <Sheet title="Замина" onClose={() => setLookOpen(false)}>
+            <h4 className="look-h">Намуди барнома</h4>
+            <div className="look-modes">
+              {MODES.map(([id, name, ic]) => (
+                <button key={id} className={id === mode ? 'look-mode on' : 'look-mode'} onClick={() => pickLook(id, accent)} aria-pressed={id === mode}>
+                  <span>{ic}</span><b>{name}</b>
+                </button>
+              ))}
+            </div>
+            <h4 className="look-h">Ранги асосӣ</h4>
+            <div className="look-accents">
+              {(Object.keys(ACCENTS) as Accent[]).map(a => (
+                <button key={a} className={a === accent ? 'look-ac on' : 'look-ac'} onClick={() => pickLook(mode, a)} aria-pressed={a === accent} aria-label={ACCENTS[a].name}>
+                  <i style={{ background: ACCENTS[a].c ? ACCENTS[a].c![0] : '#1d8a63' }} />
+                  <small>{ACCENTS[a].name}</small>
+                </button>
+              ))}
+            </div>
+            <div className="look-preview"><button className="btn" type="button">{ACCENTS[accent].name}</button></div>
+          </Sheet>
+        )}
 
         {langOpen && (
           <Sheet title="Интихоби забон" onClose={() => setLangOpen(false)}>
