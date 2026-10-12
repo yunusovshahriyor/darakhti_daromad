@@ -16,6 +16,7 @@ import {
 } from '../model';
 import type { AccountId, Debt, Dream } from '../types';
 import type { Privacy } from './Accounts';
+import { Count } from '../useCountUp';
 import type { Props } from './props';
 
 type Modal = 'transfer' | 'expense' | 'goal' | 'pay' | 'buy' | 'addDream' | null;
@@ -140,7 +141,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
             {hidden ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         </div>
-        <div className="ah-bal">{mask(fmt(bal))} <small>смн</small></div>
+        <div className="ah-bal"><Count value={bal} hidden={hidden} /> <small>смн</small></div>
 
         {isDebtAccount || isDreamAccount ? (
           first ? (

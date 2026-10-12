@@ -6,6 +6,7 @@ import {
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
+import { Count } from '../useCountUp';
 import type { Props } from './props';
 
 export interface Privacy {
@@ -61,7 +62,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
         style={{ '--c': CARD_COLORS[id] } as CSSProperties}>
         <span className="ac-ic">{ACCOUNTS[id].icon}</span>
         <span className="ac-name">{ACCOUNTS[id].name}</span>
-        <b className="ac-bal">{mask(fmt(bal[id]))}</b>
+        <b className="ac-bal"><Count value={bal[id]} hidden={hidden} /></b>
         {goal ? (
           <span className="ac-goal">
             <span className="bar"><i style={{ width: `${pct}%` }} /></span>
@@ -87,7 +88,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
             <small>{groupNote(g.key)}</small>
           </span>
           <span className="grp-sum">
-            <b>{mask(fmt(groupSum(g, bal)))}</b>
+            <b><Count value={groupSum(g, bal)} hidden={hidden} /></b>
             <span className={open ? 'chev open' : 'chev'}><ChevronIcon /></span>
           </span>
         </button>
@@ -111,7 +112,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
             {hidden ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         </div>
-        <div className="bh-total">{mask(fmt(total))} <small>смн</small></div>
+        <div className="bh-total"><Count value={total} hidden={hidden} /> <small>смн</small></div>
       </section>
 
       <div className="groups">{ACCOUNT_TREE.map(g => group(g))}</div>

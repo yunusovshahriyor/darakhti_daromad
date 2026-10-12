@@ -4,10 +4,11 @@ import { setAvatar, useSync } from '../sync';
 import Field from '../components/Field';
 import { ChevronIcon, PencilIcon } from '../components/Icons';
 import Sheet from '../components/Sheet';
+import { Count } from '../useCountUp';
 import FeedbackSheet from '../components/FeedbackSheet';
 import TelegramSheet from '../components/TelegramSheet';
 import { inTelegram, openInBrowser } from '../tg';
-import { fmt, inPeriod, monthlyIncome, periodAt } from '../model';
+import { inPeriod, monthlyIncome, periodAt } from '../model';
 import type { Props, Sub } from './props';
 
 const NAME_KEY = 'darakhti:profile';
@@ -133,7 +134,7 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
       <section className="pf-income">
         <div className="pf-big">
           <small>Ин моҳ</small>
-          <b>{fmt(incomeMonth)} <i>смн</i></b>
+          <b><Count value={incomeMonth} /> <i>смн</i></b>
         </div>
         <div className="pf-bars">
           {months.map(m => (
@@ -144,10 +145,10 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
           ))}
         </div>
         <div className="pf-stats">
-          <div><small>Ҳамаи вақт</small><b>{fmt(incomeAll)}</b></div>
-          <div><small>Миёна дар моҳ</small><b>{fmt(Math.round(avg))}</b></div>
-          <div><small>Хароҷоти моҳ</small><b>{fmt(spentMonth)}</b></div>
-          <div><small>Ҳамаи хароҷот</small><b>{fmt(spentAll)}</b></div>
+          <div><small>Ҳамаи вақт</small><b><Count value={incomeAll} /></b></div>
+          <div><small>Миёна дар моҳ</small><b><Count value={Math.round(avg)} /></b></div>
+          <div><small>Хароҷоти моҳ</small><b><Count value={spentMonth} /></b></div>
+          <div><small>Ҳамаи хароҷот</small><b><Count value={spentAll} /></b></div>
         </div>
       </section>
 
