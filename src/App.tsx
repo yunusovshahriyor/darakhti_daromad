@@ -3,17 +3,18 @@ import AddSheet from './components/AddSheet';
 import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
+import ModeChooser from './components/ModeChooser';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
   BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, RefreshIcon, WalletIcon,
 } from './components/Icons';
 import { setRootBackHandler, useHistoryLayer } from './components/useHistoryLayer';
-import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, syncCatalog, today, uid } from './model';
-import { loadState, saveState } from './storage';
+import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, newFreeAccounts, syncCatalog, toFreeMode, today, uid } from './model';
+import { loadState, saveState, stateObjHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
-import { setSyncNotifier, takeNotice } from './sync';
+import { setSyncNotifier, takeNotice, useSync } from './sync';
 import { useDreamMilestones } from './useDreamMilestones';
 import type { Alloc, AccountId } from './types';
 import AccountDetail from './views/AccountDetail';
@@ -112,9 +113,19 @@ export default function App() {
 
   useEffect(() => saveState(state), [state]);
 
+  // Корбари нав (бе маълумот ва бе интихоб): аввал услуби кор интихоб мешавад. Каме интизор мешавем, то синхронизатсия
+  // маълумоти аккаунти мавҷударо биёрад.
+  const sync = useSync();
+  const [settled, setSettled] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setSettled(true), 1500); return () => clearTimeout(t); }, []);
+  const fresh = state.mode === undefined && !stateObjHasData(state);
+  const showChooser = fresh && settled && !wantTg && !authOpen && sync.status !== 'syncing';
+  const pickMode = (m: 'system' | 'free') =>
+    setState(s => (m === 'free' ? { ...toFreeMode(s), accounts: newFreeAccounts() } : { ...s, mode: 'system' }));
+
   // Ҳамаи қарзҳо пардохт шуданд: боқимондаи «Пардохти қарз» ба «Сармоя» мегузарад
   useEffect(() => {
-    if (hasDebt(state.debts) || !state.accounts.some(a => a.id === 'capital' && !a.archived)) return;
+    if (state.mode === 'free' || hasDebt(state.debts) || !state.accounts.some(a => a.id === 'capital' && !a.archived)) return;
     const left = balancesOf(state).debt ?? 0;
     if (left > 0.005) {
       setState(s => ({
@@ -393,6 +404,7 @@ export default function App() {
       </main>
 
       {toast && <div className="toast">{toast}</div>}
+      {showChooser && <ModeChooser onPick={pickMode} />}
       {celebration && <Celebrate title={celebration.title} text={celebration.text} onClose={() => setCelebration(null)} />}
 
       <nav className="tabbar">

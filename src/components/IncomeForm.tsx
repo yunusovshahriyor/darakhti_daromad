@@ -2,10 +2,11 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { orderedSources } from '../categories';
 import { poolOf } from '../dreams';
 import type { Transfer } from '../types';
-import { ACCOUNTS, ACCOUNT_ORDER, allocate, fmt, hasDebt, today, uid } from '../model';
+import { ACCOUNTS, ACCOUNT_ORDER, allocate, balancesOf, fmt, hasDebt, hiddenAccounts, isFree, today, uid } from '../model';
 import type { Props } from '../views/props';
 import AmountEntry from './AmountEntry';
 import AddCategorySheet from './AddCategorySheet';
+import AccountSelect from './AccountSelect';
 import Field from './Field';
 
 export default function IncomeForm({ state, setState, onDone }: Props & { onDone: (msg: string) => void }) {
@@ -27,9 +28,16 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
     }
   }, [source, sources.length]);
 
+  const free = isFree(state);
   const debt = hasDebt(state.debts);
   const num = parseFloat(amount) || 0;
-  const preview = allocate(num, state.tree, debt);
+  const preview = free ? {} : allocate(num, state.tree, debt);
+  // Ҳолати озод: даромад ба як ҳисоби интихобшуда меравад (пешфарз — ҳисоби даромади охирин)
+  const [target, setTarget] = useState(() => {
+    const last = state.incomes.find(i => !i.kind && Object.keys(i.alloc).some(k => (i.alloc[k] ?? 0) > 0));
+    const prev = last ? Object.keys(last.alloc).find(k => (last.alloc[k] ?? 0) > 0) : undefined;
+    return prev && ACCOUNT_ORDER.includes(prev) ? prev : ACCOUNT_ORDER[0] ?? 'cash';
+  });
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -37,7 +45,7 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
     const n = note.trim();
     const income = {
       id: uid(), title: n ? `${source} · ${n}` : source, source, amount: num, date,
-      alloc: allocate(num, state.tree, debt),
+      alloc: free ? { ...allocate(0, state.tree, false), [target]: num } : allocate(num, state.tree, debt),
     };
     setState(s => {
       // Ҳиссаи худкор ба орзуҳо: аз ҳисоби интихобшуда ба ҳисоби орзуҳо мегузарад
@@ -86,7 +94,13 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
         <input value={note} onChange={e => setNote(e.target.value)} placeholder="Масалан, лоиҳа ё музди моҳ" />
       </Field>
 
-      {num > 0 && (
+      {free && (
+        <Field label="Ба кадом ҳисоб">
+          <AccountSelect value={target} onChange={setTarget} bal={balancesOf(state)} hidden={hiddenAccounts(state)} />
+        </Field>
+      )}
+
+      {!free && num > 0 && (
         <div className="preview">
           <b>Тақсим мешавад:</b>
           {ACCOUNT_ORDER.filter(id => preview[id] > 0).map(id => (

@@ -1,8 +1,9 @@
 import { FormEvent, ReactNode, useState } from 'react';
 import { nextInstallment } from '../loanPlan';
-import { ACCOUNTS, balancesOf, dayTitle, fmt, remaining, splitDebts, today, uid } from '../model';
+import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, dayTitle, fmt, hiddenAccounts, isFree, remaining, splitDebts, today, uid } from '../model';
 import type { Debt } from '../types';
 import type { Props } from '../views/props';
+import AccountSelect from './AccountSelect';
 import AmountEntry from './AmountEntry';
 import { useConfirm } from './ConfirmSheet';
 
@@ -21,7 +22,11 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
   const [date, setDate] = useState(today);
 
   const current = debt ?? open.find(d => d.id === pick) ?? open[0];
-  const bal = balancesOf(state).debt ?? 0;
+  const free = isFree(state);
+  const all = balancesOf(state);
+  const [src, setSrc] = useState(() => ACCOUNT_ORDER.filter(id => !hiddenAccounts(state).includes(id)).reduce((a, b) => ((all[b] ?? 0) > (all[a] ?? 0) ? b : a), ACCOUNT_ORDER[0] ?? 'cash'));
+  const from = free ? src : 'debt';
+  const bal = all[from] ?? 0;
   const left = current ? remaining(current) : 0;
   const num = Math.min(parseFloat(amount) || 0, left);
   const over = num > bal + 0.005;
@@ -30,7 +35,7 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!current || !(num > 0)) return;
-    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS.debt.name}» ҳамагӣ ${fmt(bal)} сомонӣ мавҷуд аст. Ба ҳар ҳол пардохт мекунед?`, ok: 'Пардохт кардан' }))) return;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[from]?.name ?? from}» ҳамагӣ ${fmt(bal)} сомонӣ мавҷуд аст. Ба ҳар ҳол пардохт мекунед?`, ok: 'Пардохт кардан' }))) return;
     const id = current.id;
     const name = current.title;
     setState(s => ({
@@ -41,7 +46,7 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
         return paid >= x.amount - 0.005 ? { ...x, paid, paidAt: date } : { ...x, paid };
       }),
       expenses: [
-        { id: uid(), account: 'debt', title: `Қарз: ${name}`, amount: num, date, debtId: id },
+        { id: uid(), account: from, title: `Қарз: ${name}`, amount: num, date, debtId: id },
         ...s.expenses,
       ],
     }));
@@ -78,7 +83,8 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
 
       <div className="chips-block">
         <div className="chips-label">Аз ҳисоби</div>
-        <div className="chips">
+        {free && <AccountSelect value={src} onChange={setSrc} bal={all} hidden={hiddenAccounts(state)} />}
+        <div className="chips" style={free ? { display: "none" } : undefined}>
           <span className="chip on" aria-disabled>
             <span className="chip-ic">{ACCOUNTS.debt.icon}</span>
             <span className="chip-t"><b>{ACCOUNTS.debt.name}</b><small>{fmt(bal)}</small></span>

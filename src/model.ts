@@ -86,7 +86,7 @@ export function fundDreams(dreams: Dream[], pool: number): FundedDream[] {
 export function withNewDebt(s: State, v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan }): State {
   const next: State = { ...s, debts: [...s.debts, { id: uid(), paid: 0, ...v }] };
   const fun = balancesOf(s).fun ?? 0;
-  if (!hasDebt(s.debts) && fun > 0.005) {
+  if (s.mode !== 'free' && !hasDebt(s.debts) && fun > 0.005) {
     next.transfers = [...s.transfers, { id: uid(), from: 'fun', to: 'debt', amount: fun, date: v.date ?? today() }];
   }
   return next;
@@ -176,6 +176,7 @@ export const balancesOf = (s: State) => balances(s.incomes, s.expenses, s.transf
  * ва «Вақтхушӣ» вақте қарз ҳаст (ҳиссааш ба «Пардохти қарз» меравад).
  */
 export const hiddenAccounts = (s: State): AccountId[] => {
+  if (s.mode === 'free') return ['debt', 'fun'];
   if (hasDebt(s.debts)) return ['fun'];
   return Math.abs(balancesOf(s).debt) < 0.005 ? ['debt'] : [];
 };
@@ -340,6 +341,7 @@ export function subtitleOf(id: AccountId, debt: boolean): string {
 
 /** Тавзеҳи ҳисоб нисбат ба гурӯҳи худаш: «80% аз ҳисоби ширкат». */
 export function leafHint(id: AccountId, debt: boolean): string {
+  if (FREE) return '';
   const info = LEAF_INFO[id];
   const n = (v: number) => fmt(Math.round(v * 100) / 100);
   if (id === 'fun' && debt) return 'Ҳангоми қарз пур намешавад';
@@ -654,9 +656,45 @@ export const ALL_IDS: AccountId[] = [];
 export const ACCOUNT_TREE: AccountGroup[] = [];
 const GROUP_NOTES: Record<string, string> = {};
 const LEAF_INFO: Record<AccountId, { percent: number; parent: string }> = {};
+let FREE = false;
+
+/** Ҳолати «ҳисобҳои худи корбар»: бе системаи фоизӣ. */
+export const isFree = (s: Pick<State, 'mode'>) => s.mode === 'free';
+
+/** Ҳисобҳои хизматии системаи Давлатов: дар ҳолати озод дар рӯйхати ҳисобҳои корбар нестанд. */
+export const SYSTEM_IDS: AccountId[] = ['debt', 'fun', 'bigDream', 'smallDream'];
+
+/** Гузариш ба ҳолати озод: маълумот мемонад, танҳо фоизҳо истифода намешаванд. */
+export function toFreeMode(s: State): State {
+  const mine = s.accounts.some(a => !a.archived && !SYSTEM_IDS.includes(a.id));
+  const accounts = mine ? s.accounts : [
+    ...s.accounts,
+    { id: 'cash', name: 'Нақд', icon: '💵', color: '#2f7d55' },
+    { id: 'card', name: 'Корт', icon: '💳', color: '#1f6fa3' },
+  ];
+  return { ...s, mode: 'free', accounts };
+}
+
+/** Бозгашт ба системаи Давлатов: ҳисобҳои нав бо 0% ба дарахт илова мешаванд (фоизҳои пештара нигоҳ дошта мешаванд). */
+export function toSystemMode(s: State): State {
+  let tree = s.tree;
+  for (const a of s.accounts) {
+    if (!a.archived && !findAccountNode(tree, a.id)) tree = addAccountNode(tree, 'root', a.id, 0);
+  }
+  return { ...s, mode: 'system', tree };
+}
+
+/** Ҳолати аввалини корбари нав дар ҳолати озод. */
+export function newFreeAccounts(): AccountDef[] {
+  return [
+    ...DEFAULT_ACCOUNTS.filter(a => SYSTEM_IDS.includes(a.id)),
+    { id: 'cash', name: 'Нақд', icon: '💵', color: '#2f7d55' },
+    { id: 'card', name: 'Корт', icon: '💳', color: '#1f6fa3' },
+  ];
+}
 
 /** Рӯйхатҳои зиндаро аз ҳолати ҷорӣ нав мекунад (дар болои render-и барнома даъват мешавад). */
-export function syncCatalog(s: Pick<State, 'accounts' | 'tree'>) {
+export function syncCatalog(s: Pick<State, 'accounts' | 'tree' | 'mode'>) {
   for (const o of [ACCOUNTS, CARD_COLORS, GROUP_NOTES, LEAF_INFO] as Record<string, unknown>[]) {
     for (const k of Object.keys(o)) delete o[k];
   }
@@ -670,6 +708,15 @@ export function syncCatalog(s: Pick<State, 'accounts' | 'tree'>) {
     ALL_IDS.push(a.id);
   }
   const active = (id: AccountId) => s.accounts.some(a => a.id === id && !a.archived);
+  FREE = s.mode === 'free';
+  if (FREE) {
+    const mine = s.accounts.filter(a => !a.archived && !SYSTEM_IDS.includes(a.id)).map(a => a.id);
+    const pools = ['bigDream', 'smallDream'].filter(active);
+    ACCOUNT_TREE.push({ key: 'general', title: 'Ҳисобҳои ман', icon: '💼', items: mine });
+    if (pools.length) ACCOUNT_TREE.push({ key: 'pools', title: 'Орзуҳо', icon: '✨', items: pools });
+    for (const g of ACCOUNT_TREE) for (const id of leavesOf(g)) ACCOUNT_ORDER.push(id);
+    return;
+  }
   const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
 
   const convert = (g: Extract<DistNode, { type: 'group' }>): AccountGroup => ({

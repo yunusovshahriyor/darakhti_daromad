@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
+import FreeAccounts from '../components/FreeAccounts';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
 import { useHistoryLayer } from '../components/useHistoryLayer';
 import Sheet from '../components/Sheet';
 import { LANGS, currentLang, setLang } from '../i18n';
 import type { Lang } from '../i18n';
 import { hasUnsynced, saveLangToAccount, signOutAndWipe, syncNow, useSync } from '../sync';
-import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isRemainderNode } from '../model';
+import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isFree, isRemainderNode, toFreeMode, toSystemMode } from '../model';
 import { emptyState } from '../storage';
 import type { DistNode } from '../types';
 import type { Props } from './props';
@@ -25,6 +26,14 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
   const [page, setPage] = useState<'menu' | 'accounts'>('menu');
   const sync = useSync();
   const [langOpen, setLangOpen] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const free = isFree(state);
+  const switchMode = () => {
+    setState(s => (isFree(s) ? toSystemMode(s) : toFreeMode(s)));
+    setModeOpen(false);
+    setPage('menu');
+    onToast(free ? 'Системаи Саидмурод Давлатов фаъол шуд ✓' : 'Ҳолати «ба тарзи худам» фаъол шуд ✓');
+  };
   const lang = currentLang();
   const chooseLang = async (l: Lang) => {
     if (l === lang) { setLangOpen(false); return; }
@@ -145,9 +154,17 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
             <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
             <ChevronIcon />
           </button>
+          <button className="cell tap link" onClick={() => setModeOpen(true)}>
+            <div className="ic">🌳</div>
+            <div className="grow"><b>Системаи Саидмурод Давлатов</b><small>{free ? 'Хомӯш: ҳисобҳои худам, бе фоиз' : 'Фаъол: тақсими даромад аз рӯи фоиз'}</small></div>
+            <ChevronIcon />
+          </button>
           <button className="cell tap link" onClick={() => setPage('accounts')}>
             <div className="ic">🧩</div>
-            <div className="grow"><b>Ҳисобҳо ва фоизҳо</b><small>{accountCount} ҳисоб · тақсими даромад</small></div>
+            <div className="grow">
+              <b>{free ? 'Ҳисобҳо' : 'Ҳисобҳо ва фоизҳо'}</b>
+              <small>{free ? `${state.accounts.filter(a => !a.archived && !['debt', 'fun', 'bigDream', 'smallDream'].includes(a.id)).length} ҳисоб` : `${accountCount} ҳисоб · тақсими даромад`}</small>
+            </div>
             <ChevronIcon />
           </button>
           {signed && (
@@ -163,6 +180,20 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
 
         {confirmDialog}
 
+        {modeOpen && (
+          <Sheet title="Системаи Саидмурод Давлатов" onClose={() => setModeOpen(false)}>
+            <p className="confirm-text">
+              {free
+                ? 'Системаро фаъол мекунед: даромади нав аз рӯи фоизҳо ба ҳисобҳо тақсим мешавад. Ҳисобҳое, ки худатон сохтед, бо 0% мемонанд ва фоизро дар «Ҳисобҳо ва фоизҳо» муайян мекунед.'
+                : 'Системаро хомӯш мекунед: фоизҳо ва тақсими худкори даромад кор намекунанд. Даромадро ба ҳисоби дилхоҳ медиҳед ва ҳисобҳои худатонро месозед. Ҳамаи маълумот ва фоизҳои шумо нигоҳ дошта мешаванд ва бо фаъол кардани система дубора кор мекунанд.'}
+            </p>
+            <div className="confirm-actions">
+              <button type="button" className="btn secondary" onClick={() => setModeOpen(false)}>Бекор кардан</button>
+              <button type="button" className="btn big" onClick={switchMode}>{free ? 'Фаъол кардан' : 'Хомӯш кардан'}</button>
+            </div>
+          </Sheet>
+        )}
+
         {langOpen && (
           <Sheet title="Интихоби забон" onClose={() => setLangOpen(false)}>
             <div className="cells">
@@ -176,6 +207,17 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
             <p className="note">Забон ба аккаунт сабт мешавад: бот низ бо ҳамин забон менависад.</p>
           </Sheet>
         )}
+      </>
+    );
+  }
+
+  if (free) {
+    return (
+      <>
+        <button className="set-back tap" onClick={() => setPage('menu')}>
+          <span className="chev-back"><ChevronIcon /></span> Танзимот
+        </button>
+        <FreeAccounts state={state} setState={setState} onToast={onToast} />
       </>
     );
   }

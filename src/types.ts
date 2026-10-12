@@ -149,7 +149,11 @@ export interface Transfer {
   date: string;
 }
 
+/** «system» — системаи Саидмурод Давлатов (ҳисобҳо ва фоизҳо); «free» — ҳисобҳои худи корбар бе фоиз. Агар нест — system. */
+export type AppMode = 'system' | 'free';
+
 export interface State {
+  mode?: AppMode;
   accounts: AccountDef[];
   tree: DistNode;
   incomes: Income[];
