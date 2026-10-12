@@ -58,9 +58,9 @@ jobs:
           if [ -n "$PHOTO" ]; then
             [ "$LEN" -le 1024 ] || { echo "Барои акс матн ≤1024 аломат бошад"; exit 1; }
             RESP=$(curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto" \
-              -F chat_id="$CHANNEL_ID" -F parse_mode=HTML \
-              -F caption="$(cat "$POST_FILE")" -F photo=@"$PHOTO" \
-              -F reply_markup="$MARKUP")
+              --form-string chat_id="$CHANNEL_ID" --form-string parse_mode=HTML \
+              --form-string caption="$(cat "$POST_FILE")" -F photo=@"$PHOTO" \
+              --form-string reply_markup="$MARKUP")
           else
             [ "$LEN" -le 4096 ] || { echo "Матн ≤4096 аломат бошад"; exit 1; }
             RESP=$(jq -n --arg chat "$CHANNEL_ID" --rawfile text "$POST_FILE" --argjson rm "$MARKUP" \
