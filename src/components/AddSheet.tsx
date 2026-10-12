@@ -18,12 +18,11 @@ const KINDS: { id: Kind; label: string; icon: string }[] = [
 ];
 
 /** Варақаи якҷоя: ҷудокунак (даромад / хароҷот / гузаронидан / қарз) ва форма бо тугмачаҳои рақамӣ. */
-export default function AddSheet({ state, setState, onClose, onDone, initialKind = 'expense' }: Props & {
-  initialKind?: Kind;
+export default function AddSheet({ state, setState, onClose, onDone }: Props & {
   onClose: () => void;
   onDone: (msg: string) => void;
 }) {
-  const [kind, setKind] = useState<Kind>(initialKind);
+  const [kind, setKind] = useState<Kind>('expense');
   const [debtKind, setDebtKind] = useState<DebtKind>('lend');
   const done = (msg: string) => {
     onDone(msg);

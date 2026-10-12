@@ -109,20 +109,7 @@ export default function App() {
   const layerOnBoot = typeof history !== 'undefined' && history.state?.layer === true;
   const reuseSub = useRef(layerOnBoot && nav0.sub !== null);
   const reuseAcct = useRef(layerOnBoot && nav0.acct !== null);
-  // Тугмаҳои зуд аз иконкаи барнома: ?add=income | expense
-  const [addKind, setAddKind] = useState<'income' | 'expense' | undefined>(() => {
-    try {
-      const k = new URLSearchParams(location.search).get('add');
-      if (k !== null) {
-        // Параметрро фавран тоза мекунем (то қабати таърихи варақа суроғаи тозаро нигоҳ дорад)
-        const u = new URL(location.href);
-        u.searchParams.delete('add');
-        history.replaceState(history.state, '', u.pathname + u.search + u.hash);
-      }
-      return k === 'income' || k === 'expense' ? k : undefined;
-    } catch { return undefined; }
-  });
-  const [adding, setAdding] = useState(addKind !== undefined);
+  const [adding, setAdding] = useState(false);
 
   const [info, setInfo] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -510,7 +497,7 @@ export default function App() {
       {info && infoKind && <InfoSheet kind={infoKind} onClose={() => setInfo(false)} />}
 
       {adding && (
-        <AddSheet {...props} initialKind={addKind} onClose={() => { setAdding(false); setAddKind(undefined); }} onDone={setToast} />
+        <AddSheet {...props} onClose={() => setAdding(false)} onDone={setToast} />
       )}
     </div>
   );
