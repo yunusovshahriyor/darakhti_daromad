@@ -165,6 +165,11 @@ export default function Profile({ state, open, canInstall, install, standalone, 
           <div className="grow"><b>Telegram-бот</b><small>Ёдоварии пардохтҳо ва хулоса</small></div>
           <ChevronIcon />
         </button>
+        <button className="cell tap link" onClick={() => open('guide')}>
+          <div className="ic">📖</div>
+          <div className="grow"><b>Системаҳои кор</b><small>Системаи Саидмурод Давлатов ва «ба тарзи худам»</small></div>
+          <ChevronIcon />
+        </button>
         <button className="cell tap link" onClick={() => open('settings')}>
           <div className="ic">⚙️</div>
           <div className="grow"><b>Танзимот</b><small>Фоизҳои тақсим, маълумот</small></div>

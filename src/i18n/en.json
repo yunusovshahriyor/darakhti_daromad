@@ -922,5 +922,9 @@
 "Нақд": "Cash",
 "Корт": "Card",
 "{0} ҳисоб": "Accounts: {0}",
-"{0} ҳисоб · тақсими даромад": "Accounts: {0} · income split"
+"{0} ҳисоб · тақсими даромад": "Accounts: {0} · income split",
+"Системаҳои кор": "Ways to work",
+"Шарҳ ва гузариш аз як система ба дигар": "Overview and switching between systems",
+"Системаи Саидмурод Давлатов ва «ба тарзи худам»": "Saidmurod Davlatov's system and “my own way”",
+"Дар бораи системаҳо бештар донед": "Learn more about the systems"
 }

@@ -4,6 +4,7 @@ import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
 import ModeChooser from './components/ModeChooser';
+import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
@@ -37,7 +38,7 @@ const RIGHT: { id: Tab; label: string; icon: ReactNode }[] = [
 ];
 
 const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисобҳо', history: 'Таърих', profile: 'Профил' };
-const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
+const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот', guide: 'Системаҳои кор' };
 /** Огоҳии баромад: 3 сония намоиш дода мешавад; дар ҳамин вақт бозгашти дуюм барномаро мепӯшад. */
 const EXIT_MSG = 'Барои баромадан боз тугмаи «Назад»-ро пахш кунед';
 const HIDE_KEY = 'darakhti:hide';
@@ -45,7 +46,7 @@ const NAV_KEY = 'darakhti:nav';
 const FILTER_KEY = 'darakhti:hfilter';
 
 const TAB_IDS: Tab[] = ['home', 'accounts', 'history', 'profile'];
-const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings'];
+const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings', 'guide'];
 const FILTER_IDS: HistoryFilter[] = ['all', 'income', 'expense', 'transfer'];
 
 interface Nav {
@@ -351,7 +352,8 @@ export default function App() {
     }
     if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
     if (sub === 'debts') return <Debts {...props} onToast={setToast} />;
-    if (sub === 'settings') return <SettingsView {...props} onToast={setToast} />;
+    if (sub === 'settings') return <SettingsView {...props} onToast={setToast} onGuide={() => setSub('guide')} />;
+    if (sub === 'guide') return <SystemGuide {...props} onToast={setToast} />;
     if (tab === 'home') {
       return (
         <Dashboard {...props} {...privacy} onNavigate={go} onProfile={() => go('profile')}
@@ -404,7 +406,7 @@ export default function App() {
       </main>
 
       {toast && <div className="toast">{toast}</div>}
-      {showChooser && <ModeChooser onPick={pickMode} />}
+      {showChooser && !sub && <ModeChooser onPick={pickMode} onGuide={() => { setAcct(null); setSub('guide'); }} />}
       {celebration && <Celebrate title={celebration.title} text={celebration.text} onClose={() => setCelebration(null)} />}
 
       <nav className="tabbar">

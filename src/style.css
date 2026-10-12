@@ -1509,3 +1509,34 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
 .lang-on { color: var(--primary); font-weight: 700; font-size: 1.1rem; }
 
 .inst-logo { width: 100px; max-width: 40%; height: auto; margin: 4px auto 0; display: block; }
+
+/* ================= Саҳифаи «Системаҳои кор» ================= */
+.guide { display: flex; flex-direction: column; gap: 12px; padding-bottom: 24px; }
+.guide-hero { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.guide-hero h2 { margin: 0; font-size: 1.4rem; }
+.guide-hero p { margin: 0; opacity: .92; line-height: 1.45; font-size: .95rem; }
+.guide-hero .btn { background: #fff; color: var(--primary); }
+.guide-now { align-self: flex-start; background: rgba(255,255,255,.2); border-radius: 999px; padding: 5px 12px; font-size: .82rem; font-weight: 700; }
+.guide-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 14px; display: flex; gap: 12px; }
+.guide-card p { margin: 6px 0 10px; color: var(--muted); font-size: .9rem; line-height: 1.45; }
+.gc-ic { font-size: 1.8rem; }
+.guide-cmp { display: flex; flex-direction: column; gap: 10px; }
+.gcmp-row { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.gcmp-col { border-radius: 12px; padding: 8px 10px; font-size: .88rem; line-height: 1.4; background: color-mix(in srgb, var(--muted) 8%, transparent); }
+.gcmp-col small { display: block; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+.gcmp-col.on { background: color-mix(in srgb, var(--primary) 14%, transparent); }
+.guide-p { margin: 0; line-height: 1.5; color: var(--text); font-size: .95rem; }
+.guide-h { margin: 8px 2px 0; font-size: 1.02rem; }
+.guide-steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.guide-steps li { counter-increment: s; display: flex; flex-direction: column; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 10px 12px 10px 46px; position: relative; font-size: .9rem; line-height: 1.4; }
+.guide-steps li::before { content: counter(s); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: .8rem; }
+.guide-steps li span { color: var(--muted); }
+.guide-calc { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--muted); }
+.guide-calc input { font: inherit; font-size: 1.2rem; font-weight: 700; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.guide-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; line-height: 1.45; }
+.guide-faq { display: flex; flex-direction: column; gap: 8px; }
+.guide-faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 10px 12px; }
+.guide-faq summary { font-weight: 700; cursor: pointer; line-height: 1.35; }
+.guide-faq p { margin: 8px 0 0; color: var(--muted); font-size: .9rem; line-height: 1.45; }
+.guide-check { display: flex; align-items: center; gap: 8px; font-size: .92rem; font-weight: 600; }
+.guide-check input { width: 20px; height: 20px; accent-color: var(--primary); }

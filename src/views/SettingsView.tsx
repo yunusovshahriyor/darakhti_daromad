@@ -19,7 +19,7 @@ const readClosed = (): string[] => {
   try { return JSON.parse(localStorage.getItem(CLOSED_KEY) ?? '[]') as string[]; } catch { return []; }
 };
 
-export default function SettingsView({ state, setState, onToast }: Props & { onToast: (m: string) => void }) {
+export default function SettingsView({ state, setState, onToast, onGuide }: Props & { onToast: (m: string) => void; onGuide: () => void }) {
   const [editId, setEditId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [closed, setClosed] = useState(readClosed);
@@ -152,6 +152,11 @@ export default function SettingsView({ state, setState, onToast }: Props & { onT
           <button className="cell tap link" onClick={() => setLangOpen(true)}>
             <div className="ic">🌐</div>
             <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
+            <ChevronIcon />
+          </button>
+          <button className="cell tap link" onClick={onGuide}>
+            <div className="ic">📖</div>
+            <div className="grow"><b>Системаҳои кор</b><small>Шарҳ ва гузариш аз як система ба дигар</small></div>
             <ChevronIcon />
           </button>
           <button className="cell tap link" onClick={() => setModeOpen(true)}>

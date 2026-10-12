@@ -1,7 +1,7 @@
 import Sheet from './Sheet';
 
 /** Интихоби услуби кор (дар оғози кор барои корбари нав). */
-export default function ModeChooser({ onPick }: { onPick: (m: 'system' | 'free') => void }) {
+export default function ModeChooser({ onPick, onGuide }: { onPick: (m: 'system' | 'free') => void; onGuide: () => void }) {
   return (
     <Sheet title="Чӣ тавр кор кардан мехоҳед?" onClose={() => onPick('system')}>
       <p className="note">Дар ҳар вақт онро дар Танзимот иваз кардан мумкин аст, маълумоти шумо намемирад.</p>
@@ -21,6 +21,7 @@ export default function ModeChooser({ onPick }: { onPick: (m: 'system' | 'free')
           </div>
         </button>
       </div>
+      <button className="btn secondary" onClick={onGuide}>Дар бораи системаҳо бештар донед</button>
     </Sheet>
   );
 }
