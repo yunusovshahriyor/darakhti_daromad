@@ -40,6 +40,7 @@
       try { var v = localStorage.getItem('darakhti:lang'); if (v === 'tg' || v === 'ru' || v === 'en') l = v; else { var n = (navigator.language || '').toLowerCase(); l = n.indexOf('ru') === 0 ? 'ru' : n.indexOf('en') === 0 ? 'en' : 'tg'; } } catch (e) {}
       var b = '%BASE_URL%';
       document.getElementById('splash-img').src = b + 'logo-' + l + '.png';
+      var ai = document.querySelector('link[rel="apple-touch-icon"]'); if (ai) ai.href = b + 'icons/apple-touch-icon-' + l + '.png';
       document.getElementById('manifest').href = b + 'manifest-' + l + '.webmanifest';
       var names = { tg: 'Дарахти даромад', ru: 'Дерево дохода', en: 'Income Tree' };
       document.title = names[l];

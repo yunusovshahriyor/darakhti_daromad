@@ -1,4 +1,4 @@
-const CACHE = 'daromad-v6';
+const CACHE = 'daromad-v7';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
