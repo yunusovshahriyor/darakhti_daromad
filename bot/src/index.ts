@@ -32,6 +32,32 @@ const tg = async (env: Env, method: string, body: Record<string, unknown>) => {
   return res.ok;
 };
 
+type TgPhoto = { ok: boolean; result?: { photo?: { file_id: string }[] }; description?: string };
+
+/** Баннер: аввал file_id-и захирашуда, баъд боркунӣ аз сайт ва фиристодан ҳамчун файл (Telegram худаш URL-ро набарорад ҳам кор мекунад). */
+async function sendBanner(env: Env, chat: number, lang: string, caption: string, markup: Keyboard): Promise<boolean> {
+  const base = { chat_id: chat, caption, parse_mode: 'HTML', reply_markup: markup };
+  const key = `botMeta/banner_${lang}`;
+  const cached = await fs.get(env, key).catch(() => null);
+  if (cached?.fileId && await tg(env, 'sendPhoto', { ...base, photo: String(cached.fileId) })) return true;
+  try {
+    const img = await fetch(appUrl(env, `bot-banner-${lang}.png`));
+    if (!img.ok) throw new Error(`banner fetch ${img.status}`);
+    const form = new FormData();
+    for (const [k, v] of Object.entries(base)) form.append(k, typeof v === 'string' || typeof v === 'number' ? String(v) : JSON.stringify(v));
+    form.append('photo', new Blob([await img.arrayBuffer()], { type: 'image/png' }), `banner-${lang}.png`);
+    const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/sendPhoto`, { method: 'POST', body: form });
+    const j = (await res.json()) as TgPhoto;
+    if (!j.ok) throw new Error(`sendPhoto upload: ${j.description}`);
+    const id = j.result?.photo?.at(-1)?.file_id;
+    if (id) await fs.set(env, key, { fileId: id, updatedAt: new Date().toISOString() }).catch(() => {});
+    return true;
+  } catch (e) {
+    console.log(`banner: ${e instanceof Error ? e.message : e}`);
+    return false;
+  }
+}
+
 const send = (env: Env, chat: number | string, text: string, markup?: Keyboard) =>
   tg(env, 'sendMessage', { chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...(markup ? { reply_markup: markup } : {}) });
 
@@ -228,8 +254,7 @@ async function sendMenu(env: Env, chat: number, name: string, lang: Lang, t: TFn
     t("дар бораи пардохтҳо ёдрас менамоям ва хулосаи молиявиро мефиристам.\n\n") +
     t("Аз менюи поён интихоб кунед 👇");
   const markup = menu(t, env, await isLinked(env, chat));
-  const ok = await tg(env, 'sendPhoto', { chat_id: chat, photo: appUrl(env, `bot-banner-${lang}.png`), caption, parse_mode: 'HTML', reply_markup: markup });
-  if (!ok) await send(env, chat, caption, markup);
+  if (!(await sendBanner(env, chat, lang, caption, markup))) await send(env, chat, caption, markup);
 }
 
 const linkHelp = (t: TFn, env: Env): [string, Keyboard] => [
