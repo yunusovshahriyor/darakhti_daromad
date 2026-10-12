@@ -110,9 +110,18 @@ button { cursor: pointer; }
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 4px 16px 112px;
-  animation: screen-in .22s ease;
 }
-@keyframes screen-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* Пайдоиши мулоими маълумот: ҳар блок пай дар пай аз поён мебарояд (баъди боршавӣ/навсозӣ — баъди splash) */
+.screen > * {
+  animation: rise .6s cubic-bezier(.2, .8, .2, 1) both;
+  animation-delay: calc(var(--base, 0ms) + var(--i, 0) * 55ms);
+}
+html.boot .screen > * { --base: 340ms; }
+.screen > :nth-child(1) { --i: 0; } .screen > :nth-child(2) { --i: 1; } .screen > :nth-child(3) { --i: 2; }
+.screen > :nth-child(4) { --i: 3; } .screen > :nth-child(5) { --i: 4; } .screen > :nth-child(6) { --i: 5; }
+.screen > :nth-child(7) { --i: 6; } .screen > :nth-child(8) { --i: 7; } .screen > :nth-child(n+9) { --i: 8; }
+@keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .screen > * { animation: none; } }
 
 .icon-btn {
   width: 40px; height: 40px; border: 0; border-radius: 50%;

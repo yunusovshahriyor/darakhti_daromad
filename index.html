@@ -38,6 +38,8 @@
   <script>
     (function () {
       try { var t = localStorage.getItem('darakhti:theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+      document.documentElement.classList.add('boot');
+      setTimeout(function () { document.documentElement.classList.remove('boot'); }, 2500);
       var l = 'tg';
       try { var v = localStorage.getItem('darakhti:lang'); if (v === 'tg' || v === 'ru' || v === 'en') l = v; else { var n = (navigator.language || '').toLowerCase(); l = n.indexOf('ru') === 0 ? 'ru' : n.indexOf('en') === 0 ? 'en' : 'tg'; } } catch (e) {}
       var b = '%BASE_URL%';
