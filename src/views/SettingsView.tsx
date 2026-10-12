@@ -8,7 +8,7 @@ import Sheet from '../components/Sheet';
 import { LANGS, currentLang, setLang } from '../i18n';
 import type { Lang } from '../i18n';
 import { hasUnsynced, saveLangToAccount, signOutAndWipe, syncNow, useSync } from '../sync';
-import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isFree, isRemainderNode, toFreeMode, toSystemMode } from '../model';
+import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isFree, isRemainderNode } from '../model';
 import { emptyState } from '../storage';
 import type { DistNode } from '../types';
 import type { Props } from './props';
@@ -26,14 +26,7 @@ export default function SettingsView({ state, setState, onToast, onGuide }: Prop
   const [page, setPage] = useState<'menu' | 'accounts'>('menu');
   const sync = useSync();
   const [langOpen, setLangOpen] = useState(false);
-  const [modeOpen, setModeOpen] = useState(false);
   const free = isFree(state);
-  const switchMode = () => {
-    setState(s => (isFree(s) ? toSystemMode(s) : toFreeMode(s)));
-    setModeOpen(false);
-    setPage('menu');
-    onToast(free ? 'Системаи Саидмурод Давлатов фаъол шуд ✓' : 'Ҳолати «ба тарзи худам» фаъол шуд ✓');
-  };
   const lang = currentLang();
   const chooseLang = async (l: Lang) => {
     if (l === lang) { setLangOpen(false); return; }
@@ -147,21 +140,10 @@ export default function SettingsView({ state, setState, onToast, onGuide }: Prop
   if (page === 'menu') {
     return (
       <>
-        <h3 className="group-title"><span>Танзимот</span></h3>
         <div className="cells">
-          <button className="cell tap link" onClick={() => setLangOpen(true)}>
-            <div className="ic">🌐</div>
-            <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
-            <ChevronIcon />
-          </button>
           <button className="cell tap link" onClick={onGuide}>
-            <div className="ic">📖</div>
-            <div className="grow"><b>Системаҳои кор</b><small>Шарҳ ва гузариш аз як система ба дигар</small></div>
-            <ChevronIcon />
-          </button>
-          <button className="cell tap link" onClick={() => setModeOpen(true)}>
             <div className="ic">🌳</div>
-            <div className="grow"><b>Системаи Саидмурод Давлатов</b><small>{free ? 'Хомӯш: ҳисобҳои худам, бе фоиз' : 'Фаъол: тақсими даромад аз рӯи фоиз'}</small></div>
+            <div className="grow"><b>Системаи кор</b><small>{free ? 'Ба тарзи худам' : 'Системаи Саидмурод Давлатов'}</small></div>
             <ChevronIcon />
           </button>
           <button className="cell tap link" onClick={() => setPage('accounts')}>
@@ -172,9 +154,14 @@ export default function SettingsView({ state, setState, onToast, onGuide }: Prop
             </div>
             <ChevronIcon />
           </button>
+          <button className="cell tap link" onClick={() => setLangOpen(true)}>
+            <div className="ic">🌐</div>
+            <div className="grow"><b>Забон</b><small>{LANGS.find(l => l.id === lang)?.name}</small></div>
+            <ChevronIcon />
+          </button>
           {signed && (
             <button className="cell tap link" onClick={logout}>
-              <div className="ic">🚪</div>
+              <div className="ic">↪️</div>
               <div className="grow"><b>Баромад аз аккаунт</b><small>{sync.email}</small></div>
               <ChevronIcon />
             </button>
@@ -184,20 +171,6 @@ export default function SettingsView({ state, setState, onToast, onGuide }: Prop
         <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
 
         {confirmDialog}
-
-        {modeOpen && (
-          <Sheet title="Системаи Саидмурод Давлатов" onClose={() => setModeOpen(false)}>
-            <p className="confirm-text">
-              {free
-                ? 'Системаро фаъол мекунед: даромади нав аз рӯи фоизҳо ба ҳисобҳо тақсим мешавад. Ҳисобҳое, ки худатон сохтед, бо 0% мемонанд ва фоизро дар «Ҳисобҳо ва фоизҳо» муайян мекунед.'
-                : 'Системаро хомӯш мекунед: фоизҳо ва тақсими худкори даромад кор намекунанд. Даромадро ба ҳисоби дилхоҳ медиҳед ва ҳисобҳои худатонро месозед. Ҳамаи маълумот ва фоизҳои шумо нигоҳ дошта мешаванд ва бо фаъол кардани система дубора кор мекунанд.'}
-            </p>
-            <div className="confirm-actions">
-              <button type="button" className="btn secondary" onClick={() => setModeOpen(false)}>Бекор кардан</button>
-              <button type="button" className="btn big" onClick={switchMode}>{free ? 'Фаъол кардан' : 'Хомӯш кардан'}</button>
-            </div>
-          </Sheet>
-        )}
 
         {langOpen && (
           <Sheet title="Интихоби забон" onClose={() => setLangOpen(false)}>
