@@ -161,6 +161,11 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
           <div className="grow"><b>Қарзҳо</b><small>{state.debts.length + state.loans.length} сабт</small></div>
           <ChevronIcon />
         </button>
+        <button className="cell tap link" onClick={() => open('settings')}>
+          <div className="ic">⚙️</div>
+          <div className="grow"><b>Танзимот</b><small>Фоизҳои тақсим, маълумот</small></div>
+          <ChevronIcon />
+        </button>
         <button className="cell tap link" onClick={() => setTgOpen(true)}>
           <div className="ic">✈️</div>
           <div className="grow"><b>Telegram-бот</b><small>Ёдоварии пардохтҳо ва хулоса</small></div>
@@ -169,16 +174,6 @@ export default function Profile({ state, open, onIntro, canInstall, install, sta
         <button className="cell tap link" onClick={onIntro}>
           <div className="ic">👋</div>
           <div className="grow"><b>Саҳифаи шиносоӣ</b><small>Муқаддимаи кӯтоҳ дар бораи барнома</small></div>
-          <ChevronIcon />
-        </button>
-        <button className="cell tap link" onClick={() => open('guide')}>
-          <div className="ic">📖</div>
-          <div className="grow"><b>Системаҳои кор</b><small>Системаи Саидмурод Давлатов ва «ба тарзи худам»</small></div>
-          <ChevronIcon />
-        </button>
-        <button className="cell tap link" onClick={() => open('settings')}>
-          <div className="ic">⚙️</div>
-          <div className="grow"><b>Танзимот</b><small>Фоизҳои тақсим, маълумот</small></div>
           <ChevronIcon />
         </button>
       </div>
