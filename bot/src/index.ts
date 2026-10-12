@@ -8,7 +8,7 @@ import type { Env } from './firestore';
 import type { State } from '../../src/types';
 import { LOGIN_RE, LOGIN_TTL_MS, newCode, resolveUid, verifyInitData } from './auth';
 
-interface TgUser { id?: number; first_name?: string; last_name?: string }
+interface TgUser { id?: number; first_name?: string; last_name?: string; language_code?: string }
 interface Update {
   message?: { chat: { id: number; type: string }; text?: string; from?: TgUser };
   callback_query?: { id: string; from: TgUser; data?: string; message?: { chat: { id: number; type: string }; message_id: number } };
@@ -199,14 +199,17 @@ function menu(env: Env, linked: boolean): Keyboard {
   };
 }
 
-async function sendMenu(env: Env, chat: number, name: string) {
+/** Баннер аз рӯи забони Telegram-и корбар: ru → русӣ, en → англисӣ, дигар → тоҷикӣ. */
+const bannerLang = (code?: string) => { const c = (code ?? '').toLowerCase(); return c.startsWith('ru') ? 'ru' : c.startsWith('en') ? 'en' : 'tg'; };
+
+async function sendMenu(env: Env, chat: number, name: string, lang?: string) {
   const caption =
     `👋 Салом, <b>${esc(name || 'дӯст')}</b>!\n\n` +
     '🌳 Ман ёрдамчии барномаи <b>«Дарахти даромад»</b> ҳастам: даромад, хароҷот ва қарзҳои шуморо назорат мекунам, ' +
     'дар бораи пардохтҳо ёдрас менамоям ва хулосаи молиявиро мефиристам.\n\n' +
     'Аз менюи поён интихоб кунед 👇';
   const markup = menu(env, await isLinked(env, chat));
-  const ok = await tg(env, 'sendPhoto', { chat_id: chat, photo: appUrl(env, 'bot-banner.png'), caption, parse_mode: 'HTML', reply_markup: markup });
+  const ok = await tg(env, 'sendPhoto', { chat_id: chat, photo: appUrl(env, `bot-banner-${bannerLang(lang)}.png`), caption, parse_mode: 'HTML', reply_markup: markup });
   if (!ok) await send(env, chat, caption, markup);
 }
 
@@ -226,16 +229,16 @@ async function report(env: Env, chat: number, kind: 'sum' | 'debts' | 'rem') {
   return send(env, chat, reminderText(r.state, today) ?? '✅ Имрӯз ва дар 3 рӯзи наздик пардохт нест.');
 }
 
-async function onMessage(env: Env, chat: number, text: string, name: string, fullName: string) {
+async function onMessage(env: Env, chat: number, text: string, name: string, fullName: string, lang?: string) {
   const [cmdRaw, ...rest] = text.trim().split(/\s+/);
   const cmd = cmdRaw.split('@')[0].toLowerCase();
 
   if (cmd === '/start') {
     if (rest[0]?.startsWith('login_')) return loginViaStart(env, chat, rest[0].slice(6), fullName);
     if (rest[0]) await send(env, chat, await link(env, chat, rest[0]));
-    return sendMenu(env, chat, name);
+    return sendMenu(env, chat, name, lang);
   }
-  if (cmd === '/menu') return sendMenu(env, chat, name);
+  if (cmd === '/menu') return sendMenu(env, chat, name, lang);
   if (cmd === '/help') return send(env, chat, HELP);
   if (!cmd.startsWith('/') && CODE_RE.test(cmdRaw.toUpperCase()) && rest.length === 0) return send(env, chat, await link(env, chat, cmdRaw));
 
@@ -396,7 +399,7 @@ export default {
     const m = u.message;
     const q = u.callback_query;
     if (m?.text && m.chat.type === 'private') {
-      ctx.waitUntil(onMessage(env, m.chat.id, m.text, m.from?.first_name ?? '', [m.from?.first_name, m.from?.last_name].filter(Boolean).join(' ')).catch(e => {
+      ctx.waitUntil(onMessage(env, m.chat.id, m.text, m.from?.first_name ?? '', [m.from?.first_name, m.from?.last_name].filter(Boolean).join(' '), m.from?.language_code).catch(e => {
         console.log(`message: ${e instanceof Error ? e.stack : e}`);
         return send(env, m.chat.id, '⚠️ Хатои муваққатӣ. Баъдтар кӯшиш кунед.');
       }));
