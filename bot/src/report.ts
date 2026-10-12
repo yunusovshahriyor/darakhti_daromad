@@ -1,10 +1,10 @@
 import { fmt, balancesOf, inPeriod, periodAt, remaining, openLoans, loanLeft } from '../../src/model';
 import { nextInstallment } from '../../src/loanPlan';
 import type { State } from '../../src/types';
+import type { TFn } from './i18n';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const CUR = 'смн';
-const money = (n: number) => `<b>${fmt(n)}</b> ${CUR}`;
+const money = (t: TFn, n: number) => `<b>${fmt(n)}</b> ${t("смн")}`;
 
 const parse = (s: string) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
 export const daysBetween = (a: string, b: string) => Math.round((parse(b) - parse(a)) / 86400000);
@@ -27,39 +27,39 @@ export function dues(s: State, today: string, within = 3650): Due[] {
   return out.sort((a, b) => a.due.localeCompare(b.due));
 }
 
-const when = (days: number) =>
-  days < 0 ? `⚠️ <b>${-days} рӯз гузашт</b>` : days === 0 ? '🔔 <b>имрӯз</b>' : days === 1 ? '🔔 <b>пагоҳ</b>' : `🗓 пас аз ${days} рӯз`;
+const when = (t: TFn, days: number) =>
+  days < 0 ? t("⚠️ <b>{0} рӯз гузашт</b>", -days) : days === 0 ? t("🔔 <b>имрӯз</b>") : days === 1 ? t("🔔 <b>пагоҳ</b>") : t("🗓 пас аз {0} рӯз", days);
 
-const dueLine = (x: Due) => `• ${esc(x.title)} — ${money(x.toPay)}\n  ${when(x.days)} (${fmtDate(x.due)})`;
+const dueLine = (t: TFn, x: Due) => `• ${esc(x.title)} — ${money(t, x.toPay)}\n  ${when(t, x.days)} (${fmtDate(x.due)})`;
 
 /** Ёдоварии пардохтҳо: `pay` — имрӯз, пагоҳ, пас аз 3 рӯз; `overdue` — гузаштаҳо. `null` — чизе нест. */
-export function reminderText(s: State, today: string, o: { pay?: boolean; overdue?: boolean } = { pay: true, overdue: true }): string | null {
+export function reminderText(t: TFn, s: State, today: string, o: { pay?: boolean; overdue?: boolean } = { pay: true, overdue: true }): string | null {
   const list = dues(s, today, 3).filter(x => (o.overdue && x.days < 0) || (o.pay && (x.days === 0 || x.days === 1 || x.days === 3)));
   if (!list.length) return null;
-  const head = o.overdue && !o.pay ? '⚠️ <b>Пардохти дер шуда</b>' : '⏰ <b>Ёдоварии пардохтҳо</b>';
-  return `${head}\n\n${list.map(dueLine).join('\n')}`;
+  const head = o.overdue && !o.pay ? t("⚠️ <b>Пардохти дер шуда</b>") : t("⏰ <b>Ёдоварии пардохтҳо</b>");
+  return `${head}\n\n${list.map(x => dueLine(t, x)).join('\n')}`;
 }
 
-export function debtsText(s: State, today: string): string {
+export function debtsText(t: TFn, s: State, today: string): string {
   const open = s.debts.filter(d => remaining(d) > 0.005);
   const loans = openLoans(s.loans);
-  if (!open.length && !loans.length) return '🎉 Қарз надоред.';
+  if (!open.length && !loans.length) return t("🎉 Қарз надоред.");
   const parts: string[] = [];
   if (open.length) {
     const total = open.reduce((a, d) => a + remaining(d), 0);
-    parts.push(`💳 <b>Шумо қарздоред:</b> ${money(total)}\n${open.map(d => `• ${esc(d.title)} — ${money(remaining(d))}`).join('\n')}`);
+    parts.push(t("💳 <b>Шумо қарздоред:</b> {0}\n{1}", money(t, total), open.map(d => `• ${esc(d.title)} — ${money(t, remaining(d))}`).join('\n')));
   }
   const ds = dues(s, today);
-  if (ds.length) parts.push(`📅 <b>Пардохтҳои навбатӣ</b>\n${ds.map(dueLine).join('\n')}`);
+  if (ds.length) parts.push(t("📅 <b>Пардохтҳои навбатӣ</b>\n{0}", ds.map(x => dueLine(t, x)).join('\n')));
   if (loans.length) {
     const total = loans.reduce((a, l) => a + loanLeft(l), 0);
-    parts.push(`🤝 <b>Ба шумо қарздоранд:</b> ${money(total)}\n${loans.map(l => `• ${esc(l.person)} — ${money(loanLeft(l))}`).join('\n')}`);
+    parts.push(t("🤝 <b>Ба шумо қарздоранд:</b> {0}\n{1}", money(t, total), loans.map(l => `• ${esc(l.person)} — ${money(t, loanLeft(l))}`).join('\n')));
   }
   return parts.join('\n\n');
 }
 
 /** Хулосаи моҳи ҷорӣ. */
-export function summaryText(s: State, today: string): string {
+export function summaryText(t: TFn, s: State, today: string): string {
   const now = new Date(`${today}T12:00:00`);
   const p = periodAt('month', 0, now);
   const inc = s.incomes.filter(i => inPeriod(i.date, p) && !i.kind);
@@ -69,20 +69,20 @@ export function summaryText(s: State, today: string): string {
   const total = Object.values(balancesOf(s)).reduce((a, v) => a + v, 0);
 
   const cats = new Map<string, number>();
-  for (const e of exp) cats.set(e.category || 'Дигар', (cats.get(e.category || 'Дигар') ?? 0) + e.amount);
+  for (const e of exp) cats.set(e.category || t("Дигар"), (cats.get(e.category || t("Дигар")) ?? 0) + e.amount);
   const top = [...cats.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
 
   const lines = [
-    `📊 <b>Хулосаи моҳ</b> (${esc(p.big)})`,
+    t("📊 <b>Хулосаи моҳ</b> ({0})", esc(t(p.big))),
     '',
-    `💰 Бақияи умумӣ: ${money(total)}`,
-    `📈 Даромад: ${money(incSum)}`,
-    `📉 Хароҷот: ${money(expSum)}`,
+    t("💰 Бақияи умумӣ: {0}", money(t, total)),
+    t("📈 Даромад: {0}", money(t, incSum)),
+    t("📉 Хароҷот: {0}", money(t, expSum)),
   ];
-  if (top.length) lines.push('', '🏷 <b>Хароҷоти асосӣ</b>', ...top.map(([c, v]) => `• ${esc(c)} — ${money(v)}`));
+  if (top.length) lines.push('', t("🏷 <b>Хароҷоти асосӣ</b>"), ...top.map(([c, v]) => `• ${esc(t(c))} — ${money(t, v)}`));
   const open = s.debts.filter(d => remaining(d) > 0.005);
-  if (open.length) lines.push('', `💳 Қарз: ${money(open.reduce((a, d) => a + remaining(d), 0))}`);
+  if (open.length) lines.push('', t("💳 Қарз: {0}", money(t, open.reduce((a, d) => a + remaining(d), 0))));
   const soon = dues(s, today, 7);
-  if (soon.length) lines.push('', '⏰ <b>Пардохтҳои наздик</b>', ...soon.map(dueLine));
+  if (soon.length) lines.push('', t("⏰ <b>Пардохтҳои наздик</b>"), ...soon.map(x => dueLine(t, x)));
   return lines.join('\n');
 }

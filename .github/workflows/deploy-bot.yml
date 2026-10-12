@@ -89,8 +89,29 @@ jobs:
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setChatMenuButton" \
             --data-urlencode 'menu_button={"type":"web_app","text":"Барнома","web_app":{"url":"https://yunusovshahriyor.github.io/darakhti_daromad/"}}'
           echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyCommands" \
+            --data-urlencode 'language_code=ru' \
+            --data-urlencode 'commands=[{"command":"start","description":"Главное меню"},{"command":"summary","description":"Сводка за месяц"},{"command":"debts","description":"Долги и ближайшие платежи"},{"command":"reminders","description":"Напоминания на сегодня"},{"command":"help","description":"Справка"},{"command":"stop","description":"Отключить бота от аккаунта"}]'
+          echo
+          # Тавсиф ва тавсифи кӯтоҳ: пешфарз — тоҷикӣ; ru, en — алоҳида
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyDescription" \
-            --data-urlencode 'description=Помощник приложения «Дарахти даромад»: напоминает о платежах по кредитам и долгам, присылает сводку доходов и расходов за месяц, показывает долги и ближайшие платежи. Подключите бота в приложении: Профиль → Telegram-бот.'
+            --data-urlencode 'description=Ёрдамчии барномаи «Дарахти даромад»: дар бораи пардохтҳои қарз ёдрас мекунад, хулосаи даромад ва хароҷоти моҳро мефиристад, қарзҳо ва пардохтҳои наздикро нишон медиҳад. Бот дар барнома пайваст мешавад: Профил → Telegram-бот.'
+          echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyDescription" \
+            --data-urlencode 'language_code=ru' \
+            --data-urlencode 'description=Помощник приложения «Дерево дохода»: напоминает о платежах по кредитам и долгам, присылает сводку доходов и расходов за месяц, показывает долги и ближайшие платежи. Подключите бота в приложении: Профиль → Telegram-бот.'
+          echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyDescription" \
+            --data-urlencode 'language_code=en' \
+            --data-urlencode 'description=Assistant for the Income Tree app: reminds you about loan and debt payments, sends a monthly summary of income and expenses, and shows debts and upcoming payments. Connect the bot in the app: Profile → Telegram bot.'
           echo
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyShortDescription" \
-            --data-urlencode 'short_description=Напоминания о платежах по долгам и кредитам и сводка финансов из приложения «Дарахти даромад».'
+            --data-urlencode 'short_description=Ёдоварии пардохтҳо ва хулосаи молиявӣ аз барномаи «Дарахти даромад».'
+          echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyShortDescription" \
+            --data-urlencode 'language_code=ru' \
+            --data-urlencode 'short_description=Напоминания о платежах по долгам и кредитам и сводка финансов из приложения «Дерево дохода».'
+          echo
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_TOKEN}/setMyShortDescription" \
+            --data-urlencode 'language_code=en' \
+            --data-urlencode 'short_description=Payment reminders and a finance summary from the Income Tree app.'
