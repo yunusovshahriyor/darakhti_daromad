@@ -18,8 +18,6 @@ export default function FeedbackSheet({ state, onClose }: Pick<Props, 'state'> &
   const [kind, setKind] = useState(0);
   const [text, setText] = useState('');
   const [contact, setContact] = useState(sync.email && sync.email !== 'Telegram' ? sync.email : '');
-  const [tech, setTech] = useState(true);
-  const [showTech, setShowTech] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +38,7 @@ export default function FeedbackSheet({ state, onClose }: Pick<Props, 'state'> &
     if (Date.now() - last < 20_000) { setError(t.wait); return; }
     setBusy(true); setError('');
     try {
-      await sendFeedback({ type: ['bug', 'idea', 'question'][kind], text: text.trim().slice(0, MAX), contact: contact.trim().slice(0, 120), lang, tech: tech ? info() : null });
+      await sendFeedback({ type: ['bug', 'idea', 'question'][kind], text: text.trim().slice(0, MAX), contact: contact.trim().slice(0, 120), lang, tech: info() });
       try { sessionStorage.setItem(LAST_KEY, String(Date.now())); } catch { /* ignore */ }
       setDone(true);
     } catch (e) {
@@ -86,24 +84,11 @@ export default function FeedbackSheet({ state, onClose }: Pick<Props, 'state'> &
           <input value={contact} placeholder={t.contactPh} onChange={e => setContact(e.target.value)} autoComplete="email" />
         </label>
 
-        <div className="fb-tech">
-          <label className="fb-switch">
-            <span className="grow"><b>{t.techTitle}</b><small>{t.techNote}</small></span>
-            <input type="checkbox" checked={tech} onChange={e => setTech(e.target.checked)} />
-            <i aria-hidden />
-          </label>
-          {tech && (
-            <>
-              <button className="fb-more" onClick={() => setShowTech(s => !s)}>{showTech ? t.techHide : t.techShow}</button>
-              {showTech && <pre className="fb-pre">{JSON.stringify(info(), null, 1)}</pre>}
-            </>
-          )}
-        </div>
-
         {error && <div className="alert danger">{error}</div>}
         <button className="btn big" disabled={!ok || busy} onClick={() => void submit()}>
           {busy ? <><span className="spin" /> {t.sending}</> : t.send}
         </button>
+        <p className="fb-note">{t.techNote}</p>
       </div>
     </Sheet>
   );

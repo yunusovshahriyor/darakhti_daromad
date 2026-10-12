@@ -5,7 +5,7 @@ export interface FeedbackText {
   types: [string, string, string]; typeIcons: [string, string, string];
   ph: [string, string, string];
   msgLabel: string; contactLabel: string; contactPh: string;
-  techTitle: string; techNote: string; techShow: string; techHide: string;
+  techNote: string;
   send: string; sending: string; minHint: string;
   okTitle: string; okText: string; close: string;
   err: string; wait: string; noServer: string;
@@ -17,8 +17,7 @@ export const FEEDBACK: Record<Lang, FeedbackText> = {
     types: ['Хато', 'Пешниҳод', 'Савол'], typeIcons: ['🐞', '💡', '💬'],
     ph: ['Чӣ рӯй дод? Дар кадом саҳифа ва пас аз кадом амал? Агар дошта бошед, чӣ интизор будед?', 'Чӣ чизро беҳтар кардан мумкин аст ё кадом имконият намерасад?', 'Саволатонро нависед…'],
     msgLabel: 'Матн', contactLabel: 'Чӣ тавр ҷавоб диҳем? (ихтиёрӣ)', contactPh: 'Почта ё @ном дар Telegram',
-    techTitle: 'Маълумоти техникӣ замима шавад', techNote: 'Ба мо дар ёфтани хато кӯмак мекунад. Маблағ, ном ва маълумоти молиявии шумо фиристода намешавад.',
-    techShow: 'Чӣ фиристода мешавад?', techHide: 'Пинҳон кардан',
+    techNote: 'Маълумоти техникии дастгоҳ худкор мефиристад (бе маблағ, ном ва маълумоти молиявӣ).',
     send: 'Фиристодан', sending: 'Фиристода истодааст…', minHint: 'Камаш 10 аломат нависед',
     okTitle: 'Ташаккур!', okText: 'Хабари шумо қабул шуд. Мо онро меомӯзем ва агар тамос гузошта бошед, ҷавоб медиҳем.', close: 'Пӯшидан',
     err: 'Фиристода нашуд. Интернетро санҷед ва аз нав кӯшиш кунед.', wait: 'Лутфан каме интизор шавед ва аз нав кӯшиш кунед.', noServer: 'Хидмат ҳоло дастнорас аст.',
@@ -28,8 +27,7 @@ export const FEEDBACK: Record<Lang, FeedbackText> = {
     types: ['Ошибка', 'Предложение', 'Вопрос'], typeIcons: ['🐞', '💡', '💬'],
     ph: ['Что произошло? На какой странице и после какого действия? Что вы ожидали увидеть?', 'Что можно улучшить или какой возможности не хватает?', 'Напишите ваш вопрос…'],
     msgLabel: 'Текст', contactLabel: 'Как вам ответить? (необязательно)', contactPh: 'Почта или @имя в Telegram',
-    techTitle: 'Приложить технические данные', techNote: 'Помогает нам найти ошибку. Суммы, имена и финансовые данные не отправляются.',
-    techShow: 'Что отправляется?', techHide: 'Скрыть',
+    techNote: 'Технические данные устройства отправляются автоматически (без сумм, имён и финансовых данных).',
     send: 'Отправить', sending: 'Отправляем…', minHint: 'Напишите не менее 10 символов',
     okTitle: 'Спасибо!', okText: 'Ваше сообщение получено. Мы изучим его и ответим, если вы оставили контакт.', close: 'Закрыть',
     err: 'Не удалось отправить. Проверьте интернет и попробуйте снова.', wait: 'Пожалуйста, подождите немного и попробуйте снова.', noServer: 'Сервис пока недоступен.',
@@ -39,8 +37,7 @@ export const FEEDBACK: Record<Lang, FeedbackText> = {
     types: ['Bug', 'Idea', 'Question'], typeIcons: ['🐞', '💡', '💬'],
     ph: ['What happened? On which screen and after which action? What did you expect?', 'What could be better or which feature is missing?', 'Write your question…'],
     msgLabel: 'Message', contactLabel: 'How can we reply? (optional)', contactPh: 'Email or @name in Telegram',
-    techTitle: 'Attach technical details', techNote: 'Helps us find the problem. Amounts, names and financial data are not sent.',
-    techShow: "What's sent?", techHide: 'Hide',
+    techNote: 'Technical device details are sent automatically (no amounts, names or financial data).',
     send: 'Send', sending: 'Sending…', minHint: 'Write at least 10 characters',
     okTitle: 'Thank you!', okText: 'Your message was received. We will look into it and reply if you left a contact.', close: 'Close',
     err: 'Could not send. Check your internet connection and try again.', wait: 'Please wait a moment and try again.', noServer: 'The service is unavailable right now.',
