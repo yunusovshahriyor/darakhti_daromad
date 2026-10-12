@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useConfirm } from '../components/ConfirmSheet';
 import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import CurrencySheet from '../components/CurrencySheet';
+import LockSheet from '../components/LockSheet';
+import { isLockOn } from '../lock';
 import FreeAccounts from '../components/FreeAccounts';
 import { defOf } from '../currency';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
@@ -40,6 +42,8 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const [langOpen, setLangOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
   const [curOpen, setCurOpen] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
+  const [lockTick, setLockTick] = useState(0);
   const [haptic, setHaptic] = useState(hapticOn);
   const [mode, setMode] = useState<ThemeMode>(getTheme);
   const [accent, setAccent] = useState<Accent>(getAccent);
@@ -188,6 +192,11 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
             <div className="grow"><b>Замина</b><small>{MODES.find(m => m[0] === mode)?.[1]} · {ACCENTS[accent].name}</small></div>
             <ChevronIcon />
           </button>
+          <button className="cell tap link" onClick={() => setLockOpen(true)} data-tick={lockTick}>
+            <div className="ic">🔒</div>
+            <div className="grow"><b>Қулфи барнома</b><small>{isLockOn() ? 'Фаъол: PIN' : 'Хомӯш'}</small></div>
+            <ChevronIcon />
+          </button>
           {signed && (
             <button className="cell tap link" onClick={logout}>
               <div className="ic">↪️</div>
@@ -201,6 +210,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
 
         {confirmDialog}
 
+        {lockOpen && <LockSheet onClose={() => setLockOpen(false)} onChange={() => setLockTick(x => x + 1)} />}
         {curOpen && <CurrencySheet state={state} setState={setState} onClose={() => setCurOpen(false)} />}
 
         {lookOpen && (

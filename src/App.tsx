@@ -5,6 +5,8 @@ import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
 import { BASE, activeCode, setActiveCode } from './currency';
 import { nav, refresh, success, warn } from './haptic';
+import LockScreen from './components/LockScreen';
+import { autoHide, getLock, isLockOn } from './lock';
 import Onboarding, { INTRO_RESUME_KEY } from './components/Onboarding';
 import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
@@ -113,7 +115,8 @@ export default function App() {
   const [syncOpen, setSyncOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; text: string } | null>(null);
-  const [hidden, setHidden] = useState(readHidden);
+  const [hidden, setHidden] = useState(() => readHidden() || autoHide());
+  const [locked, setLocked] = useState(isLockOn);
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
   const prevBal = useRef<Alloc | null>(null);
 
@@ -283,6 +286,22 @@ export default function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  // Қулф ва пинҳон кардани маблағ ҳангоми баргашт аз «пасзамина»
+  useEffect(() => {
+    let away = 0;
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') { away = Date.now(); return; }
+      if (!away) return;
+      const secs = (Date.now() - away) / 1000;
+      away = 0;
+      const cfg = getLock();
+      if (cfg && secs >= cfg.after) setLocked(true);
+      if (autoHide() && secs >= 30) setHidden(true);
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
   // «Бозгашт»-и телефон: аз саҳифаи дигар → ба «Асосӣ»; дар «Асосӣ» бори аввал огоҳӣ, бори дуюм баромадан.
   // Барои ин як сабти «посбон» (guard) дар таърих мемонем, то бозгашти аввал онро бигирад.
   const tabRef = useRef(tab);
@@ -450,6 +469,7 @@ export default function App() {
       </main>
 
       {toast && <div className="toast">{toast}</div>}
+      {locked && <LockScreen onUnlock={() => setLocked(false)} />}
       {intro && (
         <Onboarding mode={state.mode} onPick={pickMode} onClose={() => setIntro(false)}
           onGuide={() => { setAcct(null); setSub('guide'); }}
