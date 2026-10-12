@@ -2,6 +2,7 @@ import { brand } from '../brand';
 import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
 import AccountScopeSheet from '../components/AccountScopeSheet';
+import { Count, useCountUp } from '../useCountUp';
 import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, FilterIcon, PersonIcon } from '../components/Icons';
 import PeriodSheet from '../components/PeriodSheet';
 import {
@@ -90,6 +91,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
   const top = segs[0];
 
   const balText = fmt(balanceNow);
+  const aSpent = useCountUp(spentNow);
   const bigSize = balText.length <= 6 ? '3.6rem' : balText.length <= 8 ? '3rem' : balText.length <= 10 ? '2.4rem' : '2rem';
   const pctSpent = incomeNow > 0 ? Math.min(100, (spentNow / incomeNow) * 100) : spentNow > 0 ? 100 : 0;
 
@@ -138,7 +140,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         </div>
         <div className="spent-row">
           <div className="spent-num">
-            <span style={{ fontSize: bigSize }} className={balanceNow < 0 ? 'neg' : ''}>{mask(balText)}</span>
+            <span style={{ fontSize: bigSize }} className={balanceNow < 0 ? 'neg' : ''}><Count value={balanceNow} hidden={hidden} /></span>
             <small>смн</small>
           </div>
           <button className="round-btn mini" onClick={onToggleHidden}
@@ -152,7 +154,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         <button className="ir-block" onClick={() => onNavigate('history', 'expense')}>
           <div className="grow">
             <small>Харҷ шуд</small>
-            <b>{mask(fmt(spentNow))} смн</b>
+            <b><Count value={spentNow} hidden={hidden} /> смн</b>
             {change !== null && (
               <em className={change <= 0 ? 'trend-sm good' : 'trend-sm bad'}>
                 {change <= 0 ? '↓' : '↑'} {Math.abs(change).toLocaleString('ru-RU', { maximumFractionDigits: 1 })}% нисбат ба {PERIOD_LABELS[kind].prev}
@@ -165,7 +167,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
         <button className="ir-block" onClick={() => onNavigate('history', 'income')}>
           <div className="grow">
             <small>Даромад дар давра</small>
-            <b>{mask(fmt(incomeNow))} смн</b>
+            <b><Count value={incomeNow} hidden={hidden} /> смн</b>
           </div>
           <ChevronIcon />
         </button>
@@ -176,7 +178,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
       <div className="mini-cards">
         <div className="mini">
           <small>{PERIOD_LABELS[kind].forecast}</small>
-          <b>{mask(fmt(Math.round(proj)))} смн</b>
+          <b><Count value={Math.round(proj)} hidden={hidden} /> смн</b>
         </div>
         <div className="mini">
           <small>Ҳисоби асосӣ</small>
@@ -189,7 +191,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
           <h2>Аз рӯи ҳисобҳо</h2>
           <button className="link-btn" onClick={() => onNavigate('history', 'expense')}>Муфассал</button>
         </div>
-        <Donut segs={segs} label={mask(fmt(spentNow))} sub="смн" />
+        <Donut segs={segs} label={mask(fmt(aSpent))} sub="смн" />
         {segs.length === 0 ? (
           <p className="muted center">Дар ин давра хароҷот нест.</p>
         ) : (
@@ -198,7 +200,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
               <li key={s.id}>
                 <i style={{ background: s.color }} />
                 <span>{ACCOUNTS[s.id as keyof typeof ACCOUNTS].icon} {ACCOUNTS[s.id as keyof typeof ACCOUNTS].name}</span>
-                <b>{mask(fmt(s.value))}</b>
+                <b><Count value={s.value} hidden={hidden} /></b>
                 <em>{Math.round((s.value / spentNow) * 100)}%</em>
               </li>
             ))}
@@ -217,7 +219,7 @@ export default function Dashboard({ state, hidden, onToggleHidden, onNavigate, o
               style={{ '--c': CARD_COLORS[id] } as CSSProperties}>
               <span className="ma-ic">{ACCOUNTS[id].icon}</span>
               <small>{ACCOUNTS[id].name}</small>
-              <b>{mask(fmt(bal[id]))}</b>
+              <b><Count value={bal[id]} hidden={hidden} /></b>
             </button>
           ))}
         </div>
