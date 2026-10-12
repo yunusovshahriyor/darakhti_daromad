@@ -409,6 +409,40 @@ const ALLOWED_ORIGINS = ['https://yunusovshahriyor.github.io', 'http://localhost
 
 const FB_HITS = new Map<string, number[]>();
 
+type Tech = { mode?: string; currency?: string; screen?: string; standalone?: boolean; telegram?: boolean; online?: boolean; ua?: string; page?: string; errors?: string[] };
+
+/** Намуди дастгоҳ ва браузер аз user-agent: «Android 10 · Chrome 154». */
+function deviceOf(ua = ''): string {
+  const os = /Android ([\d.]+)/.exec(ua)?.[0] ?? (/iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '?');
+  const br = /Edg\/(\d+)/.exec(ua) ? `Edge ${/Edg\/(\d+)/.exec(ua)![1]}` : /(?:Chrome|CriOS)\/(\d+)/.exec(ua) ? `Chrome ${/(?:Chrome|CriOS)\/(\d+)/.exec(ua)![1]}` : /Firefox\/(\d+)/.exec(ua) ? `Firefox ${/Firefox\/(\d+)/.exec(ua)![1]}` : /Version\/(\d+).*Safari/.exec(ua) ? `Safari ${/Version\/(\d+)/.exec(ua)![1]}` : '';
+  return [os, br].filter(Boolean).join(' · ');
+}
+
+/** Хабари админ: намуд, матн, тамос ва маълумоти техникӣ дар шакли хонданбоб. */
+function feedbackMsg(env: Env, f: { type: string; text: string; contact: string; uid: string; lang: string; id: string; tech: Tech | null }): string {
+  const kinds: Record<string, [string, string]> = { bug: ['🐞', 'Хато'], idea: ['💡', 'Пешниҳод'], question: ['💬', 'Савол'] };
+  const [icon, name] = kinds[f.type] ?? kinds.bug;
+  const when = new Intl.DateTimeFormat('ru-RU', { timeZone: env.TIMEZONE ?? 'Asia/Dushanbe', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date());
+  const tc = f.tech;
+  const lines = [
+    `${icon} <b>${name}</b>  ·  ${esc(f.lang.toUpperCase() || '—')}`,
+    '',
+    `<blockquote>${esc(f.text)}</blockquote>`,
+    '',
+    `📨 <b>Тамос:</b> ${f.contact ? esc(f.contact) : '<i>нишон нашудааст</i>'}`,
+    `👤 <b>Корбар:</b> ${f.uid ? `<code>${esc(f.uid)}</code>` : '<i>воридшуда нест</i>'}`,
+  ];
+  if (tc) {
+    lines.push(
+      `📱 <b>Дастгоҳ:</b> ${esc(deviceOf(tc.ua))}${tc.screen ? ` · ${esc(tc.screen.replace('x', '×'))}` : ''}`,
+      `🧩 <b>Барнома:</b> ${tc.mode === 'free' ? 'ба тарзи худам' : 'системаи Давлатов'} · ${esc(tc.currency ?? 'TJS')}${tc.standalone ? ' · насбшуда' : ' · дар браузер'}${tc.telegram ? ' · Telegram' : ''}${tc.online === false ? ' · офлайн' : ''}`,
+    );
+    lines.push(tc.errors?.length ? `⚠️ <b>Хатоҳо:</b>\n<pre>${esc(tc.errors.join('\n').slice(0, 700))}</pre>` : '✅ <b>Хатои техникӣ:</b> нест');
+  }
+  lines.push('', `🕐 ${when} · <code>${esc(f.id)}</code>`);
+  return lines.join('\n').slice(0, 4000);
+}
+
 async function api(req: Request, env: Env, path: string): Promise<Response> {
   const origin = req.headers.get('origin') ?? '';
   const cors: Record<string, string> = ALLOWED_ORIGINS.includes(origin)
@@ -437,10 +471,7 @@ async function api(req: Request, env: Env, path: string): Promise<Response> {
       const id = `${now}_${Math.random().toString(36).slice(2, 8)}`;
       await fs.set(env, `feedback/${id}`, { createdAt: new Date(now).toISOString(), type, text, contact, uid, lang, tech });
       if (env.ADMIN_CHAT_ID) {
-        const icon = type === 'bug' ? '🐞' : type === 'idea' ? '💡' : '💬';
-        const msg = `${icon} <b>${type}</b> · ${esc(lang)}${uid ? ` · <code>${esc(uid)}</code>` : ''}\n\n${esc(text)}` +
-          (contact ? `\n\n📨 ${esc(contact)}` : '') + (tech ? `\n\n<code>${esc(tech.slice(0, 700))}</code>` : '');
-        await send(env, env.ADMIN_CHAT_ID, msg.slice(0, 4000)).catch(() => {});
+        await send(env, env.ADMIN_CHAT_ID, feedbackMsg(env, { type, text, contact, uid, lang, id, tech: (body.tech ?? null) as Tech | null })).catch(() => {});
       }
       return json({ ok: true });
     }
