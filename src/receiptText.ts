@@ -5,7 +5,6 @@ export interface ReceiptText {
   loadingLib: string; reading: string; firstTime: string; offline: string; failed: string;
   resultTitle: string; amount: string; merchant: string; date: string; found: string; notFound: string; raw: string;
   apply: string; retry: string; cancel: string;
-  pageTitle: string; qrHint: string; qrGallery: string; qrOcr: string; camDenied: string; qrNone: string; torch: string; back: string;
 }
 
 export const RECEIPT: Record<Lang, ReceiptText> = {
@@ -14,20 +13,17 @@ export const RECEIPT: Record<Lang, ReceiptText> = {
     loadingLib: 'Модули хондан бор мешавад…', reading: 'Матн хонда истодааст', firstTime: 'Бори аввал модули хурд (чанд МБ) бор мешавад, интернет лозим аст.', offline: 'Модули хондан бор нашуд. Интернетро санҷед ва аз нав кӯшиш кунед.', failed: 'Матн хонда нашуд. Чекро равшантар ва рост сурат гиред.',
     resultTitle: 'Натиҷа: санҷед ва тасдиқ кунед', amount: 'Маблағи ҷамъ', merchant: 'Мағоза / эзоҳ', date: 'Сана', found: 'Маблағи дигар', notFound: 'Маблағ ёфт нашуд: худатон нависед.', raw: 'Матни хондашуда',
     apply: 'Истифода бурдан', retry: 'Аз нав скан кардан', cancel: 'Бекор кардан',
-    pageTitle: 'Сканер', qrHint: 'QR-рамзи чекро бо камера хонед', qrGallery: 'Аз галерея интихоб кардан', qrOcr: 'Чек бе QR-рамз? Матнро аз акс хонед', camDenied: 'Камера иҷозат нагирифт. Аз галерея интихоб кунед ё матни чекро аз акс хонед.', qrNone: 'QR-рамз дар акс ёфт нашуд. Матни чек хонда мешавад.', torch: 'Чароғак', back: 'Бозгашт',
   },
   ru: {
     button: 'Сканировать чек', title: 'Сканер чека', lead: 'Сфотографируйте чек: приложение само прочитает сумму, магазин и дату.', camera: 'Сфотографировать', gallery: 'Из галереи', privacy: 'Фото обрабатывается на вашем устройстве и нигде не отправляется и не сохраняется.',
     loadingLib: 'Загружается модуль распознавания…', reading: 'Читаем текст', firstTime: 'В первый раз загружается небольшой модуль (несколько МБ), нужен интернет.', offline: 'Не удалось загрузить модуль. Проверьте интернет и попробуйте снова.', failed: 'Текст не распознан. Сфотографируйте чек ровнее и чётче.',
     resultTitle: 'Результат: проверьте и подтвердите', amount: 'Итоговая сумма', merchant: 'Магазин / заметка', date: 'Дата', found: 'Другая сумма', notFound: 'Сумма не найдена: введите вручную.', raw: 'Распознанный текст',
     apply: 'Использовать', retry: 'Сканировать заново', cancel: 'Отмена',
-    pageTitle: 'Сканер', qrHint: 'Считайте QR-код чека камерой', qrGallery: 'Выбрать из галереи', qrOcr: 'Чек без QR-кода? Прочитать текст с фото', camDenied: 'Нет доступа к камере. Выберите из галереи или прочитайте текст чека с фото.', qrNone: 'QR-код на фото не найден. Читаем текст чека.', torch: 'Фонарик', back: 'Назад',
   },
   en: {
     button: 'Scan a receipt', title: 'Receipt scanner', lead: 'Take a photo of the receipt: the app reads the total, the store and the date.', camera: 'Take a photo', gallery: 'From gallery', privacy: 'The photo is processed on your device and is neither sent nor stored anywhere.',
     loadingLib: 'Loading the recognition module…', reading: 'Reading the text', firstTime: 'The first time a small module (a few MB) is downloaded, so the internet is needed.', offline: 'Could not load the module. Check your internet connection and try again.', failed: 'The text could not be read. Take a flatter, sharper photo of the receipt.',
     resultTitle: 'Result: check and confirm', amount: 'Total amount', merchant: 'Store / note', date: 'Date', found: 'Another amount', notFound: 'No amount found: enter it manually.', raw: 'Recognized text',
     apply: 'Use it', retry: 'Scan again', cancel: 'Cancel',
-    pageTitle: 'Scanner', qrHint: 'Scan the receipt QR code with the camera', qrGallery: 'Choose from gallery', qrOcr: 'No QR code? Read the text from a photo', camDenied: 'No camera access. Choose from the gallery or read the receipt text from a photo.', qrNone: 'No QR code found in the photo. Reading the receipt text.', torch: 'Flashlight', back: 'Back',
   },
 };

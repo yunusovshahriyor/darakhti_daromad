@@ -7,7 +7,7 @@ import { BASE, activeCode, setActiveCode } from './currency';
 import { nav, refresh, success, warn } from './haptic';
 import LockScreen from './components/LockScreen';
 import { autoHide, getLock, isLockOn } from './lock';
-import ScanFlow from './components/ScanFlow';
+import ReceiptScanner from './components/ReceiptScanner';
 import Onboarding, { INTRO_RESUME_KEY } from './components/Onboarding';
 import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
@@ -500,7 +500,7 @@ export default function App() {
       {info && infoKind && <InfoSheet kind={infoKind} onClose={() => setInfo(false)} />}
 
       {scanOpen && (
-        <ScanFlow onClose={() => setScanOpen(false)} onApply={r => { setPrefill(r); setAdding(true); }} />
+        <ReceiptScanner onClose={() => setScanOpen(false)} onApply={r => { setPrefill(r); setAdding(true); }} />
       )}
       {adding && (
         <AddSheet {...props} prefill={prefill ?? undefined} onClose={() => { setAdding(false); setPrefill(null); }} onDone={setToast} />
