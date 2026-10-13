@@ -60,12 +60,14 @@ export default function ReceiptScanner({ onApply, onClose }: { onApply: (r: Scan
       <div className="rcp">
         {step === 'pick' && (
           <>
-            <div className="rcp-hero">🧾</div>
-            <p className="fb-lead">{t.lead}</p>
+            <div className="rcp-hero"><span>🧾</span></div>
             {error && <div className="alert danger">{error}</div>}
-            <button className="btn big" onClick={() => cam.current?.click()}>📷 {t.camera}</button>
-            <button className="btn secondary" onClick={() => gal.current?.click()}>🖼 {t.gallery}</button>
-            <p className="fb-note">{t.privacy}</p>
+            <button className="rcp-act main" onClick={() => cam.current?.click()}>
+              <i>📷</i><b>{t.camera}</b>
+            </button>
+            <button className="rcp-act" onClick={() => gal.current?.click()}>
+              <i>🖼</i><b>{t.gallery}</b>
+            </button>
             {input(cam, true)}{input(gal, false)}
           </>
         )}
