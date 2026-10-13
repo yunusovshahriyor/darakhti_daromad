@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { addPeriod, newRecurring } from '../recurring';
-import ReceiptScanner from './ReceiptScanner';
+import ScanFlow from './ScanFlow';
 import type { ScanResult } from './ReceiptScanner';
 import { RECEIPT } from '../receiptText';
 import { currentLang } from '../i18n';
@@ -73,7 +73,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
         ))}
       </div>
       {scan && (
-        <ReceiptScanner onClose={() => setScan(false)} onApply={r => {
+        <ScanFlow onClose={() => setScan(false)} onApply={r => {
           if (r.amount) setAmount(String(r.amount));
           if (r.merchant) { setNote(r.merchant); if (!manual) setCategory(smartCategory(state, r.merchant)); }
           if (r.date) setDate(r.date);

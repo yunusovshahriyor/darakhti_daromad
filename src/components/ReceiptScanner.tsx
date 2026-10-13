@@ -9,28 +9,42 @@ import Sheet from './Sheet';
 export interface ScanResult { amount: number | null; merchant: string; date: string | null }
 
 /** Сканери чек: акс → OCR дар дастгоҳ → маблағ/мағоза/сана (бо имкони ислоҳ). */
-export default function ReceiptScanner({ onApply, onClose }: { onApply: (r: ScanResult) => void; onClose: () => void }) {
+export default function ReceiptScanner({ onApply, onClose, initial, initialFile, autoPick }: {
+  onApply: (r: ScanResult) => void; onClose: () => void;
+  /** Натиҷаи тайёр (аз QR): бевосита ба қадами натиҷа. */
+  initial?: { amount: number | null; merchant: string; date: string | null; raw: string };
+  /** Акси тайёр (аз галерея): фавран хонда мешавад. */
+  initialFile?: File;
+  /** Фавран интихоби акс/камера кушода шавад. */
+  autoPick?: 'camera' | 'gallery';
+}) {
   const lang = currentLang();
   const t = RECEIPT[lang];
   const cam = useRef<HTMLInputElement>(null);
   const gal = useRef<HTMLInputElement>(null);
-  const [step, setStep] = useState<'pick' | 'work' | 'result'>('pick');
+  const [step, setStep] = useState<'pick' | 'work' | 'result'>(initial ? 'result' : 'pick');
   const [pct, setPct] = useState(0);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [thumb, setThumb] = useState('');
-  const [raw, setRaw] = useState('');
-  const [cands, setCands] = useState<number[]>([]);
-  const [amount, setAmount] = useState('');
-  const [merchant, setMerchant] = useState('');
-  const [date, setDate] = useState('');
+  const [raw, setRaw] = useState(initial?.raw ?? '');
+  const [cands, setCands] = useState<number[]>(initial?.amount ? [initial.amount] : []);
+  const [amount, setAmount] = useState(initial?.amount ? String(initial.amount) : '');
+  const [merchant, setMerchant] = useState(initial?.merchant ?? '');
+  const [date, setDate] = useState(initial?.date ?? '');
 
   useEffect(() => () => { if (thumb) URL.revokeObjectURL(thumb); }, [thumb]);
 
   const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     e.target.value = '';
-    if (!f) return;
+    if (f) await run(f);
+  };
+  useEffect(() => {
+    if (initialFile) void run(initialFile);
+    else if (autoPick && !initial) setTimeout(() => (autoPick === 'camera' ? cam : gal).current?.click(), 80);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const run = async (f: File) => {
     setError(''); setPct(0); setStatus(t.loadingLib); setStep('work');
     setThumb(URL.createObjectURL(f));
     try {
