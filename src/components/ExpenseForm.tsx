@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { addPeriod, newRecurring } from '../recurring';
 import ReceiptScanner from './ReceiptScanner';
+import type { ScanResult } from './ReceiptScanner';
 import { RECEIPT } from '../receiptText';
 import { currentLang } from '../i18n';
 import { expenseHints, quickAmounts, recentExpenses, smartCategory } from '../suggest';
@@ -13,19 +14,20 @@ import CategoryChips from './CategoryChips';
 import Field from './Field';
 import { useConfirm } from './ConfirmSheet';
 
-export default function ExpenseForm({ state, setState, onDone, initialAccount }: Props & {
+export default function ExpenseForm({ state, setState, onDone, initialAccount, prefill }: Props & {
+  prefill?: ScanResult;
   onDone: (msg: string) => void;
   initialAccount?: AccountId;
 }) {
   const [account, setAccount] = useState<AccountId>(initialAccount ?? 'living');
-  const [note, setNote] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+  const [note, setNote] = useState(prefill?.merchant ?? '');
+  const [category, setCategory] = useState<string | null>(() => (prefill?.merchant ? smartCategory(state, prefill.merchant) : null));
   // Агар категория дастӣ интихоб нашуда бошад, аз эзоҳ худкор пешниҳод мешавад
   const [manual, setManual] = useState(false);
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(prefill?.amount ? String(prefill.amount) : '');
   const [every, setEvery] = useState<'' | 'week' | 'month'>('');
   const [scan, setScan] = useState(false);
-  const [date, setDate] = useState(today);
+  const [date, setDate] = useState(prefill?.date ?? today());
 
   const bal = balancesOf(state);
   const recent = recentExpenses(state.expenses);

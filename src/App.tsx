@@ -7,6 +7,7 @@ import { BASE, activeCode, setActiveCode } from './currency';
 import { nav, refresh, success, warn } from './haptic';
 import LockScreen from './components/LockScreen';
 import { autoHide, getLock, isLockOn } from './lock';
+import ReceiptScanner from './components/ReceiptScanner';
 import Onboarding, { INTRO_RESUME_KEY } from './components/Onboarding';
 import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
@@ -110,6 +111,8 @@ export default function App() {
   const reuseSub = useRef(layerOnBoot && nav0.sub !== null);
   const reuseAcct = useRef(layerOnBoot && nav0.acct !== null);
   const [adding, setAdding] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [prefill, setPrefill] = useState<{ amount: number | null; merchant: string; date: string | null } | null>(null);
 
   const [info, setInfo] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -416,7 +419,7 @@ export default function App() {
     if (sub === 'guide') return <SystemGuide {...props} onToast={setToast} onIntro={() => setIntro(true)} />;
     if (tab === 'home') {
       return (
-        <Dashboard {...props} {...privacy} onToast={setToast} onNavigate={go} onProfile={() => go('profile')}
+        <Dashboard {...props} {...privacy} onToast={setToast} onNavigate={go} onScan={() => setScanOpen(true)}
           onOpenAccount={openAccount} />
       );
     }
@@ -496,8 +499,11 @@ export default function App() {
 
       {info && infoKind && <InfoSheet kind={infoKind} onClose={() => setInfo(false)} />}
 
+      {scanOpen && (
+        <ReceiptScanner onClose={() => setScanOpen(false)} onApply={r => { setPrefill(r); setAdding(true); }} />
+      )}
       {adding && (
-        <AddSheet {...props} onClose={() => setAdding(false)} onDone={setToast} />
+        <AddSheet {...props} prefill={prefill ?? undefined} onClose={() => { setAdding(false); setPrefill(null); }} onDone={setToast} />
       )}
     </div>
   );

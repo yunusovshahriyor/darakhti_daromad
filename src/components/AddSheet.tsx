@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Props } from '../views/props';
 import ExpenseForm from './ExpenseForm';
+import type { ScanResult } from './ReceiptScanner';
 import IncomeForm from './IncomeForm';
 import { BorrowForm, LendForm, ReturnLoanForm } from './LoanForms';
 import PayDebtForm from './PayDebtForm';
@@ -18,7 +19,9 @@ const KINDS: { id: Kind; label: string; icon: string }[] = [
 ];
 
 /** Варақаи якҷоя: ҷудокунак (даромад / хароҷот / гузаронидан / қарз) ва форма бо тугмачаҳои рақамӣ. */
-export default function AddSheet({ state, setState, onClose, onDone }: Props & {
+export default function AddSheet({ state, setState, onClose, onDone, prefill }: Props & {
+  /** Натиҷаи сканери чек: шакли «Хароҷот» бо ҳамин маълумот пур мешавад. */
+  prefill?: ScanResult;
   onClose: () => void;
   onDone: (msg: string) => void;
 }) {
@@ -63,7 +66,7 @@ export default function AddSheet({ state, setState, onClose, onDone }: Props & {
         ))}
       </div>
       {kind === 'income' && <IncomeForm key="i" {...common} />}
-      {kind === 'expense' && <ExpenseForm key="e" {...common} />}
+      {kind === 'expense' && <ExpenseForm prefill={prefill} key="e" {...common} />}
       {kind === 'transfer' && <TransferForm key="t" {...common} />}
       {kind === 'debt' && debtKind === 'lend' && <LendForm key="dl" {...common} afterPad={what} />}
       {kind === 'debt' && debtKind === 'back' && <ReturnLoanForm key="db" {...common} afterPad={what} />}

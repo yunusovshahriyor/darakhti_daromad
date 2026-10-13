@@ -86,3 +86,10 @@ export const FilterIcon = () => (
 export const CheckIcon = () => (
   <Svg size={18}><polyline points="20 6 9 17 4 12" /></Svg>
 );
+
+export const ScanIcon = () => (
+  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" />
+    <path d="M8 9h8M8 12.5h8M8 16h5" />
+  </svg>
+);

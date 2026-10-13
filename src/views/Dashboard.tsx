@@ -4,7 +4,7 @@ import Donut from '../components/Donut';
 import AccountScopeSheet from '../components/AccountScopeSheet';
 import RecurringDue from '../components/RecurringDue';
 import { Count, useCountUp } from '../useCountUp';
-import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, FilterIcon, PersonIcon } from '../components/Icons';
+import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, FilterIcon, ScanIcon } from '../components/Icons';
 import PeriodSheet from '../components/PeriodSheet';
 import {
   ACCOUNTS, ACCOUNT_ORDER, CARD_COLORS, PERIOD_LABELS, balancesOf, fmt, forecast,
@@ -37,10 +37,10 @@ function readPeriod(): { kind: PeriodKind; offset: number } {
   } catch { /* ignore */ }
   return { kind: 'month', offset: 0 };
 }
-export default function Dashboard({ state, setState, hidden, onToggleHidden, onNavigate, onProfile, onOpenAccount, onToast }: Props & Privacy & {
+export default function Dashboard({ state, setState, hidden, onToggleHidden, onNavigate, onScan, onOpenAccount, onToast }: Props & Privacy & {
   onToast: (m: string) => void;
   onNavigate: (t: Tab, filter?: HistoryFilter) => void;
-  onProfile: () => void;
+  onScan: () => void;
   onOpenAccount: (id: AccountId) => void;
 }) {
   const { incomes, expenses } = state;
@@ -112,7 +112,7 @@ export default function Dashboard({ state, setState, hidden, onToggleHidden, onN
             <small>{brand().tag}</small>
           </div>
         </div>
-        <button className="avatar-btn" onClick={onProfile} aria-label="Профил"><PersonIcon /></button>
+        <button className="avatar-btn" onClick={onScan} aria-label="Скан кардани чек"><ScanIcon /></button>
       </header>
 
       <RecurringDue state={state} setState={setState} onToast={onToast} />
