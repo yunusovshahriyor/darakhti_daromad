@@ -1849,3 +1849,8 @@ html.boot .donut-seg { --base: 340ms; }
 .rcp-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary), var(--primary-2)); transition: width .3s; }
 .rcp-raw summary { cursor: pointer; font-size: .82rem; color: var(--muted); }
 .rcp-raw pre { margin: 8px 0 0; max-height: 160px; overflow: auto; font-size: .72rem; white-space: pre-wrap; background: var(--bg); border-radius: 10px; padding: 10px; }
+
+.btn-add { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); }
+.btn-add i { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .24); }
+.btn-add i svg { width: 18px; height: 18px; }
+.btn-add span { font-weight: 700; letter-spacing: .1px; }

@@ -70,7 +70,7 @@ export default function FreeAccounts({ state, setState, onToast }: Props & { onT
           </button>
         ))}
       </div>
-      <button className="btn" onClick={() => setEditId(null)}><PlusIcon /> Ҳисоби нав</button>
+      <button className="btn btn-add" onClick={() => setEditId(null)}><i><PlusIcon /></i><span>Ҳисоби нав</span></button>
       {editId !== undefined && (
         <FreeAccountSheet state={state} setState={setState} id={editId} onClose={() => setEditId(undefined)} onToast={onToast} />
       )}

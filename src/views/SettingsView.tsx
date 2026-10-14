@@ -279,7 +279,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
       <div className="cells tree">
         {row(root, -1)}
       </div>
-      <button className="btn" onClick={() => setAdding(true)}><PlusIcon /> Ҳисоби нав</button>
+      <button className="btn btn-add" onClick={() => setAdding(true)}><i><PlusIcon /></i><span>Ҳисоби нав</span></button>
 
       {confirmDialog}
 
