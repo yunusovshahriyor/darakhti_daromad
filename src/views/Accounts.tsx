@@ -2,11 +2,12 @@ import { CSSProperties, useEffect, useState } from 'react';
 import { ChevronIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import {
   ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, balancesOf, fmt, groupNote, groupSum,
-  fundDreams, hasDebt, hiddenAccounts, leafHint, remaining,
+  fundDreams, hasDebt, hiddenAccounts, isFree, leafHint, remaining,
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
 import { Count } from '../useCountUp';
+import TreeDiagram from '../components/TreeDiagram';
 import type { Props } from './props';
 
 export interface Privacy {
@@ -24,6 +25,8 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
   onOpenAccount: (id: AccountId) => void;
 }) {
   const [closed, setClosed] = useState(readClosed);
+  const [treeView, setTreeView] = useState(() => { try { return localStorage.getItem('darakhti:balview') === 'tree'; } catch { return false; } });
+  const pickView = (t: boolean) => { setTreeView(t); try { localStorage.setItem('darakhti:balview', t ? 'tree' : 'list'); } catch { /* ignore */ } };
 
   useEffect(() => {
     try { localStorage.setItem(CLOSED_KEY, JSON.stringify(closed)); } catch { /* ignore */ }
@@ -115,7 +118,22 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
         <div className="bh-total"><Count value={total} hidden={hidden} /> <small>смн</small></div>
       </section>
 
-      <div className="groups">{ACCOUNT_TREE.map(g => group(g))}</div>
+      {!isFree(state) && (
+        <div className="seg-tabs acct-view" role="tablist">
+          <button role="tab" aria-selected={!treeView} className={!treeView ? 'on' : ''} onClick={() => pickView(false)}>Гурӯҳҳо</button>
+          <button role="tab" aria-selected={treeView} className={treeView ? 'on' : ''} onClick={() => pickView(true)}>Дарахт</button>
+        </div>
+      )}
+      {treeView && !isFree(state) ? (
+        <>
+          <p className="note td-hint">Дарахт нишон медиҳад, ки пул дар куҷост. Ҳисобро пахш кунед — ҷузъиёт кушода мешавад.</p>
+          <TreeDiagram root={state.tree} accounts={state.accounts} balances={bal} hidden={hidden}
+            isOff={id => hide.includes(id as AccountId)}
+            onPick={n => { if (n.type === 'account') onOpenAccount(n.accountId); }} />
+        </>
+      ) : (
+        <div className="groups">{ACCOUNT_TREE.map(g => group(g))}</div>
+      )}
     </>
   );
 }

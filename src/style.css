@@ -1913,3 +1913,5 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .td-box.off { opacity: .45; }
 .td-box:not(.off):active { transform: scale(.98); }
 .td-hint { margin: -4px 4px 8px; }
+.td-box em.bal { white-space: nowrap; }
+.td-box.root em.bal { color: #fff; background: rgba(255, 255, 255, .22); }

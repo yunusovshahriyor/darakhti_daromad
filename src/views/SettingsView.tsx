@@ -285,7 +285,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
       </div>
       {treeView && <p className="note td-hint">Барои дидани тамоми дарахт ба тарафи рост кашед. Қуттиро пахш кунед — таҳрир мешавад.</p>}
       {treeView ? (
-        <TreeDiagram root={root} accounts={state.accounts} onEdit={setEditId}
+        <TreeDiagram root={root} accounts={state.accounts} onPick={n => setEditId(n.id)}
           isOff={id => (debt ? id === 'fun' : id === 'debt')} />
       ) : (
         <div className="cells tree">

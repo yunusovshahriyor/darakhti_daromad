@@ -5,12 +5,17 @@ import type { AccountDef, DistNode } from '../types';
 const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
 
 /** Диаграммаи дарахтӣ аз чап ба рост: реша → гурӯҳҳо → ҳисобҳо. Пахши қуттӣ — таҳрир. */
-export default function TreeDiagram({ root, accounts, isOff, onEdit }: {
+export default function TreeDiagram({ root, accounts, isOff, onPick, balances, hidden }: {
   root: DistNode;
   accounts: AccountDef[];
   isOff: (accountId: string) => boolean;
-  onEdit: (id: string) => void;
+  onPick?: (n: DistNode) => void;
+  /** Агар дода шавад, ба ҷои ҳиссаи фоизӣ боқимондаи ҳисобҳо нишон дода мешавад. */
+  balances?: Record<string, number>;
+  hidden?: boolean;
 }) {
+  const sum = (n: DistNode): number => (n.type === 'group' ? n.children.reduce((t, c) => t + sum(c), 0) : balances?.[n.accountId] ?? 0);
+  const money = (v: number) => (hidden ? '••••' : fmt(Math.round(v)));
   const node = (n: DistNode): ReactNode => {
     const isRoot = n.id === root.id;
     let name: string; let icon: ReactNode; let bg: string | undefined; let off = false;
@@ -22,12 +27,13 @@ export default function TreeDiagram({ root, accounts, isOff, onEdit }: {
     const kids = n.type === 'group' ? n.children.map(node).filter(Boolean) : [];
     const share = effectiveShareNode(root, n.id);
     const cls = `td-box${isRoot ? ' root' : n.type === 'group' ? ' grp' : ''}${off ? ' off' : ''}`;
+    const clickable = !!onPick && !off && !(balances && n.type === 'group');
     return (
       <div className="td-node">
-        <button type="button" className={cls} disabled={off} onClick={() => onEdit(n.id)}>
+        <button type="button" className={cls} disabled={!clickable} onClick={() => onPick?.(n)}>
           <i style={bg ? { background: bg } : undefined}>{icon}</i>
-          <span><b>{name}</b><small>{isRoot ? '100%' : `${n2(n.percent)}%`}{!isRoot && isRemainderNode(root, n.id) && <> · <span>боқимонда</span></>}</small></span>
-          {!isRoot && <em>{n2(share)}%</em>}
+          <span><b>{name}</b><small>{isRoot && balances ? '' : isRoot ? '100%' : `${n2(n.percent)}%`}{!isRoot && isRemainderNode(root, n.id) && <> · <span>боқимонда</span></>}</small></span>
+          {balances ? <em className="bal">{money(sum(n))}</em> : !isRoot && <em>{n2(share)}%</em>}
         </button>
         {kids.length > 0 && (
           <div className="td-kids">
