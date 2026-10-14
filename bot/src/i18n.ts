@@ -17,11 +17,8 @@ const DICT: Record<Exclude<Lang, 'tg'>, Record<string, string>> = {
 
 export const isLang = (v: unknown): v is Lang => v === 'tg' || v === 'ru' || v === 'en';
 
-/** Забони Telegram-и корбар: ru → русӣ, en → англисӣ, дигар → тоҷикӣ. */
-export const langFromCode = (code?: string): Lang => {
-  const c = (code ?? '').toLowerCase();
-  return c.startsWith('ru') ? 'ru' : c.startsWith('en') ? 'en' : 'tg';
-};
+/** Забони пешфарз ҳамеша русӣ; корбар дар танзимоти бот тоҷикӣ ё англисиро интихоб карда метавонад. */
+export const langFromCode = (_code?: string): Lang => 'ru';
 
 export function makeT(lang: Lang): TFn {
   const d = lang === 'tg' ? null : DICT[lang];

@@ -14,10 +14,8 @@ export const LANGS: { id: Lang; name: string }[] = [
 
 export const LANG_KEY = 'darakhti:lang';
 
-const detect = (): Lang => {
-  const n = (navigator.language || '').toLowerCase();
-  return n.startsWith('ru') ? 'ru' : n.startsWith('en') ? 'en' : 'tg';
-};
+/** Забони пешфарз ҳамеша русӣ аст; корбар худаш тоҷикӣ ё англисиро интихоб карда метавонад. */
+const detect = (): Lang => 'ru';
 
 export function currentLang(): Lang {
   try {
