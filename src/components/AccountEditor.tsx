@@ -4,6 +4,7 @@ import {
   fmt, groupOptions, hiddenAccounts, isRemainderNode, patchGroup, removeAccountNode, setNodePercent,
   today, treeError, uid,
 } from '../model';
+import { tr } from '../i18n';
 import type { AccountDef, DistNode } from '../types';
 import type { Props } from '../views/props';
 import AccountSelect from './AccountSelect';
@@ -19,6 +20,11 @@ export const COLORS = [
   '#b7791f', '#b24a6c', '#2f857b', '#7a5bb8', '#b3453b', '#1f6fa3',
   '#2f7d55', '#2f8fb5', '#46688f', '#8a5a2b', '#5b7f2a', '#a0522d',
 ];
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+const nodeLabel = (n: DistNode, accounts: AccountDef[]) =>
+  n.type === 'group' ? n.title : accounts.find(a => a.id === n.accountId)?.name ?? n.accountId;
 
 const parsePercent = (v: string) => Math.max(0, Math.min(100, parseFloat(v) || 0));
 
@@ -65,6 +71,8 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [target, setTarget] = useState('living');
+  const sibs = found?.parent && found.parent.type === 'group' ? found.parent.children.filter(c => c.id !== nodeId) : [];
+  const [swap, setSwap] = useState(sibs[0]?.id ?? '');
 
   if (!node || !found) return null;
 
@@ -81,10 +89,20 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
     e.preventDefault();
     if (!name.trim()) return;
     let tree = state.tree;
-    if (!remainder && !isRoot) {
+    if (!isRoot && !remainder) {
       tree = setNodePercent(tree, nodeId, parsePercent(percent));
       const err = treeError(tree);
       if (err) { setError(err); return; }
+    } else if (!isRoot && remainder) {
+      const d = parsePercent(percent) - node.percent;
+      const sib = sibs.find(c => c.id === swap);
+      if (Math.abs(d) > 0.0001) {
+        if (!sib) { setError('Ҳисоби дигар дар гурӯҳ нест.'); return; }
+        if (sib.percent - d < -0.0001) { setError('Дар ҳисоби интихобшуда фоизи кофӣ нест.'); return; }
+        tree = setNodePercent(tree, sib.id, Math.max(0, sib.percent - d));
+        const err = treeError(tree);
+        if (err) { setError(err); return; }
+      }
     }
     if (group) tree = patchGroup(tree, nodeId, { title: name.trim(), icon });
     setState(s => ({
@@ -139,11 +157,17 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
         {!isRoot && (
           <Field label={`Фоиз аз «${found.parent && found.parent.type === 'group' ? found.parent.title : ''}»`}>
             <input type="number" inputMode="decimal" min="0" max="100" step="0.1" value={percent}
-              disabled={remainder} onChange={e => { setPercent(e.target.value); setError(''); }} />
+              onChange={e => { setPercent(e.target.value); setError(''); }} />
           </Field>
         )}
-        {remainder && !isRoot && (
-          <p className="note">Ин гиреҳ боқимонда аст: фоизи он худкор ҳисоб мешавад (то ҷамъ 100% шавад). Барои тағйир додан фоизи дигар ҳисобҳои гурӯҳро иваз кунед.</p>
+        {remainder && !isRoot && sibs.length > 0 && (
+          <>
+            <Field label="Фарқи фоизро бо кадом ҳисоб мубодила кунем?">
+              <PickerField value={swap} title="Бо кадом ҳисоб" onChange={setSwap}
+                options={sibs.map(c => ({ value: c.id, label: nodeLabel(c, state.accounts), note: `${r2(c.percent)}%` }))} />
+            </Field>
+            <p className="note">Ин боқимонда аст. Агар фоизро иваз кунед, фарқ ба ҳисоби интихобшуда меравад ё аз он гирифта мешавад.</p>
+          </>
         )}
         {accountId === 'fun' && (
           <p className="note">Агар қарз бошад, ин фоиз ба «Пардохти қарз» меравад.</p>
@@ -189,19 +213,32 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
   onClose: () => void;
   onToast: (m: string) => void;
 }) {
-  const groups = groupOptions(state.tree).filter(g => g.id !== 'monthly');
+  const groups = groupOptions(state.tree);
   const [parent, setParent] = useState(groups.find(g => g.id === 'root')?.id ?? groups[0].id);
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('💰');
   const [color, setColor] = useState(COLORS[5]);
   const [percent, setPercent] = useState('5');
   const [error, setError] = useState('');
+  const [donor, setDonor] = useState('');
+
+  const pg = findNode(state.tree, parent)?.node;
+  const kids = pg && pg.type === 'group' ? pg.children : [];
+  const donorId = kids.some(c => c.id === donor) ? donor : kids[kids.length - 1]?.id ?? '';
 
   const save = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     const id = `a${uid()}`;
-    const tree = addAccountNode(state.tree, parent, id, parsePercent(percent));
+    const p = parsePercent(percent);
+    let tree = addAccountNode(state.tree, parent, id, p);
+    const last = kids[kids.length - 1];
+    if (last && donorId && donorId !== last.id) {
+      const d = kids.find(c => c.id === donorId);
+      if (!d || d.percent - p < -0.0001) { setError('Дар ҳисоби интихобшуда фоизи кофӣ нест.'); return; }
+      tree = setNodePercent(tree, donorId, Math.max(0, d.percent - p));
+      tree = setNodePercent(tree, `n_${id}`, p);
+    }
     const err = treeError(tree);
     if (err) { setError(err); return; }
     setState(s => ({
@@ -223,7 +260,7 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
           <span>Ҳисоби нав ба кадом гурӯҳ тааллуқ дорад?</span>
           <p className="note grp-hint">Гурӯҳ — «қуттӣ»-е аст, ки даромад аввал ба он меравад ва сипас байни ҳисобҳои дохилаш тақсим мешавад.</p>
           <PickerField value={parent} title="Дар кадом гурӯҳ" onChange={v => { setParent(v); setError(''); }}
-            options={groups.map(g => ({ value: g.id, label: g.label, icon: '📁' }))} />
+            options={groups.map(g => ({ value: g.id, label: g.label.split(' › ').map(x => tr(x)).join(' › '), icon: '📁' }))} />
         </div>
         <Field label="Номи ҳисоб">
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Масалан, Таҳсил" required />
@@ -235,7 +272,15 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
             onChange={e => { setPercent(e.target.value); setError(''); }} />
         </Field>
         <p className="note">{`Аз ҳар 100 дар «${parentTitle}» ба ин ҳисоб ${parsePercent(percent)} мерасад`}</p>
-        <p className="note">Ин фоиз аз боқимондаи гурӯҳ кам мешавад (охирин ҳисоби гурӯҳ — боқимонда).</p>
+        {kids.length > 0 && (
+          <>
+            <Field label="Фоиз аз кадом ҳисоб гирифта шавад?">
+              <PickerField value={donorId} title="Аз кадом ҳисоб" onChange={v => { setDonor(v); setError(''); }}
+                options={kids.map((c, i) => ({ value: c.id, label: nodeLabel(c, state.accounts), note: `${r2(c.percent)}%${i === kids.length - 1 ? ' · боқимонда' : ''}` }))} />
+            </Field>
+            <p className="note">Фоизи ҳисоби нав аз ҳисоби интихобшуда кам мешавад.</p>
+          </>
+        )}
         {error && <div className="alert danger">{error}</div>}
         <button className="btn" type="submit">Илова кардан</button>
       </form>
