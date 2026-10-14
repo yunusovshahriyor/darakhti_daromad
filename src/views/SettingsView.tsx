@@ -283,7 +283,7 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
         <button role="tab" aria-selected={!treeView} className={!treeView ? 'on' : ''} onClick={() => pickView(false)}>Рӯйхат</button>
         <button role="tab" aria-selected={treeView} className={treeView ? 'on' : ''} onClick={() => pickView(true)}>Дарахт</button>
       </div>
-      {treeView && <p className="note td-hint">Барои дидани тамоми дарахт ба тарафи рост кашед. Қуттиро пахш кунед — таҳрир мешавад.</p>}
+      {treeView && <p className="note td-hint">Барои дидани тамоми дарахт ба паҳлӯ кашед. Қуттиро пахш кунед — таҳрир мешавад.</p>}
       {treeView ? (
         <TreeDiagram root={root} accounts={state.accounts} onPick={n => setEditId(n.id)}
           isOff={id => (debt ? id === 'fun' : id === 'debt')} />
