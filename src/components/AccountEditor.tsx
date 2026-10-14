@@ -219,10 +219,24 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
   return (
     <Sheet title="Ҳисоби нав" onClose={onClose}>
       <form onSubmit={save}>
-        <Field label="Дар кадом гурӯҳ">
-          <PickerField value={parent} title="Дар кадом гурӯҳ" onChange={v => { setParent(v); setError(''); }}
-            options={groups.map(g => ({ value: g.id, label: g.label, icon: '📁' }))} />
-        </Field>
+        <div className="field">
+          <span>Ҳисоби нав ба кадом гурӯҳ тааллуқ дорад?</span>
+          <p className="note grp-hint">Гурӯҳ — «қуттӣ»-е аст, ки даромад аввал ба он меравад ва сипас байни ҳисобҳои дохилаш тақсим мешавад.</p>
+          <div className="grp-list" role="radiogroup">
+            {groups.map(g => {
+              const parts = g.label.split(' › ');
+              return (
+                <button type="button" key={g.id} role="radio" aria-checked={g.id === parent}
+                  className={g.id === parent ? 'grp-card on' : 'grp-card'}
+                  onClick={() => { setParent(g.id); setError(''); }}>
+                  <i>📁</i>
+                  <span><b>{parts[parts.length - 1]}</b>{parts.length > 1 && <small>{parts.slice(0, -1).map((x, i) => <span key={i}>{i > 0 && ' › '}<span>{x}</span></span>)}</small>}</span>
+                  <em aria-hidden>{g.id === parent ? '✓' : ''}</em>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <Field label="Номи ҳисоб">
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Масалан, Таҳсил" required />
         </Field>
@@ -232,6 +246,7 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
           <input type="number" inputMode="decimal" min="0" max="100" step="0.1" value={percent}
             onChange={e => { setPercent(e.target.value); setError(''); }} />
         </Field>
+        <p className="note">{`Аз ҳар 100 дар «${parentTitle}» ба ин ҳисоб ${parsePercent(percent)} мерасад`}</p>
         <p className="note">Ин фоиз аз боқимондаи гурӯҳ кам мешавад (охирин ҳисоби гурӯҳ — боқимонда).</p>
         {error && <div className="alert danger">{error}</div>}
         <button className="btn" type="submit">Илова кардан</button>

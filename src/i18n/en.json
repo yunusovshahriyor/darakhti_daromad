@@ -976,5 +976,8 @@
 "{0} · навбатӣ {1}": "{0} · next {1}",
 "{0} смн · мӯҳлат {1}": "{0} smn · due {1}",
 "Маблағ: {0} смн дар як давра (ҷамъ).": "Total: {0} smn per period.",
-"Скан кардани чек": "Scan a receipt"
+"Скан кардани чек": "Scan a receipt",
+"Ҳисоби нав ба кадом гурӯҳ тааллуқ дорад?": "Which group does the new account belong to?",
+"Гурӯҳ — «қуттӣ»-е аст, ки даромад аввал ба он меравад ва сипас байни ҳисобҳои дохилаш тақсим мешавад.": "A group is a “box”: income goes into it first and is then split between the accounts inside.",
+"Аз ҳар 100 дар «{0}» ба ин ҳисоб {1} мерасад": "Out of every 100 in “{0}”, this account gets {1}"
 }

@@ -1854,3 +1854,15 @@ html.boot .donut-seg { --base: 340ms; }
 .btn-add i { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .24); }
 .btn-add i svg { width: 18px; height: 18px; }
 .btn-add span { font-weight: 700; letter-spacing: .1px; }
+
+.grp-hint { margin: 2px 0 10px; }
+.grp-card small span { display: inline; }
+.grp-list { display: flex; flex-direction: column; gap: 8px; }
+.grp-card { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 16px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); font: inherit; text-align: left; }
+.grp-card i { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-style: normal; font-size: 1.2rem; background: color-mix(in srgb, var(--primary) 12%, transparent); flex: none; }
+.grp-card span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.grp-card b { font-weight: 700; font-size: 1rem; }
+.grp-card small { color: var(--muted); font-size: .76rem; }
+.grp-card em { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .85rem; font-weight: 800; border: 2px solid var(--border); color: #fff; flex: none; }
+.grp-card.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 9%, var(--bg)); }
+.grp-card.on em { background: var(--primary); border-color: var(--primary); }
