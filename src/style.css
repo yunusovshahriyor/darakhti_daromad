@@ -1887,3 +1887,29 @@ html.boot .donut-seg { --base: 340ms; }
 button.tp-root { border: 0; font: inherit; text-align: left; width: 100%; opacity: .92; }
 button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); }
 .tp-root u { text-decoration: none; font-weight: 800; }
+
+/* Диаграммаи дарахтӣ (аз чап ба рост) */
+.acct-view { margin: 0 0 12px; }
+.td-scroll { overflow-x: auto; padding: 6px 2px 14px; margin: 0 -4px; -webkit-overflow-scrolling: touch; }
+.td { width: max-content; }
+.td-node { display: flex; align-items: center; }
+.td-kids { position: relative; display: flex; flex-direction: column; margin-left: 22px; }
+.td-kids::before { content: ""; position: absolute; left: -22px; top: 50%; width: 22px; border-top: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); }
+.td-kid { position: relative; padding: 5px 0 5px 22px; }
+.td-kid::before { content: ""; position: absolute; left: 0; top: 50%; width: 22px; border-top: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); }
+.td-kid::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); }
+.td-kid:first-child::after { top: 50%; }
+.td-kid:last-child::after { bottom: 50%; }
+.td-kid:only-child::after { display: none; }
+.td-box { display: flex; align-items: center; gap: 8px; min-width: 132px; padding: 8px 10px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font: inherit; text-align: left; box-shadow: 0 4px 12px rgba(0, 0, 0, .12); }
+.td-box i { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-style: normal; font-size: 1.05rem; background: color-mix(in srgb, var(--primary) 14%, transparent); flex: none; }
+.td-box > span { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.td-box b { font-size: .82rem; font-weight: 700; line-height: 1.15; }
+.td-box small { color: var(--muted); font-size: .7rem; }
+.td-box em { font-style: normal; font-weight: 800; font-size: .72rem; color: var(--primary); padding: 3px 7px; border-radius: 99px; background: color-mix(in srgb, var(--primary) 14%, transparent); }
+.td-box.grp { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
+.td-box.root { color: #fff; border: 0; background: linear-gradient(135deg, var(--primary), var(--primary-2)); min-width: 128px; }
+.td-box.root small { color: #e1f7ec; }
+.td-box.off { opacity: .45; }
+.td-box:not(.off):active { transform: scale(.98); }
+.td-hint { margin: -4px 4px 8px; }

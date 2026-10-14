@@ -5,6 +5,7 @@ import CurrencySheet from '../components/CurrencySheet';
 import LockSheet from '../components/LockSheet';
 import RecurringSheet from '../components/RecurringSheet';
 import { isLockOn } from '../lock';
+import TreeDiagram from '../components/TreeDiagram';
 import FreeAccounts from '../components/FreeAccounts';
 import { defOf } from '../currency';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
@@ -39,6 +40,8 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const [editId, setEditId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [closed, setClosed] = useState(readClosed);
+  const [treeView, setTreeView] = useState(() => { try { return localStorage.getItem('darakhti:acctview') === 'tree'; } catch { return false; } });
+  const pickView = (t: boolean) => { setTreeView(t); try { localStorage.setItem('darakhti:acctview', t ? 'tree' : 'list'); } catch { /* ignore */ } };
   const sync = useSync();
   const [langOpen, setLangOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
@@ -276,9 +279,19 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
 
   return (
     <>
-      <div className="cells tree">
-        {row(root, -1)}
+      <div className="seg-tabs acct-view" role="tablist">
+        <button role="tab" aria-selected={!treeView} className={!treeView ? 'on' : ''} onClick={() => pickView(false)}>Рӯйхат</button>
+        <button role="tab" aria-selected={treeView} className={treeView ? 'on' : ''} onClick={() => pickView(true)}>Дарахт</button>
       </div>
+      {treeView && <p className="note td-hint">Барои дидани тамоми дарахт ба тарафи рост кашед. Қуттиро пахш кунед — таҳрир мешавад.</p>}
+      {treeView ? (
+        <TreeDiagram root={root} accounts={state.accounts} onEdit={setEditId}
+          isOff={id => (debt ? id === 'fun' : id === 'debt')} />
+      ) : (
+        <div className="cells tree">
+          {row(root, -1)}
+        </div>
+      )}
       <button className="btn btn-add" onClick={() => setAdding(true)}><i><PlusIcon /></i><span>Ҳисоби нав</span></button>
 
       {confirmDialog}

@@ -989,5 +989,8 @@
 "Фоизи ҳисоби нав аз ҳисоби интихобшуда кам мешавад.": "The new account's percent will be taken from the chosen account.",
 "Ҳисоби нав аз кадом ҳисоб фоиз мегирад?": "Which account does the new account take its percent from?",
 "Гурӯҳ ва ҳисоб": "Group and account",
-"Ҳисоби нав ба ҳамон гурӯҳе меравад, ки ҳисоби интихобшуда дар он аст.": "The new account goes into the same group as the chosen account."
+"Ҳисоби нав ба ҳамон гурӯҳе меравад, ки ҳисоби интихобшуда дар он аст.": "The new account goes into the same group as the chosen account.",
+"Рӯйхат": "List",
+"Дарахт": "Tree",
+"Барои дидани тамоми дарахт ба тарафи рост кашед. Қуттиро пахш кунед — таҳрир мешавад.": "Swipe right to see the whole tree. Tap a box to edit."
 }
