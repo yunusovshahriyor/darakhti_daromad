@@ -222,20 +222,8 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
         <div className="field">
           <span>Ҳисоби нав ба кадом гурӯҳ тааллуқ дорад?</span>
           <p className="note grp-hint">Гурӯҳ — «қуттӣ»-е аст, ки даромад аввал ба он меравад ва сипас байни ҳисобҳои дохилаш тақсим мешавад.</p>
-          <div className="grp-list" role="radiogroup">
-            {groups.map(g => {
-              const parts = g.label.split(' › ');
-              return (
-                <button type="button" key={g.id} role="radio" aria-checked={g.id === parent}
-                  className={g.id === parent ? 'grp-card on' : 'grp-card'}
-                  onClick={() => { setParent(g.id); setError(''); }}>
-                  <i>📁</i>
-                  <span><b>{parts[parts.length - 1]}</b>{parts.length > 1 && <small>{parts.slice(0, -1).map((x, i) => <span key={i}>{i > 0 && ' › '}<span>{x}</span></span>)}</small>}</span>
-                  <em aria-hidden>{g.id === parent ? '✓' : ''}</em>
-                </button>
-              );
-            })}
-          </div>
+          <PickerField value={parent} title="Дар кадом гурӯҳ" onChange={v => { setParent(v); setError(''); }}
+            options={groups.map(g => ({ value: g.id, label: g.label, icon: '📁' }))} />
         </div>
         <Field label="Номи ҳисоб">
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Масалан, Таҳсил" required />
