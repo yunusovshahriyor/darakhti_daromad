@@ -1892,11 +1892,12 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .acct-view { margin: 0 0 12px; }
 .td-scroll { padding: 6px 0 18px; }
 .td { width: 100%; }
-.td-node { display: flex; flex-direction: column; align-items: stretch; }
-.td-kids { position: relative; display: flex; flex-direction: column; margin-left: 20px; padding-left: 18px; }
-.td-kid { position: relative; padding-top: 8px; }
-.td-kid::before { content: ""; position: absolute; left: -18px; top: 0; width: 18px; height: 33px; border-left: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); border-bottom: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); border-bottom-left-radius: 12px; }
-.td-kid:not(:last-child)::after { content: ""; position: absolute; left: -18px; top: 33px; bottom: 0; border-left: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); }
+/* Реша дар поён, шохаҳо ба боло (мисли дарахти воқеӣ) */
+.td-node { display: flex; flex-direction: column-reverse; align-items: stretch; }
+.td-kids { position: relative; display: flex; flex-direction: column-reverse; margin-left: 20px; padding-left: 18px; }
+.td-kid { position: relative; padding-bottom: 8px; }
+.td-kid::before { content: ""; position: absolute; left: -18px; bottom: 0; width: 18px; height: 33px; border-left: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); border-top: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); border-top-left-radius: 12px; }
+.td-kid:not(:last-child)::after { content: ""; position: absolute; left: -18px; top: 0; bottom: 33px; border-left: 2px solid color-mix(in srgb, var(--primary) 40%, transparent); }
 .td-box { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font: inherit; text-align: left; box-shadow: 0 4px 12px rgba(0, 0, 0, .12); }
 .td-box i { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-style: normal; font-size: 1.15rem; background: color-mix(in srgb, var(--primary) 14%, transparent); flex: none; }
 .td-box > span { display: flex; flex-direction: column; min-width: 0; flex: 1; }

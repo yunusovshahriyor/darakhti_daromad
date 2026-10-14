@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { CARD_COLORS, ACCOUNTS, effectiveShareNode, fmt, isRemainderNode } from '../model';
 import type { AccountDef, DistNode } from '../types';
@@ -14,6 +15,9 @@ export default function TreeDiagram({ root, accounts, isOff, onPick, balances, h
   balances?: Record<string, number>;
   hidden?: boolean;
 }) {
+  const box = useRef<HTMLDivElement>(null);
+  // Реша дар поён аст: ҳангоми кушодан скролл ба поён (ба реша) мешавад
+  useEffect(() => { box.current?.scrollIntoView({ block: 'end' }); }, []);
   const sum = (n: DistNode): number => (n.type === 'group' ? n.children.reduce((t, c) => t + sum(c), 0) : balances?.[n.accountId] ?? 0);
   const money = (v: number) => (hidden ? '••••' : fmt(Math.round(v)));
   const node = (n: DistNode): ReactNode => {
@@ -43,5 +47,5 @@ export default function TreeDiagram({ root, accounts, isOff, onPick, balances, h
       </div>
     );
   };
-  return <div className="td-scroll"><div className="td">{node(root)}</div></div>;
+  return <div className="td-scroll" ref={box}><div className="td">{node(root)}</div></div>;
 }
