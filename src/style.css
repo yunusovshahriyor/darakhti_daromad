@@ -1884,3 +1884,6 @@ html.boot .donut-seg { --base: 340ms; }
 .tp-row u { text-decoration: none; color: var(--primary); font-weight: 800; }
 .tp-row.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 9%, var(--bg)); }
 .tp-row:active { transform: scale(.99); }
+button.tp-root { border: 0; font: inherit; text-align: left; width: 100%; opacity: .92; }
+button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent); }
+.tp-root u { text-decoration: none; font-weight: 800; }

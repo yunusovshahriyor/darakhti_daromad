@@ -237,13 +237,15 @@ function TreePicker({ root, accounts, value, title, onChange }: {
       <button type="button" className="picker-btn" onClick={() => setOpen(true)}>
         <span className="pk-ic">{cur ? iconOf(cur) : ''}</span>
         <span className="pk-t">{cur ? nodeLabel(cur, accounts) : '—'}</span>
-        {cur && <small>{r2(cur.percent)}%</small>}
+        {cur && <small>{cur.id === root.id ? 100 : r2(cur.percent)}%</small>}
         <ChevronDownIcon />
       </button>
       {open && createPortal(
         <Sheet title={title} onClose={() => setOpen(false)} tall>
           <div className="tp">
-            <div className="tp-root"><i>{iconOf(root)}</i><b>{nodeLabel(root, accounts)}</b><em>100%</em></div>
+            <button type="button" className={root.id === value ? 'tp-root on' : 'tp-root'} onClick={() => { onChange(root.id); setOpen(false); }}>
+              <i>{iconOf(root)}</i><b>{nodeLabel(root, accounts)}</b><em>100%</em>{root.id === value && <u aria-hidden>✓</u>}
+            </button>
             <div className="tp-kids">{rows(root, 0)}</div>
           </div>
         </Sheet>,
@@ -272,7 +274,7 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
   const parent = sourceFound?.parent?.id ?? 'root';
   const pg = findNode(state.tree, parent)?.node;
   const kids = pg && pg.type === 'group' ? pg.children : [];
-  const donorId = source;
+  const donorId = source === state.tree.id ? kids[kids.length - 1]?.id ?? '' : source;
 
   const save = (e: FormEvent) => {
     e.preventDefault();
