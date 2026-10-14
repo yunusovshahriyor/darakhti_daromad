@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { CARD_COLORS, ACCOUNTS, effectiveShareNode, fmt, isRemainderNode } from '../model';
 import type { AccountDef, DistNode } from '../types';
@@ -15,9 +14,6 @@ export default function TreeDiagram({ root, accounts, isOff, onPick, balances, h
   balances?: Record<string, number>;
   hidden?: boolean;
 }) {
-  const box = useRef<HTMLDivElement>(null);
-  // Дарахт аз миёна оғоз мешавад: реша дар экран намоён бошад
-  useEffect(() => { const e = box.current; if (e) e.scrollLeft = (e.scrollWidth - e.clientWidth) / 2; }, []);
   const sum = (n: DistNode): number => (n.type === 'group' ? n.children.reduce((t, c) => t + sum(c), 0) : balances?.[n.accountId] ?? 0);
   const money = (v: number) => (hidden ? '••••' : fmt(Math.round(v)));
   const node = (n: DistNode): ReactNode => {
@@ -36,7 +32,7 @@ export default function TreeDiagram({ root, accounts, isOff, onPick, balances, h
       <div className="td-node">
         <button type="button" className={cls} disabled={!clickable} onClick={() => onPick?.(n)}>
           <i style={bg ? { background: bg } : undefined}>{icon}</i>
-          <span><b>{name}</b><small>{isRoot && balances ? '' : isRoot ? '100%' : `${n2(n.percent)}%`}{!isRoot && isRemainderNode(root, n.id) && <><br /><span>боқимонда</span></>}</small></span>
+          <span><b>{name}</b><small>{isRoot && balances ? '' : isRoot ? '100%' : `${n2(n.percent)}%`}{!isRoot && isRemainderNode(root, n.id) && <> · <span>боқимонда</span></>}</small></span>
           {balances ? <em className="bal">{money(sum(n))}</em> : !isRoot && <em>{n2(share)}%</em>}
         </button>
         {kids.length > 0 && (
@@ -47,5 +43,5 @@ export default function TreeDiagram({ root, accounts, isOff, onPick, balances, h
       </div>
     );
   };
-  return <div className="td-scroll" ref={box}><div className="td">{node(root)}</div></div>;
+  return <div className="td-scroll"><div className="td">{node(root)}</div></div>;
 }
