@@ -1,4 +1,6 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, ReactNode, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronDownIcon } from './Icons';
 import {
   ACCOUNTS, PROTECTED_IDS, addAccountNode, balancesOf, effectiveShareNode, findAccountNode, findNode,
   fmt, groupOptions, hiddenAccounts, isRemainderNode, patchGroup, removeAccountNode, setNodePercent,
@@ -208,6 +210,49 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
   );
 }
 
+/** Интихоби ҳисоб бо намуди дарахт (мисли нақшаи системаи Давлатов): гурӯҳҳо ва зерҳисобҳо бо фоизҳо. */
+function TreePicker({ root, accounts, value, title, onChange }: {
+  root: DistNode; accounts: AccountDef[]; value: string; title: string; onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const cur = findNode(root, value)?.node;
+  const iconOf = (n: DistNode) => (n.type === 'group' ? n.icon ?? '📁' : accounts.find(a => a.id === n.accountId)?.icon ?? '💰');
+  const rows = (n: DistNode, depth: number): ReactNode => {
+    if (n.type !== 'group') return null;
+    return n.children.map((c, i) => (
+      <div key={c.id} className="tp-node">
+        <button type="button" className={c.id === value ? 'tp-row on' : 'tp-row'} 
+          onClick={() => { onChange(c.id); setOpen(false); }}>
+          <i>{iconOf(c)}</i>
+          <span><b>{nodeLabel(c, accounts)}</b>{i === n.children.length - 1 && <small>боқимонда</small>}</span>
+          <em>{r2(c.percent)}%</em>
+          {c.id === value && <u aria-hidden>✓</u>}
+        </button>
+        {c.type === 'group' && <div className="tp-kids" style={{ marginLeft: 8 }}>{rows(c, 0)}</div>}
+      </div>
+    ));
+  };
+  return (
+    <>
+      <button type="button" className="picker-btn" onClick={() => setOpen(true)}>
+        <span className="pk-ic">{cur ? iconOf(cur) : ''}</span>
+        <span className="pk-t">{cur ? nodeLabel(cur, accounts) : '—'}</span>
+        {cur && <small>{r2(cur.percent)}%</small>}
+        <ChevronDownIcon />
+      </button>
+      {open && createPortal(
+        <Sheet title={title} onClose={() => setOpen(false)} tall>
+          <div className="tp">
+            <div className="tp-root"><i>{iconOf(root)}</i><b>{nodeLabel(root, accounts)}</b><em>100%</em></div>
+            <div className="tp-kids">{rows(root, 0)}</div>
+          </div>
+        </Sheet>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 /** Ҳисоби нав: гурӯҳ, ном, нишона, ранг ва фоиз. */
 export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
   onClose: () => void;
@@ -228,15 +273,6 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
   const pg = findNode(state.tree, parent)?.node;
   const kids = pg && pg.type === 'group' ? pg.children : [];
   const donorId = source;
-  const sourceOptions = groups.flatMap(g => {
-    const gn = findNode(state.tree, g.id)?.node;
-    if (!gn || gn.type !== 'group') return [];
-    const head = g.label.split(' › ').map(x => tr(x)).join(' › ');
-    return gn.children.map((c, i) => ({
-      value: c.id, label: nodeLabel(c, state.accounts), icon: c.type === 'group' ? c.icon ?? '📁' : state.accounts.find(a => a.id === c.accountId)?.icon ?? '💰',
-      note: `${r2(c.percent)}%${i === gn.children.length - 1 ? ' · боқимонда' : ''}`, group: head,
-    }));
-  });
 
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -270,7 +306,7 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
       <form onSubmit={save}>
         <div className="field">
           <span>Ҳисоби нав аз кадом ҳисоб фоиз мегирад?</span>
-          <PickerField value={source} title="Гурӯҳ ва ҳисоб" onChange={v => { setSource(v); setError(''); }} options={sourceOptions} />
+          <TreePicker root={state.tree} accounts={state.accounts} value={source} title="Гурӯҳ ва ҳисоб" onChange={v => { setSource(v); setError(''); }} />
           <p className="note grp-hint">Ҳисоби нав ба ҳамон гурӯҳе меравад, ки ҳисоби интихобшуда дар он аст.</p>
         </div>
         <Field label="Номи ҳисоб">
