@@ -113,7 +113,7 @@ button { cursor: pointer; }
 }
 /* Пайдоиши мулоими маълумот: ҳар блок пай дар пай аз поён мебарояд (баъди боршавӣ/навсозӣ — баъди splash) */
 .screen > * {
-  animation: rise .6s cubic-bezier(.2, .8, .2, 1) both;
+  animation: rise .6s cubic-bezier(.2, .8, .2, 1) backwards;
   animation-delay: calc(var(--base, 0ms) + var(--i, 0) * 55ms);
 }
 html.boot .screen > * { --base: 340ms; }
