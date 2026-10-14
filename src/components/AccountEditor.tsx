@@ -164,7 +164,7 @@ export function EditNodeSheet({ state, setState, nodeId, onClose, onToast }: Pro
                 : 'Дар гурӯҳ ҳадди аққал як ҳисоб бояд бимонад.'}
             </p>
           ) : !confirmDelete ? (
-            <button className="btn danger" type="button" onClick={() => setConfirmDelete(true)}>Нест кардани ҳисоб</button>
+            <button className="btn danger" type="button" onClick={() => setConfirmDelete(true)}>Нест кардани ин ҳисоб</button>
           ) : (
             <div className="confirm-box">
               <p>Ҳисоб нест мешавад, таърихи он дар «Таърих» мемонад.</p>

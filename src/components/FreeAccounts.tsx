@@ -47,7 +47,7 @@ function FreeAccountSheet({ state, setState, id, onClose, onToast }: Props & {
         <div className="field"><span>Ранг</span><ColorPicker value={color} onChange={setColor} /></div>
         {error && <div className="alert danger">{error}</div>}
         <button className="btn" type="submit">{id ? 'Захира кардан' : 'Илова кардан'}</button>
-        {id && <button className="btn danger" type="button" onClick={archive}>Нест кардани ҳисоб</button>}
+        {id && <button className="btn danger" type="button" onClick={archive}>Нест кардани ин ҳисоб</button>}
       </form>
     </Sheet>
   );
