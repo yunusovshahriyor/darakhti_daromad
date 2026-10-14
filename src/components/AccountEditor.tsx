@@ -214,17 +214,29 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
   onToast: (m: string) => void;
 }) {
   const groups = groupOptions(state.tree);
-  const [parent, setParent] = useState(groups.find(g => g.id === 'root')?.id ?? groups[0].id);
+  const rootNode = state.tree.type === 'group' ? state.tree : null;
+  const [source, setSource] = useState(rootNode?.children[rootNode.children.length - 1]?.id ?? '');
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('💰');
   const [color, setColor] = useState(COLORS[5]);
   const [percent, setPercent] = useState('5');
   const [error, setError] = useState('');
-  const [donor, setDonor] = useState('');
 
+  // Гурӯҳ ва ҳисоб як ҷо: ҳисоби интихобшуда — манбаи фоиз; ҳисоби нав ба гурӯҳи ҳамон ҳисоб меравад.
+  const sourceFound = findNode(state.tree, source);
+  const parent = sourceFound?.parent?.id ?? 'root';
   const pg = findNode(state.tree, parent)?.node;
   const kids = pg && pg.type === 'group' ? pg.children : [];
-  const donorId = kids.some(c => c.id === donor) ? donor : kids[kids.length - 1]?.id ?? '';
+  const donorId = source;
+  const sourceOptions = groups.flatMap(g => {
+    const gn = findNode(state.tree, g.id)?.node;
+    if (!gn || gn.type !== 'group') return [];
+    const head = g.label.split(' › ').map(x => tr(x)).join(' › ');
+    return gn.children.map((c, i) => ({
+      value: c.id, label: nodeLabel(c, state.accounts), icon: c.type === 'group' ? c.icon ?? '📁' : state.accounts.find(a => a.id === c.accountId)?.icon ?? '💰',
+      note: `${r2(c.percent)}%${i === gn.children.length - 1 ? ' · боқимонда' : ''}`, group: head,
+    }));
+  });
 
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -257,10 +269,9 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
     <Sheet title="Ҳисоби нав" onClose={onClose}>
       <form onSubmit={save}>
         <div className="field">
-          <span>Ҳисоби нав ба кадом гурӯҳ тааллуқ дорад?</span>
-          <p className="note grp-hint">Гурӯҳ — «қуттӣ»-е аст, ки даромад аввал ба он меравад ва сипас байни ҳисобҳои дохилаш тақсим мешавад.</p>
-          <PickerField value={parent} title="Дар кадом гурӯҳ" onChange={v => { setParent(v); setError(''); }}
-            options={groups.map(g => ({ value: g.id, label: g.label.split(' › ').map(x => tr(x)).join(' › '), icon: '📁' }))} />
+          <span>Ҳисоби нав аз кадом ҳисоб фоиз мегирад?</span>
+          <PickerField value={source} title="Гурӯҳ ва ҳисоб" onChange={v => { setSource(v); setError(''); }} options={sourceOptions} />
+          <p className="note grp-hint">Ҳисоби нав ба ҳамон гурӯҳе меравад, ки ҳисоби интихобшуда дар он аст.</p>
         </div>
         <Field label="Номи ҳисоб">
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Масалан, Таҳсил" required />
@@ -272,15 +283,7 @@ export function AddAccountSheet({ state, setState, onClose, onToast }: Props & {
             onChange={e => { setPercent(e.target.value); setError(''); }} />
         </Field>
         <p className="note">{`Аз ҳар 100 дар «${parentTitle}» ба ин ҳисоб ${parsePercent(percent)} мерасад`}</p>
-        {kids.length > 0 && (
-          <>
-            <Field label="Фоиз аз кадом ҳисоб гирифта шавад?">
-              <PickerField value={donorId} title="Аз кадом ҳисоб" onChange={v => { setDonor(v); setError(''); }}
-                options={kids.map((c, i) => ({ value: c.id, label: nodeLabel(c, state.accounts), note: `${r2(c.percent)}%${i === kids.length - 1 ? ' · боқимонда' : ''}` }))} />
-            </Field>
-            <p className="note">Фоизи ҳисоби нав аз ҳисоби интихобшуда кам мешавад.</p>
-          </>
-        )}
+        <p className="note">Фоизи ҳисоби нав аз ҳисоби интихобшуда кам мешавад.</p>
         {error && <div className="alert danger">{error}</div>}
         <button className="btn" type="submit">Илова кардан</button>
       </form>

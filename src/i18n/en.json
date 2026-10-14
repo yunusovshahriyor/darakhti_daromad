@@ -986,5 +986,8 @@
 "Ҳисоби дигар дар гурӯҳ нест.": "There is no other account in the group.",
 "Дар ҳисоби интихобшуда фоизи кофӣ нест.": "The chosen account does not have enough percent.",
 "Фоиз аз кадом ҳисоб гирифта шавад?": "Which account should the percent be taken from?",
-"Фоизи ҳисоби нав аз ҳисоби интихобшуда кам мешавад.": "The new account's percent will be taken from the chosen account."
+"Фоизи ҳисоби нав аз ҳисоби интихобшуда кам мешавад.": "The new account's percent will be taken from the chosen account.",
+"Ҳисоби нав аз кадом ҳисоб фоиз мегирад?": "Which account does the new account take its percent from?",
+"Гурӯҳ ва ҳисоб": "Group and account",
+"Ҳисоби нав ба ҳамон гурӯҳе меравад, ки ҳисоби интихобшуда дар он аст.": "The new account goes into the same group as the chosen account."
 }
