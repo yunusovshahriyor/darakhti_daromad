@@ -36,7 +36,7 @@ export default function TreeDiagram({ root, accounts, isOff, onPick, balances, h
       <div className="td-node">
         <button type="button" className={cls} disabled={!clickable} onClick={() => onPick?.(n)}>
           <i style={bg ? { background: bg } : undefined}>{icon}</i>
-          <span><b>{name}</b><small>{isRoot && balances ? '' : isRoot ? '100%' : `${n2(n.percent)}%`}{!isRoot && isRemainderNode(root, n.id) && <> · <span>боқимонда</span></>}</small></span>
+          <span><b>{name}</b><small>{isRoot && balances ? '' : isRoot ? '100%' : `${n2(n.percent)}%`}</small></span>
           {balances ? <em className="bal">{money(sum(n))}</em> : !isRoot && <em>{n2(share)}%</em>}
         </button>
         {kids.length > 0 && (
