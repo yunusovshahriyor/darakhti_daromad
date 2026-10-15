@@ -17,7 +17,7 @@ export default function TreeDiagram({ root, accounts, isOff, onPick, balances, h
 }) {
   const box = useRef<HTMLDivElement>(null);
   // Реша дар поён аст: ҳангоми кушодан скролл ба поён ва ба миёна (ба реша) мешавад
-  useEffect(() => { const e = box.current; if (e) { e.scrollTop = e.scrollHeight; e.scrollLeft = (e.scrollWidth - e.clientWidth) / 2; } }, []);
+  useEffect(() => { const e = box.current; if (e) { e.scrollTop = e.scrollHeight; e.scrollLeft = (e.scrollWidth - e.clientWidth) / 2; e.scrollIntoView({ block: 'nearest' }); } }, []);
   const sum = (n: DistNode): number => (n.type === 'group' ? n.children.reduce((t, c) => t + sum(c), 0) : balances?.[n.accountId] ?? 0);
   const money = (v: number) => (hidden ? '••••' : fmt(Math.round(v)));
   const node = (n: DistNode): ReactNode => {

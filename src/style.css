@@ -1890,7 +1890,7 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 
 /* Диаграммаи дарахтӣ: реша дар поён, шохаҳо ба боло; скролл ҳам амудӣ, ҳам уфуқӣ */
 .acct-view { margin: 0 0 12px; }
-.td-scroll { overflow: auto; max-height: 68vh; padding: 10px 2px 18px; margin: 0 -4px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.td-scroll { overflow: auto; height: max(300px, calc(100dvh - 400px)); padding: 10px 2px 24px; margin: 0 -4px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .td { width: max-content; min-width: 100%; display: flex; justify-content: center; }
 .td-node { display: flex; flex-direction: column-reverse; align-items: center; }
 .td-kids { position: relative; display: flex; flex-direction: row; justify-content: center; margin-bottom: 22px; }
