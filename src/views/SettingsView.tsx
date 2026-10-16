@@ -77,6 +77,55 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
 
   const [ask, confirmDialog] = useConfirm();
 
+  const [wipeOpen, setWipeOpen] = useState(false);
+  /** Нест кардани як навъи маълумот: ҳар навъ танҳо чизҳои вобастаи худро мебарад. */
+  const wipePart = async (kind: 'incomes' | 'expenses' | 'transfers' | 'debts' | 'loans' | 'dreams') => {
+    const T: Record<typeof kind, { title: string; text: string; run: () => void }> = {
+      incomes: {
+        title: 'Нест кардани ҳамаи даромад',
+        text: 'Ҳамаи сабтҳои даромад нест мешаванд (бо тақсими онҳо ба ҳисобҳо). Хароҷот, қарзҳо ва орзуҳо мемонанд. Барқарор кардан мумкин нест.',
+        run: () => setState(s => ({ ...s, incomes: [] })),
+      },
+      expenses: {
+        title: 'Нест кардани ҳамаи хароҷот',
+        text: 'Ҳамаи сабтҳои хароҷот нест мешаванд (аз ҷумла пардохтҳои қарз). Даромад, қарзҳо ва орзуҳо мемонанд. Барқарор кардан мумкин нест.',
+        run: () => setState(s => ({ ...s, expenses: [] })),
+      },
+      transfers: {
+        title: 'Нест кардани ҳамаи гузаронидан',
+        text: 'Ҳамаи гузаронидани байни ҳисобҳо нест мешаванд. Барқарор кардан мумкин нест.',
+        run: () => setState(s => ({ ...s, transfers: [] })),
+      },
+      debts: {
+        title: 'Нест кардани ҳамаи қарзҳо',
+        text: 'Ҳамаи қарзҳое, ки шумо қарздоред (кушода ва пардохтшуда), бо пардохтҳои онҳо нест мешаванд. Даромади «Қарз гирифтам» мемонад. Барқарор кардан мумкин нест.',
+        run: () => setState(s => ({
+          ...s,
+          debts: [],
+          expenses: s.expenses.filter(x => x.debtId === undefined),
+          incomes: s.incomes.map(i => (i.kind === 'borrow' ? { ...i, debtId: undefined } : i)),
+        })),
+      },
+      loans: {
+        title: 'Нест кардани ҳамаи қарздорон',
+        text: 'Ҳамаи қарзҳое, ки шумо додаед (дигарон ба шумо қарздоранд), бо сабтҳои додан ва баргардонидан нест мешаванд. Барқарор кардан мумкин нест.',
+        run: () => setState(s => ({
+          ...s,
+          loans: [],
+          expenses: s.expenses.filter(x => x.loanId === undefined),
+          incomes: s.incomes.filter(i => i.kind !== 'loanBack'),
+        })),
+      },
+      dreams: {
+        title: 'Нест кардани ҳамаи орзуҳо',
+        text: 'Ҳамаи орзуҳо (кушода ва харидашуда) бо хароҷоти харидашон нест мешаванд. Барқарор кардан мумкин нест.',
+        run: () => setState(s => ({ ...s, dreams: [], expenses: s.expenses.filter(x => x.dreamId === undefined) })),
+      },
+    };
+    const t = T[kind];
+    if (await ask({ title: t.title, text: t.text, ok: 'Ҳаа, нест кунед', danger: true })) { t.run(); setWipeOpen(false); onToast('Нест шуд'); }
+  };
+
   const wipe = async () => {
     const ok = await ask({
       title: 'Нест кардани ҳамаи маълумот',
@@ -216,9 +265,31 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
           )}
         </div>
 
-        <button className="btn danger" onClick={wipe}>Нест кардани ҳамаи маълумот</button>
+        <button className="btn danger" onClick={() => setWipeOpen(true)}>Нест кардани маълумот</button>
 
         {confirmDialog}
+
+        {wipeOpen && (
+          <Sheet title="Нест кардани маълумот" onClose={() => setWipeOpen(false)}>
+            <div className="cells">
+              {([
+                ['incomes', '📥', 'Нест кардани ҳамаи даромад', state.incomes.length],
+                ['expenses', '📤', 'Нест кардани ҳамаи хароҷот', state.expenses.length],
+                ['transfers', '🔄', 'Нест кардани ҳамаи гузаронидан', state.transfers.length],
+                ['debts', '💳', 'Нест кардани ҳамаи қарзҳо', state.debts.length],
+                ['loans', '🤝', 'Нест кардани ҳамаи қарздорон', state.loans.length],
+                ['dreams', '✨', 'Нест кардани ҳамаи орзуҳо', state.dreams.length],
+              ] as const).map(([k, ic, label, n]) => (
+                <button key={k} type="button" className="cell tap link" disabled={n === 0} onClick={() => void wipePart(k)}>
+                  <div className="ic">{ic}</div>
+                  <div className="grow"><b>{label}</b><small>{n === 0 ? 'Холӣ' : `${n} сабт`}</small></div>
+                  <ChevronIcon />
+                </button>
+              ))}
+            </div>
+            <button className="btn danger" onClick={() => { setWipeOpen(false); void wipe(); }}>Нест кардани ҳамаи маълумот</button>
+          </Sheet>
+        )}
 
         {recOpen && <RecurringSheet state={state} setState={setState} onClose={() => setRecOpen(false)} />}
         {lockOpen && <LockSheet onClose={() => setLockOpen(false)} onChange={() => setLockTick(x => x + 1)} />}

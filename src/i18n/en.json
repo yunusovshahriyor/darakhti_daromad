@@ -1011,5 +1011,21 @@
 "Қурби охирин": "Last rate",
 "Маблағ ва қурб ҳангоми пардохт нав мешавад. Барои тағйири маблағи қарз онро нест карда, аз нав сабт кунед.": "Amount and rate are updated on payment. To change the debt amount, delete it and record it again.",
 "Қарз: {0} ({1})": "Debt: {0} ({1})",
-"Дар барнома: ≈ {0} смн": "In the app: ≈ {0} смн"
+"Дар барнома: ≈ {0} смн": "In the app: ≈ {0} смн",
+"Нест кардани маълумот": "Delete data",
+"Нест кардани ҳамаи даромад": "Delete all income",
+"Нест кардани ҳамаи хароҷот": "Delete all expenses",
+"Нест кардани ҳамаи гузаронидан": "Delete all transfers",
+"Нест кардани ҳамаи қарзҳо": "Delete all debts",
+"Нест кардани ҳамаи қарздорон": "Delete all debtors",
+"Нест кардани ҳамаи орзуҳо": "Delete all dreams",
+"Холӣ": "Empty",
+"{0} сабт": "{0} entries",
+"Ҳамаи сабтҳои даромад нест мешаванд (бо тақсими онҳо ба ҳисобҳо). Хароҷот, қарзҳо ва орзуҳо мемонанд. Барқарор кардан мумкин нест.": "All income entries will be deleted (with their split across accounts). Expenses, debts and dreams stay. This cannot be undone.",
+"Ҳамаи сабтҳои хароҷот нест мешаванд (аз ҷумла пардохтҳои қарз). Даромад, қарзҳо ва орзуҳо мемонанд. Барқарор кардан мумкин нест.": "All expense entries will be deleted (including debt payments). Income, debts and dreams stay. This cannot be undone.",
+"Ҳамаи гузаронидани байни ҳисобҳо нест мешаванд. Барқарор кардан мумкин нест.": "All transfers between accounts will be deleted. This cannot be undone.",
+"Ҳамаи қарзҳое, ки шумо қарздоред (кушода ва пардохтшуда), бо пардохтҳои онҳо нест мешаванд. Даромади «Қарз гирифтам» мемонад. Барқарор кардан мумкин нест.": "All debts you owe (open and paid) will be deleted with their payments. The “I borrowed” income stays. This cannot be undone.",
+"Ҳамаи қарзҳое, ки шумо додаед (дигарон ба шумо қарздоранд), бо сабтҳои додан ва баргардонидан нест мешаванд. Барқарор кардан мумкин нест.": "All loans you gave (others owe you) will be deleted with their lending and return entries. This cannot be undone.",
+"Ҳамаи орзуҳо (кушода ва харидашуда) бо хароҷоти харидашон нест мешаванд. Барқарор кардан мумкин нест.": "All dreams (open and bought) will be deleted with their purchase expenses. This cannot be undone.",
+"Нест шуд": "Deleted"
 }
