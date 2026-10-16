@@ -1994,3 +1994,66 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 }
 .tab.active::after { display: none; }
 .add-circle { box-shadow: 6px 6px 14px var(--nm-lo), -5px -5px 12px var(--nm-hi), inset 1px 1px 2px rgba(255, 255, 255, .25); border-color: var(--bg); }
+
+/* ===== Нармҳисс дар тамоми барнома: варақаҳо, майдонҳо, тугмаҳо ===== */
+.sheet { background: var(--bg); box-shadow: 0 -10px 30px rgba(0, 0, 0, .25), 0 -1px 0 var(--nm-hi); }
+.sheet-head .icon-btn { box-shadow: 4px 4px 9px var(--nm-lo), -4px -4px 9px var(--nm-hi); background: var(--nm-bg); }
+.sheet-head .icon-btn:active { box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.grabber { background: color-mix(in srgb, var(--muted) 35%, transparent); }
+
+/* Майдонҳои вуруд: фурӯрафта */
+input, select, .picker-btn, textarea {
+  border: 0; background: var(--bg);
+  box-shadow: inset 4px 4px 9px var(--nm-lo), inset -4px -4px 9px var(--nm-hi);
+}
+input:focus, select:focus, .picker-btn:focus-visible {
+  border: 0; outline: none;
+  box-shadow: inset 4px 4px 9px var(--nm-lo), inset -4px -4px 9px var(--nm-hi), 0 0 0 2px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.date-row { border: 0; background: var(--nm-bg); box-shadow: 5px 5px 11px var(--nm-lo), -5px -5px 11px var(--nm-hi); }
+.date-row input { box-shadow: none; background: transparent; }
+
+/* Тугмачаҳои рақамӣ: болобаромада, ҳангоми пахш фурӯ мераванд */
+.key { border: 0; background: var(--nm-bg); box-shadow: 5px 5px 11px var(--nm-lo), -5px -5px 11px var(--nm-hi); }
+.key:active { background: var(--nm-bg); transform: none; box-shadow: inset 4px 4px 9px var(--nm-lo), inset -4px -4px 9px var(--nm-hi); }
+.qa { border: 0; background: var(--nm-bg); box-shadow: 4px 4px 9px var(--nm-lo), -4px -4px 9px var(--nm-hi); }
+.qa.on { background: var(--nm-bg); box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); color: var(--primary); }
+
+/* Чипҳо */
+.chip { border: 0; background: var(--nm-bg); color: var(--muted); box-shadow: 4px 4px 9px var(--nm-lo), -4px -4px 9px var(--nm-hi); }
+.chip.on { background: var(--nm-bg); color: var(--text); box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi), 0 0 0 1.5px color-mix(in srgb, var(--primary) 70%, transparent); }
+.chips { padding: 6px 8px 14px; margin: 0 -8px; }
+
+/* Ҷудокунаки навъи амалиёт (Даромад / Хароҷот / …) */
+.kind-tabs { background: transparent; box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.kt.on { background: var(--nm-bg); box-shadow: 3px 3px 7px var(--nm-lo), -3px -3px 7px var(--nm-hi); }
+
+/* Калидҳои иваз (switch) */
+.switch i { background: transparent; box-shadow: inset 3px 3px 6px var(--nm-lo), inset -3px -3px 6px var(--nm-hi); }
+.switch input:checked + i { background: color-mix(in srgb, var(--primary) 85%, transparent); }
+.switch i::after { box-shadow: 2px 2px 5px rgba(0, 0, 0, .3), -1px -1px 3px var(--nm-hi); }
+
+/* Тугмаҳо */
+.btn { box-shadow: 6px 6px 14px var(--nm-lo), -5px -5px 12px var(--nm-hi); }
+.btn:active { box-shadow: inset 3px 3px 8px rgba(0, 0, 0, .3); }
+.btn.secondary, .btn.danger { background: var(--nm-bg); border: 0; box-shadow: 5px 5px 11px var(--nm-lo), -5px -5px 11px var(--nm-hi); }
+.btn.secondary:active, .btn.danger:active { box-shadow: inset 3px 3px 8px var(--nm-lo), inset -3px -3px 8px var(--nm-hi); }
+.btn:disabled { box-shadow: none; }
+.btn-sm { box-shadow: 4px 4px 9px var(--nm-lo), -3px -3px 8px var(--nm-hi); }
+
+/* Нишонаҳо ва рангҳо (swatches) */
+.swatches button { border: 0; background: var(--nm-bg); box-shadow: 3px 3px 7px var(--nm-lo), -3px -3px 7px var(--nm-hi); }
+.swatches.colors button { box-shadow: 3px 3px 7px var(--nm-lo), -3px -3px 7px var(--nm-hi); }
+.swatches button.on { box-shadow: inset 2px 2px 5px var(--nm-lo), inset -2px -2px 5px var(--nm-hi), 0 0 0 2px var(--primary); }
+
+/* Интихобкунак, огоҳӣ, пешнамоиш */
+.pk-item.on { background: transparent; box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.pk-item:active { background: transparent; box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.preview { background: transparent; box-shadow: inset 3px 3px 8px var(--nm-lo), inset -3px -3px 8px var(--nm-hi); }
+.alert { box-shadow: inset 2px 2px 6px var(--nm-lo), inset -2px -2px 6px var(--nm-hi); }
+.rp, .repeat-row .rp { border: 0; background: var(--nm-bg); box-shadow: 4px 4px 9px var(--nm-lo), -4px -4px 9px var(--nm-hi); }
+.cells:not(.screen *) { background: var(--nm-bg); }
+.sheet .cells { background: transparent; box-shadow: inset 3px 3px 8px var(--nm-lo), inset -3px -3px 8px var(--nm-hi); border-radius: 22px; }
+.sheet .cells > .cell, .sheet .cells .swipe .cell { background: transparent; border-bottom-color: color-mix(in srgb, var(--nm-lo) 40%, transparent); }
+.toast { box-shadow: 6px 6px 16px var(--nm-lo), -4px -4px 12px var(--nm-hi); }
+.fab { border: 0; }
