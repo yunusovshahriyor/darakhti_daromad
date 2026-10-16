@@ -1954,3 +1954,43 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .card:has(> .chart) { border-radius: 26px; }
 .chart .bar { box-shadow: 2px 3px 7px var(--nm-lo); }
 .spent .filter-btn { border-radius: 14px; }
+
+/* ===== Ҳамаи саҳифаҳо ва менюи поёнӣ: нармҳисс ===== */
+:root { --nm-bg: linear-gradient(145deg, color-mix(in srgb, var(--bg) 90%, #fff), color-mix(in srgb, var(--bg) 94%, #000)); }
+
+.screen .card:not(.backdrop *), .screen .cells:not(.backdrop .cells), .screen .grp:not(.backdrop *),
+.screen .tab-block:not(.backdrop *), .screen .pf-income, .screen .due-card, .screen .pf-hero:not(.backdrop *) {
+  background: var(--nm-bg);
+  border: 0;
+  box-shadow: 7px 7px 16px var(--nm-lo), -7px -7px 16px var(--nm-hi);
+}
+.screen .cells:not(.backdrop .cells) { border-radius: 26px; margin-bottom: 8px; }
+.screen .cells:not(.backdrop .cells) > .cell, .screen .cells:not(.backdrop .cells) .swipe .cell { background: transparent; border-bottom-color: color-mix(in srgb, var(--nm-lo) 45%, transparent); }
+.screen .cells:not(.backdrop .cells) .cell.tap:active { background: transparent; box-shadow: inset 3px 3px 8px var(--nm-lo), inset -3px -3px 8px var(--nm-hi); }
+.screen .tab-block .cells { box-shadow: none; background: transparent; }
+.screen .grp { border-radius: 30px; }
+.screen .grp-head { background: transparent; }
+.screen .acct-card, .screen .next-debt { box-shadow: 6px 6px 14px var(--nm-lo), -6px -6px 14px var(--nm-hi); }
+.screen .bank-hero { box-shadow: 8px 8px 18px var(--nm-lo), -8px -8px 18px var(--nm-hi); }
+.screen .seg-tabs { background: transparent; box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.screen .seg-tabs button.on { background: var(--nm-bg); box-shadow: 3px 3px 7px var(--nm-lo), -3px -3px 7px var(--nm-hi); color: var(--text); }
+.screen .progress { background: transparent; box-shadow: inset 2px 2px 4px var(--nm-lo), inset -2px -2px 4px var(--nm-hi); }
+.screen .icon-btn:active { background: transparent; box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.screen .rank { box-shadow: 3px 3px 7px var(--nm-lo), -3px -3px 7px var(--nm-hi); }
+.screen .rank.first { box-shadow: 3px 3px 8px var(--nm-lo), -3px -3px 8px var(--nm-hi); }
+.fab { box-shadow: 6px 6px 14px var(--nm-lo), -4px -4px 12px var(--nm-hi); }
+
+/* Менюи поёнӣ */
+.tabbar {
+  background: var(--nm-bg);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-top: 0;
+  box-shadow: 0 -8px 20px var(--nm-lo), 0 -1px 0 var(--nm-hi);
+}
+.tab { isolation: isolate; }
+.tab:not(.add).active::before {
+  content: ''; position: absolute; z-index: -1; top: 8px; width: 54px; height: 38px; border-radius: 14px;
+  box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi);
+}
+.tab.active::after { display: none; }
+.add-circle { box-shadow: 6px 6px 14px var(--nm-lo), -5px -5px 12px var(--nm-hi), inset 1px 1px 2px rgba(255, 255, 255, .25); border-color: var(--bg); }
