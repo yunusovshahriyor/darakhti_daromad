@@ -1,9 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { addPeriod, newRecurring } from '../recurring';
-import ReceiptScanner from './ReceiptScanner';
 import type { ScanResult } from './ReceiptScanner';
-import { RECEIPT } from '../receiptText';
-import { currentLang } from '../i18n';
 import { expenseHints, quickAmounts, recentExpenses, smartCategory } from '../suggest';
 import { ACCOUNTS, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
@@ -26,7 +23,6 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
   const [manual, setManual] = useState(false);
   const [amount, setAmount] = useState(prefill?.amount ? String(prefill.amount) : '');
   const [every, setEvery] = useState<'' | 'week' | 'month'>('');
-  const [scan, setScan] = useState(false);
   const [date, setDate] = useState(prefill?.date ?? today());
 
   const bal = balancesOf(state);
@@ -62,22 +58,14 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
 
   return (
     <form onSubmit={onSubmit}>
-      <div className="repeat-row">
-        <button type="button" className="rp scan" onClick={() => setScan(true)}>
-          <i>📷</i><span>{RECEIPT[currentLang()].button}</span>
-        </button>
-        {recent.map(r => (
-          <button key={r.id} type="button" className="rp" onClick={() => apply(r.title, r.amount, r.category, r.account)}>
-            <i>↻</i><span>{r.title} <small>· {fmt(r.amount)} смн</small></span>
-          </button>
-        ))}
-      </div>
-      {scan && (
-        <ReceiptScanner onClose={() => setScan(false)} onApply={r => {
-          if (r.amount) setAmount(String(r.amount));
-          if (r.merchant) { setNote(r.merchant); if (!manual) setCategory(smartCategory(state, r.merchant)); }
-          if (r.date) setDate(r.date);
-        }} />
+      {recent.length > 0 && (
+        <div className="repeat-row">
+          {recent.map(r => (
+            <button key={r.id} type="button" className="rp" onClick={() => apply(r.title, r.amount, r.category, r.account)}>
+              <i>↻</i><span>{r.title} <small>· {fmt(r.amount)} смн</small></span>
+            </button>
+          ))}
+        </div>
       )}
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" quick={quick} />
       <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal} spentBy={spent(state.expenses)}
