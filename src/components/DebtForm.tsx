@@ -2,8 +2,10 @@ import { FormEvent, ReactNode, useState } from 'react';
 import { fmt, today } from '../model';
 import { buildSchedule, paidThrough, planTotals } from '../loanPlan';
 import type { Debt, DebtPlan } from '../types';
+import { defOf } from '../currency';
 import AmountEntry from './AmountEntry';
 import Field from './Field';
+import { FxCurrencyPicker, FxRateField } from './FxRate';
 
 interface Values {
   title: string;
@@ -13,6 +15,8 @@ interface Values {
   plan?: DebtPlan;
   /** Пардохтҳои то имрӯз аллакай супоридашуда (барои қарзи кӯҳнаи бонкӣ). */
   paid?: number;
+  /** Қарз бо асъори хориҷӣ. */
+  fx?: Debt['fx'];
 }
 
 const METHODS: { id: DebtPlan['method']; icon: string; title: string; text: string; example: string }[] = [
@@ -31,7 +35,9 @@ const METHODS: { id: DebtPlan['method']; icon: string; title: string; text: stri
 ];
 
 /** Форма барои илова кардан ва таҳрири қарз: маблағи калон, сана, тугмачаҳои рақамӣ. */
-export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
+export default function DebtForm({ initial, onSubmit, submitLabel, afterPad, base = 'TJS' }: {
+  /** Асъори барнома (барои интихоби асъори қарзи нав). */
+  base?: string;
   initial?: Debt;
   onSubmit: (v: Values) => void;
   submitLabel: string;
@@ -51,6 +57,10 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   const [catchUp, setCatchUp] = useState(false);
   const [priority, setPriority] = useState(initial?.priority ?? false);
   const [date, setDate] = useState(initial?.date ?? today());
+  const [code, setCode] = useState(base);
+  const [rateText, setRateText] = useState('');
+  const foreign = !initial && code !== base;
+  const fxRate = foreign ? parseFloat(rateText.replace(',', '.')) || 0 : 1;
 
   const paid = initial?.paid ?? 0;
   const principal = parseFloat(amount) || 0;
@@ -59,7 +69,7 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   const payNum = parseFloat(fixedPay.replace(',', '.').replace(/\s/g, '')) || 0;
   const dayNum = Math.min(31, Math.max(1, Math.round(parseFloat(payDay) || 0)));
   const commNum = parseFloat(commission.replace(',', '.').replace(/\s/g, '')) || 0;
-  const validBase = bank && principal > 0 && monthsNum >= 1 && monthsNum <= 600
+  const validBase = bank && !foreign && principal > 0 && monthsNum >= 1 && monthsNum <= 600
     && (method !== 'actual' || payNum > 0) && (method !== 'flat' || commNum >= 0);
   const plan: DebtPlan | undefined = validBase
     ? {
@@ -72,10 +82,10 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
       } : undefined;
   const rows = plan ? buildSchedule(plan, date) : [];
   const totals = planTotals(rows);
-  const num = plan ? totals.total : principal;
+  const num = plan ? totals.total : foreign ? Math.round(principal * fxRate * 100) / 100 : principal;
   const tooLow = initial !== undefined && num > 0 && num < paid - 0.005;
   const noCover = plan !== undefined && rows.length > 0 && rows[0].principal <= 0;
-  const ready = principal > 0 && !tooLow && !noCover && title.trim() !== '' && (!bank || plan !== undefined);
+  const ready = principal > 0 && (!foreign || fxRate > 0) && !tooLow && !noCover && title.trim() !== '' && (!bank || plan !== undefined);
   const pastPaid = plan ? paidThrough(rows, today()) : 0;
   const pastCount = plan ? rows.filter(x => x.due <= today()).length : 0;
 
@@ -84,6 +94,7 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
     if (!ready) return;
     onSubmit({
       title: title.trim(), amount: num, priority, date, plan,
+      ...(foreign ? { fx: { code, amount: principal, paid: 0, rate: fxRate } } : {}),
       ...(plan && catchUp ? { paid: Math.min(pastPaid, num) } : {}),
     });
   };
@@ -91,12 +102,23 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
   return (
     <form onSubmit={submit}>
       <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate}
-        dateLabel={bank ? 'Санаи оғози шартнома' : 'Санаи амалиёт'} />
+        dateLabel={bank ? 'Санаи оғози шартнома' : 'Санаи амалиёт'} unit={foreign ? defOf(code).label : undefined} />
       {afterPad}
+      {!initial && (
+        <>
+          <FxCurrencyPicker value={code} base={base} onChange={c => { setCode(c); setRateText(''); if (c !== base) setBank(false); }} />
+          {foreign && (
+            <>
+              <FxRateField code={code} base={base} value={rateText} onChange={setRateText} />
+              {principal > 0 && fxRate > 0 && <p className="note">{`Дар барнома: ≈ ${fmt(num)} смн`}</p>}
+            </>
+          )}
+        </>
+      )}
       <Field label="Ба кӣ / барои чӣ">
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Масалан, қарз ба Алӣ" />
       </Field>
-      <label className="switch-row">
+      {!foreign && <label className="switch-row">
         <span>
           <b>🏦 Қарзи бонкӣ (бо фоиз)</b>
           <small>Супоридани ҳармоҳа ва ҳисоби фоизҳо.</small>
@@ -105,7 +127,7 @@ export default function DebtForm({ initial, onSubmit, submitLabel, afterPad }: {
           <input type="checkbox" checked={bank} onChange={e => setBank(e.target.checked)} />
           <i />
         </span>
-      </label>
+      </label>}
       {bank && (
         <>
           <div className="method-block">

@@ -1010,5 +1010,6 @@
 "Маблағи қарз": "Debt amount",
 "Қурби охирин": "Last rate",
 "Маблағ ва қурб ҳангоми пардохт нав мешавад. Барои тағйири маблағи қарз онро нест карда, аз нав сабт кунед.": "Amount and rate are updated on payment. To change the debt amount, delete it and record it again.",
-"Қарз: {0} ({1})": "Debt: {0} ({1})"
+"Қарз: {0} ({1})": "Debt: {0} ({1})",
+"Дар барнома: ≈ {0} смн": "In the app: ≈ {0} смн"
 }

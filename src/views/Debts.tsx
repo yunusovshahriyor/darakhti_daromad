@@ -116,7 +116,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
   const { open, paid } = splitDebts(state.debts);
   const first = open[0];
 
-  const add = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan; paid?: number }) => {
+  const add = (v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan; paid?: number; fx?: Debt['fx'] }) => {
     setState(s => withNewDebt(s, v));
     setAdding(false);
   };
@@ -315,7 +315,7 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
 
       {adding && (
         <Sheet title="Қарзи нав" onClose={() => setAdding(false)}>
-          <DebtForm onSubmit={add} submitLabel="Илова кардан" />
+          <DebtForm onSubmit={add} submitLabel="Илова кардан" base={state.currency ?? 'TJS'} />
         </Sheet>
       )}
 
