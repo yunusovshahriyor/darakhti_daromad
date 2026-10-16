@@ -7,7 +7,7 @@ import {
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
 import { Count } from '../useCountUp';
-import TreeDiagram from '../components/TreeDiagram';
+import TreeDiagram, { TREE_ENABLED } from '../components/TreeDiagram';
 import type { Props } from './props';
 
 export interface Privacy {
@@ -118,13 +118,13 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
         <div className="bh-total"><Count value={total} hidden={hidden} /> <small>смн</small></div>
       </section>
 
-      {!isFree(state) && (
+      {TREE_ENABLED && !isFree(state) && (
         <div className="seg-tabs acct-view" role="tablist">
           <button role="tab" aria-selected={!treeView} className={!treeView ? 'on' : ''} onClick={() => pickView(false)}>Гурӯҳҳо</button>
           <button role="tab" aria-selected={treeView} className={treeView ? 'on' : ''} onClick={() => pickView(true)}>Дарахт</button>
         </div>
       )}
-      {treeView && !isFree(state) ? (
+      {TREE_ENABLED && treeView && !isFree(state) ? (
         <>
           <p className="note td-hint">Дарахт нишон медиҳад, ки пул дар куҷост. Ҳисобро пахш кунед — ҷузъиёт кушода мешавад.</p>
           <TreeDiagram root={state.tree} accounts={state.accounts} balances={bal} hidden={hidden}

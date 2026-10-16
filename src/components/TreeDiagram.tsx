@@ -3,6 +3,9 @@ import type { ReactNode } from 'react';
 import { CARD_COLORS, ACCOUNTS, effectiveShareNode, fmt, isRemainderNode } from '../model';
 import type { AccountDef, DistNode } from '../types';
 
+/** Диаграммаи дарахтӣ ҳоло пинҳон аст: барои фаъол кардан `true` гузоред (код нигоҳ дошта шудааст). */
+export const TREE_ENABLED = false;
+
 const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
 
 /** Диаграммаи дарахтӣ аз чап ба рост: реша → гурӯҳҳо → ҳисобҳо. Пахши қуттӣ — таҳрир. */

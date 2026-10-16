@@ -5,7 +5,7 @@ import CurrencySheet from '../components/CurrencySheet';
 import LockSheet from '../components/LockSheet';
 import RecurringSheet from '../components/RecurringSheet';
 import { isLockOn } from '../lock';
-import TreeDiagram from '../components/TreeDiagram';
+import TreeDiagram, { TREE_ENABLED } from '../components/TreeDiagram';
 import FreeAccounts from '../components/FreeAccounts';
 import { defOf } from '../currency';
 import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
@@ -350,12 +350,12 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
 
   return (
     <>
-      <div className="seg-tabs acct-view" role="tablist">
+      {TREE_ENABLED && <div className="seg-tabs acct-view" role="tablist">
         <button role="tab" aria-selected={!treeView} className={!treeView ? 'on' : ''} onClick={() => pickView(false)}>Рӯйхат</button>
         <button role="tab" aria-selected={treeView} className={treeView ? 'on' : ''} onClick={() => pickView(true)}>Дарахт</button>
-      </div>
-      {treeView && <p className="note td-hint">Дарахтро ба ҳар тараф кашед. Қуттиро пахш кунед — таҳрир мешавад.</p>}
-      {treeView ? (
+      </div>}
+      {TREE_ENABLED && treeView && <p className="note td-hint">Дарахтро ба ҳар тараф кашед. Қуттиро пахш кунед — таҳрир мешавад.</p>}
+      {TREE_ENABLED && treeView ? (
         <TreeDiagram root={root} accounts={state.accounts} onPick={n => setEditId(n.id)}
           isOff={id => (debt ? id === 'fun' : id === 'debt')} />
       ) : (
