@@ -56,7 +56,7 @@ export default function ReceiptScanner({ onApply, onClose }: { onApply: (r: Scan
   );
 
   return (
-    <Sheet title={t.title} onClose={onClose} tall>
+    <Sheet title={t.title} onClose={onClose}>
       <div className="rcp">
         {step === 'pick' && (
           <>

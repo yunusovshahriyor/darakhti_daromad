@@ -1820,22 +1820,22 @@ html.boot .donut-seg { --base: 340ms; }
 /* ---------- Сканери чек ---------- */
 .rp.scan { border-style: solid; background: var(--primary); color: #fff; border-color: var(--primary); }
 .rp.scan i { color: #fff; }
-.rcp { display: flex; flex-direction: column; gap: 12px; }
-.rcp-hero { display: grid; place-items: center; margin: 14px 0 22px; }
+.rcp { display: flex; flex-direction: column; gap: 8px; padding-bottom: 6px; }
+.rcp-hero { display: grid; place-items: center; margin: 4px 0 12px; }
 .rcp-hero span {
-  width: 148px; height: 148px; border-radius: 50%; display: grid; place-items: center; font-size: 5.6rem;
+  width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-size: 3.4rem;
   background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--primary) 30%, transparent), color-mix(in srgb, var(--primary) 10%, transparent));
-  box-shadow: 0 0 0 10px color-mix(in srgb, var(--primary) 7%, transparent), 0 16px 40px color-mix(in srgb, var(--primary) 22%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 7%, transparent), 0 10px 26px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 .rcp-act {
-  display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border-radius: 18px;
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border-radius: 16px;
   border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; text-align: left;
 }
 .rcp-act i {
-  width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-style: normal; font-size: 1.5rem;
+  width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-style: normal; font-size: 1.25rem;
   background: color-mix(in srgb, var(--primary) 14%, transparent);
 }
-.rcp-act b { font-size: 1.05rem; font-weight: 700; }
+.rcp-act b { font-size: 1rem; font-weight: 700; }
 .rcp-act:active { transform: scale(.98); }
 .rcp-act.main {
   border: 0; color: #fff; background: linear-gradient(135deg, var(--primary), var(--primary-2));
