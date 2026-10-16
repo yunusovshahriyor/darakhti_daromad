@@ -1914,3 +1914,43 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .td-box.off { opacity: .45; }
 .td-box:not(.off):active { transform: scale(.98); }
 .td-hint { margin: -4px 4px 8px; }
+
+/* ===== Саҳифаи асосӣ: услуби нармҳисс (soft UI) бо рангҳои худи барнома ===== */
+:root {
+  --nm-hi: rgba(255, 255, 255, .95);
+  --nm-lo: rgba(104, 138, 116, .34);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --nm-hi: rgba(255, 255, 255, .05); --nm-lo: rgba(0, 0, 0, .6); }
+}
+:root[data-theme="dark"] { --nm-hi: rgba(255, 255, 255, .05); --nm-lo: rgba(0, 0, 0, .6); }
+
+.home-head ~ .period-nav .pn-btn, .period-nav .pn-label, .home-head .avatar-btn,
+.spent .filter-btn, .spent .round-btn.mini,
+.income-row, .mini-cards .mini, .big-card, .strip .mini-acct, .card:has(> .chart) {
+  --nm-bg: linear-gradient(145deg, color-mix(in srgb, var(--bg) 90%, #fff), color-mix(in srgb, var(--bg) 94%, #000));
+  border: 0;
+  box-shadow: 7px 7px 16px var(--nm-lo), -7px -7px 16px var(--nm-hi);
+}
+.period-nav .pn-btn, .period-nav .pn-label, .home-head .avatar-btn, .spent .filter-btn, .spent .round-btn.mini,
+.income-row, .mini-cards .mini, .big-card, .card:has(> .chart) {
+  background: var(--nm-bg);
+  color: var(--text);
+}
+.period-nav .pn-btn, .home-head .avatar-btn, .spent .filter-btn, .spent .round-btn.mini { box-shadow: 5px 5px 11px var(--nm-lo), -5px -5px 11px var(--nm-hi); }
+.period-nav .pn-btn:active, .period-nav .pn-label:active, .home-head .avatar-btn:active, .spent .filter-btn:active, .spent .round-btn.mini:active {
+  background: var(--nm-bg);
+  box-shadow: inset 4px 4px 9px var(--nm-lo), inset -4px -4px 9px var(--nm-hi);
+}
+.period-nav .pn-btn:disabled { box-shadow: none; opacity: .4; }
+.period-nav .pn-label { border-radius: 99px; box-shadow: 6px 6px 13px var(--nm-lo), -6px -6px 13px var(--nm-hi); }
+.income-row { border-radius: 26px; padding: 16px 18px 20px; margin: 14px 0 6px; }
+.income-row .line { left: 18px; right: 18px; bottom: 10px; height: 7px; border-radius: 99px; background: transparent; box-shadow: inset 2px 2px 4px var(--nm-lo), inset -2px -2px 4px var(--nm-hi); }
+.income-row .ir-block + .ir-block { border-top: 0; }
+.mini-cards .mini { border-radius: 22px; padding: 14px 16px; }
+.big-card { border-radius: 28px; }
+.legend li { border-top: 0; }
+.strip .mini-acct { box-shadow: 6px 6px 13px var(--nm-lo), -6px -6px 13px var(--nm-hi); }
+.card:has(> .chart) { border-radius: 26px; }
+.chart .bar { box-shadow: 2px 3px 7px var(--nm-lo); }
+.spent .filter-btn { border-radius: 14px; }
