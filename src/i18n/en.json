@@ -1027,5 +1027,7 @@
 "Ҳамаи қарзҳое, ки шумо қарздоред (кушода ва пардохтшуда), бо пардохтҳои онҳо нест мешаванд. Даромади «Қарз гирифтам» мемонад. Барқарор кардан мумкин нест.": "All debts you owe (open and paid) will be deleted with their payments. The “I borrowed” income stays. This cannot be undone.",
 "Ҳамаи қарзҳое, ки шумо додаед (дигарон ба шумо қарздоранд), бо сабтҳои додан ва баргардонидан нест мешаванд. Барқарор кардан мумкин нест.": "All loans you gave (others owe you) will be deleted with their lending and return entries. This cannot be undone.",
 "Ҳамаи орзуҳо (кушода ва харидашуда) бо хароҷоти харидашон нест мешаванд. Барқарор кардан мумкин нест.": "All dreams (open and bought) will be deleted with their purchase expenses. This cannot be undone.",
-"Нест шуд": "Deleted"
+"Нест шуд": "Deleted",
+"Бе тақсим, ба як ҳисоб": "No split, to one account",
+"Даромад аз рӯи фоизҳои системаи Давлатов тақсим намешавад, пурра ба ҳисоби интихобшуда меравад.": "The income is not split by Davlatov's percentages and goes entirely to the chosen account."
 }

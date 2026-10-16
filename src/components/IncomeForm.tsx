@@ -34,7 +34,11 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
   const free = isFree(state);
   const debt = hasDebt(state.debts);
   const num = parseFloat(amount) || 0;
-  const preview = free ? {} : allocate(num, state.tree, debt);
+  // Системаи Давлатов: даромадро бе тақсим, танҳо ба як ҳисоб илова кардан мумкин аст
+  const [single, setSingle] = useState(false);
+  const [one, setOne] = useState(() => (ACCOUNTS.living ? 'living' : ACCOUNT_ORDER[0] ?? 'cash'));
+  const direct = !free && single;
+  const preview = free || direct ? {} : allocate(num, state.tree, debt);
   // Ҳолати озод: даромад ба як ҳисоби интихобшуда меравад (пешфарз — ҳисоби даромади охирин)
   const [target, setTarget] = useState(() => {
     const last = state.incomes.find(i => !i.kind && Object.keys(i.alloc).some(k => (i.alloc[k] ?? 0) > 0));
@@ -48,7 +52,7 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
     const n = note.trim();
     const income = {
       id: uid(), title: n ? `${source} · ${n}` : source, source, amount: num, date,
-      alloc: free ? { ...allocate(0, state.tree, false), [target]: num } : allocate(num, state.tree, debt),
+      alloc: free ? { ...allocate(0, state.tree, false), [target]: num } : direct ? { ...allocate(0, state.tree, false), [one]: num } : allocate(num, state.tree, debt),
     };
     setState(s => {
       // Ҳиссаи худкор ба орзуҳо: аз ҳисоби интихобшуда ба ҳисоби орзуҳо мегузарад
@@ -118,7 +122,27 @@ export default function IncomeForm({ state, setState, onDone }: Props & { onDone
         </Field>
       )}
 
-      {!free && num > 0 && (
+      {!free && (
+        <>
+          <label className="switch-row">
+            <span>
+              <b>Бе тақсим, ба як ҳисоб</b>
+              <small>Даромад аз рӯи фоизҳои системаи Давлатов тақсим намешавад, пурра ба ҳисоби интихобшуда меравад.</small>
+            </span>
+            <span className="switch">
+              <input type="checkbox" checked={single} onChange={e => setSingle(e.target.checked)} />
+              <i />
+            </span>
+          </label>
+          {single && (
+            <Field label="Ба кадом ҳисоб">
+              <AccountSelect value={one} onChange={setOne} bal={balancesOf(state)} hidden={hiddenAccounts(state)} />
+            </Field>
+          )}
+        </>
+      )}
+
+      {!free && !direct && num > 0 && (
         <div className="preview">
           <b>Тақсим мешавад:</b>
           {ACCOUNT_ORDER.filter(id => preview[id] > 0).map(id => (
