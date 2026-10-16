@@ -1,3 +1,4 @@
+import { defOf } from './currency';
 import { nextInstallment } from './loanPlan';
 import type { AccountDef, AccountId, Alloc, Debt, DebtPlan, DistNode, Loan, Dream, Expense, Income, Settings, State, Transfer } from './types';
 
@@ -15,6 +16,20 @@ export const emptyAlloc = (): Alloc =>
   Object.fromEntries(ALL_IDS.map(id => [id, 0])) as Alloc;
 
 export const remaining = (d: Debt) => Math.max(0, d.amount - d.paid);
+
+/** Маблағ бо аломати асъор: «10 000 ₽». */
+export const fxFmt = (n: number, code: string) => `${fmt(n)} ${defOf(code).label}`;
+/** Боқимондаи қарзи хориҷӣ бо ҳамон асъор. */
+export const fxLeft = (d: Debt) => (d.fx ? Math.max(0, d.fx.amount - d.fx.paid) : 0);
+/** Пас аз пардохт ё навсозии қурб: `amount`/`paid`-и қарзро бо асъори барнома аз нав ҳисоб мекунад. */
+export function withFxPaid(d: Debt, paidFx: number, rate: number, date: string): Debt {
+  if (!d.fx) return d;
+  const fx = { ...d.fx, paid: Math.min(d.fx.amount, paidFx), rate };
+  const amount = Math.round(fx.amount * rate * 100) / 100;
+  const done = fx.paid >= fx.amount - 0.0005;
+  const paid = done ? amount : Math.round(fx.paid * rate * 100) / 100;
+  return { ...d, fx, amount, paid, ...(done ? { paidAt: date } : {}) };
+}
 
 /**
  * Тартиби пардохти қарзҳо: аввал қарзҳои афзалиятнок, баъд боқимонда;
@@ -83,7 +98,7 @@ export function fundDreams(dreams: Dream[], pool: number): FundedDream[] {
 }
 
 /** Қарзи нав: агар аввалин қарз бошад, боқимондаи «Вақтхушӣ» худкор ба «Пардохти қарз» мегузарад. */
-export function withNewDebt(s: State, v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan }): State {
+export function withNewDebt(s: State, v: { title: string; amount: number; priority: boolean; date?: string; plan?: DebtPlan; fx?: Debt['fx'] }): State {
   const next: State = { ...s, debts: [...s.debts, { id: uid(), paid: 0, ...v }] };
   const fun = balancesOf(s).fun ?? 0;
   if (s.mode !== 'free' && !hasDebt(s.debts) && fun > 0.005) {

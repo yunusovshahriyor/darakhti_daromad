@@ -29,7 +29,9 @@ function shown(value: string) {
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'back'];
 
 /** Маблағ бо тугмачаҳои рақамӣ + сана: тарҳи барномаи мобилӣ. */
-export default function AmountEntry({ value, onChange, date, onDate, sign, locked = false, dateLabel = 'Санаи амалиёт', quick }: {
+export default function AmountEntry({ value, onChange, date, onDate, sign, locked = false, dateLabel = 'Санаи амалиёт', quick, unit }: {
+  /** Воҳиди маблағ (масалан «₽»); пешфарз — «смн». */
+  unit?: string;
   /** Суммаҳои тез (тугмаҳо болои клавиатура). */
   quick?: number[];
   /** Номи сатри сана. */
@@ -58,7 +60,7 @@ export default function AmountEntry({ value, onChange, date, onDate, sign, locke
   return (
     <>
       <div className={`amount-big${value ? '' : ' empty'}${sign === '+' ? ' pos' : sign === '−' ? ' neg' : ''}`}>
-        {sign && value ? <span className="sg">{sign}</span> : null}{shown(value)} <small>смн</small>
+        {sign && value ? <span className="sg">{sign}</span> : null}{shown(value)} <small>{unit ?? 'смн'}</small>
       </div>
 
       {!locked && quick && quick.length > 0 && (

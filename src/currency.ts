@@ -104,7 +104,7 @@ const convPlan = (p: DebtPlan, k: number): DebtPlan => ({
   ...(p.overrides ? { overrides: Object.fromEntries(Object.entries(p.overrides).map(([n, o]) => [n, { ...o, ...(o.payment !== undefined ? { payment: r2(o.payment * k) } : {}) }])) } : {}),
 });
 
-const convDebt = (d: Debt, k: number): Debt => ({ ...d, amount: r2(d.amount * k), paid: r2(d.paid * k), ...(d.plan ? { plan: convPlan(d.plan, k) } : {}) });
+const convDebt = (d: Debt, k: number): Debt => ({ ...d, amount: r2(d.amount * k), paid: r2(d.paid * k), ...(d.plan ? { plan: convPlan(d.plan, k) } : {}), ...(d.fx ? { fx: { ...d.fx, rate: d.fx.rate * k } } : {}) });
 
 const convDream = (d: Dream, k: number): Dream => ({
   ...d,

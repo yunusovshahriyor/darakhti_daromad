@@ -1,7 +1,9 @@
 import { FormEvent, ReactNode, useState } from 'react';
 import {
-  ACCOUNTS, ACCOUNT_ORDER, balancesOf, spent, fmt, hiddenAccounts, loanLeft, openLoans, today, uid, withNewDebt,
+  ACCOUNTS, ACCOUNT_ORDER, balancesOf, spent, fmt, fxFmt, hiddenAccounts, loanLeft, openLoans, today, uid, withNewDebt,
 } from '../model';
+import { defOf } from '../currency';
+import { FxCurrencyPicker, FxRateField } from './FxRate';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
 import AccountChips from './AccountChips';
@@ -139,33 +141,50 @@ export function BorrowForm({ state, setState, onDone, afterPad }: Props & Extra)
   const [priority, setPriority] = useState(false);
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(today);
+  const base = state.currency ?? 'TJS';
+  const [code, setCode] = useState(base);
+  const [rateText, setRateText] = useState('');
+  const foreign = code !== base;
+  const rate = foreign ? parseFloat(rateText.replace(',', '.')) || 0 : 1;
+  const unit = foreign ? defOf(code).label : undefined;
 
   const bal = balancesOf(state);
   const num = parseFloat(amount) || 0;
-  const ready = num > 0 && person.trim() !== '';
+  const baseNum = Math.round(num * rate * 100) / 100;
+  const ready = num > 0 && person.trim() !== '' && rate > 0;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!ready) return;
     const name = person.trim();
     setState(s => {
-      const next = withNewDebt(s, { title: name, amount: num, priority, date });
+      const next = withNewDebt(s, {
+        title: name, amount: baseNum, priority, date,
+        ...(foreign ? { fx: { code, amount: num, paid: 0, rate } } : {}),
+      });
       const debtId = next.debts[next.debts.length - 1].id;
       return {
         ...next,
         incomes: [
-          { id: uid(), title: `Қарз гирифтам: ${name}`, amount: num, date, alloc: { [account]: num }, kind: 'borrow' as const, debtId },
+          { id: uid(), title: `Қарз гирифтам: ${name}`, amount: baseNum, date, alloc: { [account]: baseNum }, kind: 'borrow' as const, debtId },
           ...next.incomes,
         ].sort((a, b) => b.date.localeCompare(a.date)),
       };
     });
-    onDone(`Қарз гирифта шуд: ${fmt(num)} смн ✓`);
+    onDone(foreign ? `Қарз гирифта шуд: ${fxFmt(num, code)} (≈ ${fmt(baseNum)} смн) ✓` : `Қарз гирифта шуд: ${fmt(num)} смн ✓`);
   };
 
   return (
     <form onSubmit={submit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" unit={unit} />
       {afterPad}
+      <FxCurrencyPicker value={code} base={base} onChange={c => { setCode(c); setRateText(''); }} />
+      {foreign && (
+        <>
+          <FxRateField code={code} base={base} value={rateText} onChange={setRateText} />
+          {num > 0 && rate > 0 && <p className="note">{`Ба ҳисоб илова мешавад: ≈ ${fmt(baseNum)} смн`}</p>}
+        </>
+      )}
       <AccountChips label="Ба кадом ҳисоб илова шавад" value={account} onChange={setAccount} bal={bal} spentBy={spent(state.expenses)}
         hidden={[...hiddenAccounts(state), 'debt']} />
       <Field label="Аз кӣ қарз гирифтед">

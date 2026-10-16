@@ -12,7 +12,7 @@ import SegTabs from '../components/SegTabs';
 import Sheet from '../components/Sheet';
 import SwipeRow from '../components/SwipeRow';
 import { buildSchedule, nextInstallment, planTotals } from '../loanPlan';
-import { dayTitle, fmt, loanLeft, today, openLoans, remaining, splitDebts, withNewDebt } from '../model';
+import { dayTitle, fmt, fxFmt, fxLeft, loanLeft, today, openLoans, remaining, splitDebts, withNewDebt } from '../model';
 import type { Debt, DebtPlan, Loan } from '../types';
 import type { Props } from './props';
 
@@ -74,6 +74,31 @@ function Schedule({ debt, onEdit }: { debt: Debt; onEdit: (n: number) => void })
       </div>
       <p className="muted" style={{ margin: '8px 2px 0' }}>Барои тағйири сана ё маблағи пардохт онро пахш кунед.</p>
     </>
+  );
+}
+
+/** Таҳрири қарзи хориҷӣ: ном ва афзалият (маблағ ва қурб бо пардохт нав мешавад). */
+function FxDebtEdit({ debt, onSubmit }: { debt: Debt; onSubmit: (v: { title: string; priority: boolean }) => void }) {
+  const [title, setTitle] = useState(debt.title);
+  const [priority, setPriority] = useState(debt.priority ?? false);
+  const fx = debt.fx!;
+  return (
+    <form onSubmit={e => { e.preventDefault(); if (title.trim()) onSubmit({ title: title.trim(), priority }); }}>
+      <div className="loan-info">
+        <div><span>Асъор</span><b>{fx.code}</b></div>
+        <div><span>Маблағи қарз</span><b>{fxFmt(fx.amount, fx.code)}</b></div>
+        <div><span>Пардохтшуда</span><b>{fxFmt(fx.paid, fx.code)}</b></div>
+        <div><span>Қурби охирин</span><b>{`1 ${fx.code} = ${Math.round(fx.rate * 1e4) / 1e4} смн`}</b></div>
+      </div>
+      <label className="field"><span>Ба кӣ / барои чӣ</span>
+        <input value={title} onChange={e => setTitle(e.target.value)} /></label>
+      <label className="switch-row">
+        <span><b>⭐ Аввал пардохт шавад</b><small>Қарзҳои қайдшуда пеш меоянд, дигарон аз рӯи миқдор.</small></span>
+        <span className="switch"><input type="checkbox" checked={priority} onChange={e => setPriority(e.target.checked)} /><i /></span>
+      </label>
+      <p className="note">Маблағ ва қурб ҳангоми пардохт нав мешавад. Барои тағйири маблағи қарз онро нест карда, аз нав сабт кунед.</p>
+      <button className="btn big" type="submit" disabled={!title.trim()}>Нигоҳ доштан</button>
+    </form>
   );
 }
 
@@ -203,11 +228,13 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
                           <div className="grow">
                             <div className="r1">
                               <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                              <b className="neg">{fmt(left)}</b>
+                              <b className="neg">{d.fx ? fxFmt(fxLeft(d), d.fx.code) : fmt(left)}</b>
                             </div>
                             <div className="progress"><i style={{ width: `${pct}%` }} /></div>
                             <small>
-                              Пардохт: {fmt(d.paid)} аз {fmt(d.amount)} · {d.plan ? d.plan.method === 'flat' ? `🏦 комиссия ${fmt(d.plan.commission ?? 0)} · ${d.plan.months} моҳ` : `🏦 ${d.plan.rate}% · ${d.plan.months} моҳ` : d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}
+                              {d.fx
+                                ? `Пардохт: ${fxFmt(d.fx.paid, d.fx.code)} аз ${fxFmt(d.fx.amount, d.fx.code)} · ≈ ${fmt(left)} смн (қурб ${Math.round(d.fx.rate * 1e4) / 1e4})`
+                                : `Пардохт: ${fmt(d.paid)} аз ${fmt(d.amount)} · ${d.plan ? d.plan.method === 'flat' ? `🏦 комиссия ${fmt(d.plan.commission ?? 0)} · ${d.plan.months} моҳ` : `🏦 ${d.plan.rate}% · ${d.plan.months} моҳ` : d.priority ? 'афзалиятнок' : 'аз рӯи миқдор'}`}
                             </small>
                             {(() => {
                               const n = nextInstallment(d, today());
@@ -236,9 +263,9 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
                     <div className="grow">
                       <div className="r1">
                         <b>{d.priority ? '⭐ ' : ''}{d.title}</b>
-                        <b className="pos">{fmt(d.amount)} смн</b>
+                        <b className="pos">{d.fx ? fxFmt(d.fx.amount, d.fx.code) : `${fmt(d.amount)} смн`}</b>
                       </div>
-                      <small>Арзиш: {fmt(d.amount)} смн · пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
+                      <small>Арзиш: {d.fx ? fxFmt(d.fx.amount, d.fx.code) : `${fmt(d.amount)} смн`} · пардохт шуд{d.paidAt ? ` · ${d.paidAt}` : ''}</small>
                     </div>
                   </div>
                 </SwipeRow>
@@ -308,7 +335,11 @@ export default function Debts({ state, setState, onToast }: Props & { onToast: (
             <PayDebtForm state={state} setState={setState} debt={cur}
               onDone={() => setPayFor(null)} />
           ) : (
-            <DebtForm initial={cur} onSubmit={save} submitLabel="Нигоҳ доштан" />
+            cur.fx ? (
+              <FxDebtEdit debt={cur} onSubmit={v => save({ title: v.title, amount: cur.amount, priority: v.priority, date: cur.date })} />
+            ) : (
+              <DebtForm initial={cur} onSubmit={save} submitLabel="Нигоҳ доштан" />
+            )
           )}
         </Sheet>
       )}

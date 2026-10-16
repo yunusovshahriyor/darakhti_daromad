@@ -103,6 +103,11 @@ export interface Debt {
   date?: string;
   /** Агар қарз бонкӣ бошад: супоридани ҳармоҳа бо фоиз. */
   plan?: DebtPlan;
+  /**
+   * Қарз бо асъори хориҷӣ: `amount`/`paid` — бо ҳамон асъор (масалан рубл), `rate` — чанд воҳиди асъори барнома дар 1 воҳиди ин асъор.
+   * `Debt.amount` ва `Debt.paid` (бо асъори барнома) ҳамеша = fx.amount·rate ва fx.paid·rate.
+   */
+  fx?: { code: string; amount: number; paid: number; rate: number };
 }
 
 export interface Dream {

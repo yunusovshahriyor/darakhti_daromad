@@ -1,6 +1,8 @@
 import { FormEvent, ReactNode, useState } from 'react';
 import { nextInstallment } from '../loanPlan';
-import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, dayTitle, fmt, hiddenAccounts, isFree, remaining, splitDebts, today, uid } from '../model';
+import { ACCOUNTS, ACCOUNT_ORDER, balancesOf, dayTitle, fmt, fxFmt, fxLeft, hiddenAccounts, isFree, remaining, splitDebts, today, uid, withFxPaid } from '../model';
+import { defOf } from '../currency';
+import { FxRateField } from './FxRate';
 import type { Debt } from '../types';
 import type { Props } from '../views/props';
 import AccountSelect from './AccountSelect';
@@ -27,14 +29,22 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
   const [src, setSrc] = useState(() => ACCOUNT_ORDER.filter(id => !hiddenAccounts(state).includes(id)).reduce((a, b) => ((all[b] ?? 0) > (all[a] ?? 0) ? b : a), ACCOUNT_ORDER[0] ?? 'cash'));
   const from = free ? src : 'debt';
   const bal = all[from] ?? 0;
-  const left = current ? remaining(current) : 0;
+  const fx = current?.fx;
+  const base = state.currency ?? 'TJS';
+  const [rateText, setRateText] = useState(fx ? String(Math.round(fx.rate * 1e4) / 1e4) : '');
+  const rate = fx ? parseFloat(rateText.replace(',', '.')) || 0 : 1;
+  // Қарзи хориҷӣ: маблағ бо асъори қарз ворид мешавад (масалан рубл), аз ҳисоб бо қурб ба асъори барнома кам мешавад
+  const left = current ? (fx ? fxLeft(current) : remaining(current)) : 0;
   const num = Math.min(parseFloat(amount) || 0, left);
-  const over = num > bal + 0.005;
+  const baseNum = Math.round(num * rate * 100) / 100;
+  const over = baseNum > bal + 0.005;
+  const unit = fx ? defOf(fx.code).label : undefined;
+  const money = (n: number) => (fx ? fxFmt(n, fx.code) : `${fmt(n)} смн`);
 
   const [ask, confirmDialog] = useConfirm();
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!current || !(num > 0)) return;
+    if (!current || !(num > 0) || !(rate > 0)) return;
     if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[from]?.name ?? from}» ҳамагӣ ${fmt(bal)} сомонӣ мавҷуд аст. Ба ҳар ҳол пардохт мекунед?`, ok: 'Пардохт кардан' }))) return;
     const id = current.id;
     const name = current.title;
@@ -42,15 +52,16 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
       ...s,
       debts: s.debts.map(x => {
         if (x.id !== id) return x;
+        if (x.fx) return withFxPaid(x, x.fx.paid + num, rate, date);
         const paid = x.paid + num;
         return paid >= x.amount - 0.005 ? { ...x, paid, paidAt: date } : { ...x, paid };
       }),
       expenses: [
-        { id: uid(), account: from, title: `Қарз: ${name}`, amount: num, date, debtId: id },
+        { id: uid(), account: from, title: fx ? `Қарз: ${name} (${fxFmt(num, fx.code)})` : `Қарз: ${name}`, amount: baseNum, date, debtId: id },
         ...s.expenses,
       ],
     }));
-    onDone(num >= left - 0.005 ? `«${name}» пурра пардохт шуд 🎉` : `${fmt(num)} смн пардохт шуд ✓`);
+    onDone(num >= left - 0.005 ? `«${name}» пурра пардохт шуд 🎉` : fx ? `${fxFmt(num, fx.code)} (≈ ${fmt(baseNum)} смн) пардохт шуд ✓` : `${fmt(num)} смн пардохт шуд ✓`);
   };
 
   if (!current) {
@@ -64,7 +75,7 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
 
   return (
     <form onSubmit={submit}>
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" unit={unit} />
       {afterPad}
 
       {!debt && open.length > 1 && (
@@ -74,7 +85,7 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
             {open.map(d => (
               <button key={d.id} type="button" className={d.id === current.id ? 'chip on' : 'chip'}
                 onClick={() => setPick(d.id)}>
-                <span className="chip-t"><b>{d.priority ? '⭐ ' : ''}{d.title}</b><small>боқӣ {fmt(remaining(d))}</small></span>
+                <span className="chip-t"><b>{d.priority ? '⭐ ' : ''}{d.title}</b><small>боқӣ {d.fx ? fxFmt(fxLeft(d), d.fx.code) : fmt(remaining(d))}</small></span>
               </button>
             ))}
           </div>
@@ -108,8 +119,12 @@ export default function PayDebtForm({ state, setState, debt, onDone, afterPad }:
           </div>
         );
       })()}
+      {fx && <FxRateField key={current.id} code={fx.code} base={base} value={rateText} onChange={setRateText} />}
+      {fx && num > 0 && rate > 0 && <p className="note">{`Аз ҳисоб кам мешавад: ≈ ${fmt(baseNum)} смн`}</p>}
       <p className="muted" style={{ margin: '4px 2px 0' }}>
-        {current.title}: боқӣ {fmt(left)} сомонӣ{num > 0 ? ` → пас аз пардохт ${fmt(left - num)}` : ''}
+        {fx
+          ? `${current.title}: боқӣ ${money(left)}${num > 0 ? ` → пас аз пардохт ${money(left - num)}` : ''}`
+          : `${current.title}: боқӣ ${fmt(left)} сомонӣ${num > 0 ? ` → пас аз пардохт ${fmt(left - num)}` : ''}`}
       </p>
       {over && num > 0 && (
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal)}).</div>

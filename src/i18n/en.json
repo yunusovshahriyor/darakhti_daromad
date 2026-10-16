@@ -994,5 +994,21 @@
 "Дарахт": "Tree",
 "Гурӯҳҳо": "Groups",
 "Дарахт нишон медиҳад, ки пул дар куҷост. Ҳисобро пахш кунед — ҷузъиёт кушода мешавад.": "The tree shows where your money is. Tap an account to see details.",
-"Дарахтро ба ҳар тараф кашед. Қуттиро пахш кунед — таҳрир мешавад.": "Drag the tree in any direction. Tap a box to edit."
+"Дарахтро ба ҳар тараф кашед. Қуттиро пахш кунед — таҳрир мешавад.": "Drag the tree in any direction. Tap a box to edit.",
+"Асъори қарз": "Debt currency",
+"Қурби имрӯза аз Интернет гирифта шуд. Агар дар ҳақиқат дигар бошад, ислоҳ кунед.": "Today's rate was loaded from the Internet. If the real rate is different, correct it.",
+"Қурб аз Интернет гирифта нашуд: худатон ворид кунед.": "Could not load the rate from the Internet: enter it manually.",
+"Масалан, 0.12": "For example, 0.12",
+"Қурб: 1 {0} = ? {1}": "Rate: 1 {0} = ? {1}",
+"Ба ҳисоб илова мешавад: ≈ {0} смн": "Will be added to the account: ≈ {0} смн",
+"Аз ҳисоб кам мешавад: ≈ {0} смн": "Will be deducted from the account: ≈ {0} смн",
+"Қарз гирифта шуд: {0} (≈ {1} смн) ✓": "Debt taken: {0} (≈ {1} смн) ✓",
+"{0} (≈ {1} смн) пардохт шуд ✓": "{0} (≈ {1} смн) paid ✓",
+"{0}: боқӣ {1}": "{0}: {1} left",
+"{0}: боқӣ {1} → пас аз пардохт {2}": "{0}: {1} left → after payment {2}",
+"Пардохт: {0} аз {1} · ≈ {2} смн (қурб {3})": "Paid: {0} of {1} · ≈ {2} смн (rate {3})",
+"Маблағи қарз": "Debt amount",
+"Қурби охирин": "Last rate",
+"Маблағ ва қурб ҳангоми пардохт нав мешавад. Барои тағйири маблағи қарз онро нест карда, аз нав сабт кунед.": "Amount and rate are updated on payment. To change the debt amount, delete it and record it again.",
+"Қарз: {0} ({1})": "Debt: {0} ({1})"
 }
