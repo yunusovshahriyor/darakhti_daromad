@@ -4,7 +4,6 @@ import { poolOf } from '../dreams';
 import type { Transfer } from '../types';
 import { ACCOUNTS, ACCOUNT_ORDER, allocate, balancesOf, fmt, hasDebt, hiddenAccounts, isFree, today, uid } from '../model';
 import type { Props } from '../views/props';
-import { quickAmounts, recentIncomes } from '../suggest';
 import AmountEntry from './AmountEntry';
 import AddCategorySheet from './AddCategorySheet';
 import AccountSelect from './AccountSelect';
@@ -29,8 +28,6 @@ export default function IncomeForm({ state, setState, onDone, prefill }: Props &
     }
   }, [source, sources.length]);
 
-  const recent = recentIncomes(state.incomes);
-  const quick = quickAmounts(state.incomes.filter(i => !i.kind).map(i => i.amount), state.currency ?? 'TJS', true);
   const free = isFree(state);
   const debt = hasDebt(state.debts);
   const num = parseFloat(amount) || 0;
@@ -74,22 +71,7 @@ export default function IncomeForm({ state, setState, onDone, prefill }: Props &
 
   return (
     <form onSubmit={onSubmit}>
-      {recent.length > 0 && (
-        <div className="repeat-row">
-          {recent.map(r => (
-            <button key={r.id} type="button" className="rp" onClick={() => {
-              const src = r.source ?? source;
-              setSource(src);
-              setAmount(String(r.amount));
-              const prefix = `${src} · `;
-              setNote(r.title.startsWith(prefix) ? r.title.slice(prefix.length) : '');
-            }}>
-              <i>↻</i><span>{r.source ?? r.title} <small>· {fmt(r.amount)} смн</small></span>
-            </button>
-          ))}
-        </div>
-      )}
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" quick={quick} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="+" />
 
       <div className="chips-block">
         <div className="chips-head">

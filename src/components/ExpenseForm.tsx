@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { addPeriod, newRecurring } from '../recurring';
 import type { ScanResult } from './ReceiptScanner';
-import { expenseHints, quickAmounts, recentExpenses, smartCategory } from '../suggest';
+import { expenseHints, smartCategory } from '../suggest';
 import { ACCOUNTS, balancesOf, spent, fmt, hiddenAccounts, today, uid } from '../model';
 import type { AccountId } from '../types';
 import type { Props } from '../views/props';
@@ -26,9 +26,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
   const [date, setDate] = useState(prefill?.date ?? today());
 
   const bal = balancesOf(state);
-  const recent = recentExpenses(state.expenses);
   const hints = expenseHints(state.expenses, note).filter(h => h.title.trim().toLowerCase() !== note.trim().toLowerCase());
-  const quick = quickAmounts(state.expenses.filter(e => !e.debtId && !e.dreamId && !e.loanId).map(e => e.amount), state.currency ?? 'TJS', false);
   const hidden = hiddenAccounts(state);
   const apply = (title: string, amountV: number, cat: string | undefined, acc: string, fill = true) => {
     const generic = title === cat || title === ACCOUNTS[acc]?.name;
@@ -58,16 +56,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
 
   return (
     <form onSubmit={onSubmit}>
-      {recent.length > 0 && (
-        <div className="repeat-row">
-          {recent.map(r => (
-            <button key={r.id} type="button" className="rp" onClick={() => apply(r.title, r.amount, r.category, r.account)}>
-              <i>↻</i><span>{r.title} <small>· {fmt(r.amount)} смн</small></span>
-            </button>
-          ))}
-        </div>
-      )}
-      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" quick={quick} />
+      <AmountEntry value={amount} onChange={setAmount} date={date} onDate={setDate} sign="−" />
       <AccountChips label="Аз кадом ҳисоб" value={account} onChange={setAccount} bal={bal} spentBy={spent(state.expenses)}
         hidden={hiddenAccounts(state)} />
       <CategoryChips state={state} setState={setState} value={category} onChange={c => { setCategory(c); setManual(true); }} />
