@@ -2087,3 +2087,14 @@ input:focus, select:focus, .picker-btn:focus-visible {
 }
 .add-body .chips-label { font-size: .78rem; margin: 10px 2px 6px; }
 .add-body .chip-ic.soft { background: var(--bg); }
+
+/* Қарзҳо ва Орзуҳо: як корти нармҳисс, дарунаш ҳамвор (бе қуттиҳои дар дар) */
+.screen .tab-block .cells:not(.backdrop .cells) { background: transparent; box-shadow: none; border-radius: 0; margin: 0; }
+.screen .tab-block .cells:not(.backdrop .cells) > .cell,
+.screen .tab-block .cells:not(.backdrop .cells) .swipe .cell { background: transparent; padding: 14px 16px; }
+.screen .tab-block { padding-bottom: 4px; }
+.screen .tab-block .seg-tabs { margin: 12px 14px 8px; }
+.screen .tab-block .empty.small { padding: 22px 16px; }
+.dr-pill { background: var(--nm-bg); border: 0; box-shadow: 4px 4px 9px var(--nm-lo), -4px -4px 9px var(--nm-hi); }
+.medal { background: transparent; border: 0; box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.medal.on { background: var(--nm-bg); box-shadow: 5px 5px 11px var(--nm-lo), -5px -5px 11px var(--nm-hi), 0 0 0 1.5px color-mix(in srgb, var(--accent) 70%, transparent); }
