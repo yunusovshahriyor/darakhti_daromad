@@ -2097,11 +2097,9 @@ input:focus, select:focus, .picker-btn:focus-visible {
   box-shadow: 0 10px 28px rgba(0, 0, 0, .25);
 }
 .tab { height: 62px; isolation: isolate; }
-.tab:not(.add).active::before {
-  content: ''; position: absolute; z-index: -1; top: 7px; width: 56px; height: 36px; border-radius: 16px;
-  background: color-mix(in srgb, var(--primary) 18%, transparent); box-shadow: none;
-}
-.tab.active::after { display: none; }
+.tab.active::after { bottom: 6px; animation: tab-line .25s ease-out; }
+@keyframes tab-line { from { transform: scaleX(.2); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tab.active::after { animation: none; } }
 .add-circle {
   margin-top: -30px; border: 0;
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
