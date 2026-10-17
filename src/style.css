@@ -1980,20 +1980,6 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .screen .rank.first { box-shadow: 3px 3px 8px var(--nm-lo), -3px -3px 8px var(--nm-hi); }
 .fab { box-shadow: 6px 6px 14px var(--nm-lo), -4px -4px 12px var(--nm-hi); }
 
-/* Менюи поёнӣ */
-.tabbar {
-  background: var(--nm-bg);
-  backdrop-filter: none; -webkit-backdrop-filter: none;
-  border-top: 0;
-  box-shadow: 0 -8px 20px var(--nm-lo), 0 -1px 0 var(--nm-hi);
-}
-.tab { isolation: isolate; }
-.tab:not(.add).active::before {
-  content: ''; position: absolute; z-index: -1; top: 8px; width: 54px; height: 38px; border-radius: 14px;
-  box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi);
-}
-.tab.active::after { display: none; }
-.add-circle { box-shadow: 6px 6px 14px var(--nm-lo), -5px -5px 12px var(--nm-hi), inset 1px 1px 2px rgba(255, 255, 255, .25); border-color: var(--bg); }
 
 /* ===== Нармҳисс дар тамоми барнома: варақаҳо, майдонҳо, тугмаҳо ===== */
 .sheet { background: var(--bg); box-shadow: 0 -10px 30px rgba(0, 0, 0, .25), 0 -1px 0 var(--nm-hi); }
@@ -2108,7 +2094,7 @@ input:focus, select:focus, .picker-btn:focus-visible {
   background: color-mix(in srgb, var(--surface) 48%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
   border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .28), inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .25);
 }
 .tab { height: 62px; isolation: isolate; }
 .tab:not(.add).active::before {
@@ -2119,7 +2105,7 @@ input:focus, select:focus, .picker-btn:focus-visible {
 .add-circle {
   margin-top: -30px; border: 0;
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 50%, transparent), 0 0 0 5px color-mix(in srgb, var(--surface) 55%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 45%, transparent);
 }
 .tab.add { padding-bottom: 6px; }
 .screen { padding-bottom: calc(env(safe-area-inset-bottom) + 104px); }
