@@ -2109,13 +2109,3 @@ input:focus, select:focus, .picker-btn:focus-visible {
 }
 .tab.add { padding-bottom: 6px; }
 .screen { padding-bottom: calc(env(safe-area-inset-bottom) + 104px); }
-
-/* Ҳисоби фаъоли менюи поёнӣ: ором ва мулоим — танҳо ранги сабз ва пасзаминаи хеле сабук */
-.tab:not(.add).active::before {
-  top: 7px; width: 58px; height: 48px; border-radius: 18px;
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  border: 0; box-shadow: none; animation: none;
-}
-.tab:not(.add).active svg { transform: none; filter: none; color: var(--primary); }
-.tab:not(.add).active { color: var(--primary); font-weight: 700; }
-.tab:not(.add):not(.active) { opacity: .85; }
