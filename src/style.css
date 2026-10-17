@@ -2110,16 +2110,12 @@ input:focus, select:focus, .picker-btn:focus-visible {
 .tab.add { padding-bottom: 6px; }
 .screen { padding-bottom: calc(env(safe-area-inset-bottom) + 104px); }
 
-/* Ҳисоби фаъоли менюи поёнӣ: пилюлаи равшан бо нишона ва ном, пайдоиши мулоим */
+/* Ҳисоби фаъоли менюи поёнӣ: ором ва мулоим — танҳо ранги сабз ва пасзаминаи хеле сабук */
 .tab:not(.add).active::before {
-  top: 6px; width: 64px; height: 50px; border-radius: 20px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 26%, transparent), color-mix(in srgb, var(--primary) 10%, transparent));
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 1px 0 color-mix(in srgb, #fff 14%, transparent);
-  animation: tab-pop .28s cubic-bezier(.2, .9, .3, 1.2);
+  top: 7px; width: 58px; height: 48px; border-radius: 18px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 0; box-shadow: none; animation: none;
 }
-.tab:not(.add).active svg { transform: translateY(-1px) scale(1.12); color: var(--primary); filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--primary) 45%, transparent)); }
-.tab:not(.add).active { color: var(--primary); font-weight: 800; }
-.tab:not(.add):not(.active) { opacity: .78; }
-@keyframes tab-pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .tab:not(.add).active::before { animation: none; } }
+.tab:not(.add).active svg { transform: none; filter: none; color: var(--primary); }
+.tab:not(.add).active { color: var(--primary); font-weight: 700; }
+.tab:not(.add):not(.active) { opacity: .85; }
