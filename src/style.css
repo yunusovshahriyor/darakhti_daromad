@@ -15,7 +15,7 @@
   --blob-2: rgba(238, 230, 196, .65);
   --glass: rgba(255, 255, 255, .62);
   --radius: 22px;
-  --tabbar-h: 64px;
+  --tabbar-h: 80px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -2098,3 +2098,28 @@ input:focus, select:focus, .picker-btn:focus-visible {
 .dr-pill { background: var(--nm-bg); border: 0; box-shadow: 4px 4px 9px var(--nm-lo), -4px -4px 9px var(--nm-hi); }
 .medal { background: transparent; border: 0; box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
 .medal.on { background: var(--nm-bg); box-shadow: 5px 5px 11px var(--nm-lo), -5px -5px 11px var(--nm-hi), 0 0 0 1.5px color-mix(in srgb, var(--accent) 70%, transparent); }
+
+/* ===== Менюи поёнии шаффоф ва шино (мисли «шиша»): ҳошияҳо ҷудо, мундариҷа аз зери он намоён ===== */
+.tabbar {
+  position: absolute; z-index: 20;
+  left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 10px);
+  align-items: center;
+  border-radius: 30px; padding-bottom: 0;
+  background: color-mix(in srgb, var(--surface) 48%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .28), inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent);
+}
+.tab { height: 62px; isolation: isolate; }
+.tab:not(.add).active::before {
+  content: ''; position: absolute; z-index: -1; top: 7px; width: 56px; height: 36px; border-radius: 16px;
+  background: color-mix(in srgb, var(--primary) 18%, transparent); box-shadow: none;
+}
+.tab.active::after { display: none; }
+.add-circle {
+  margin-top: -30px; border: 0;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 50%, transparent), 0 0 0 5px color-mix(in srgb, var(--surface) 55%, transparent);
+}
+.tab.add { padding-bottom: 6px; }
+.screen { padding-bottom: calc(env(safe-area-inset-bottom) + 104px); }
