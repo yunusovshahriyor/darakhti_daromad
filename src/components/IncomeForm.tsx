@@ -10,14 +10,14 @@ import AddCategorySheet from './AddCategorySheet';
 import AccountSelect from './AccountSelect';
 import Field from './Field';
 
-export default function IncomeForm({ state, setState, onDone }: Props & { onDone: (msg: string) => void }) {
+export default function IncomeForm({ state, setState, onDone, prefill }: Props & { onDone: (msg: string) => void; prefill?: { amount: number | null; note: string; date: string | null } }) {
   const [source, setSource] = useState('Музд');
   const [adding, setAdding] = useState(false);
   const row = useRef<HTMLDivElement>(null);
   const sources = orderedSources(state.incomeSources ?? [], state.incomes);
-  const [note, setNote] = useState('');
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(today);
+  const [note, setNote] = useState(prefill?.note ?? '');
+  const [amount, setAmount] = useState(prefill?.amount ? String(prefill.amount) : '');
+  const [date, setDate] = useState(prefill?.date ?? today());
 
   // Манбаи интихобшуда дар сатр намоён бошад
   useEffect(() => {

@@ -5,6 +5,10 @@ import type { ScanResult } from './ReceiptScanner';
 import IncomeForm from './IncomeForm';
 import { BorrowForm, LendForm, ReturnLoanForm } from './LoanForms';
 import PayDebtForm from './PayDebtForm';
+import VoiceButton from './VoiceButton';
+import type { VoiceResult } from '../voiceParse';
+import { VOICE } from '../voiceText';
+import { currentLang } from '../i18n';
 import Sheet from './Sheet';
 import TransferForm from './TransferForm';
 
@@ -27,6 +31,8 @@ export default function AddSheet({ state, setState, onClose, onDone, prefill }: 
 }) {
   const [kind, setKind] = useState<Kind>('expense');
   const [debtKind, setDebtKind] = useState<DebtKind>('lend');
+  const [voice, setVoice] = useState<(VoiceResult & { n: number }) | null>(null);
+  const [voiceMsg, setVoiceMsg] = useState('');
   const done = (msg: string) => {
     onDone(msg);
     onClose();
@@ -65,8 +71,14 @@ export default function AddSheet({ state, setState, onClose, onDone, prefill }: 
           </button>
         ))}
       </div>
-      {kind === 'income' && <IncomeForm key="i" {...common} />}
-      {kind === 'expense' && <ExpenseForm prefill={prefill} key="e" {...common} />}
+      {(kind === 'income' || kind === 'expense') && (
+        <div className="voice-row">
+          <VoiceButton onMessage={setVoiceMsg} onResult={r => { setVoice({ ...r, n: (voice?.n ?? 0) + 1 }); setKind(r.kind === 'income' ? 'income' : 'expense'); }} />
+          {voiceMsg ? <p className="voice-msg">{voiceMsg}</p> : <p className="voice-msg hint">{VOICE[currentLang()].hint}</p>}
+        </div>
+      )}
+      {kind === 'income' && <IncomeForm key={`i${voice?.n ?? 0}`} {...common} prefill={voice ?? undefined} />}
+      {kind === 'expense' && <ExpenseForm prefill={voice ? { amount: voice.amount, merchant: voice.note, date: voice.date } : prefill} key={`e${voice?.n ?? 0}`} {...common} />}
       {kind === 'transfer' && <TransferForm key="t" {...common} />}
       {kind === 'debt' && debtKind === 'lend' && <LendForm key="dl" {...common} afterPad={what} />}
       {kind === 'debt' && debtKind === 'back' && <ReturnLoanForm key="db" {...common} afterPad={what} />}
