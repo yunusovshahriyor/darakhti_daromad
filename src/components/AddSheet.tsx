@@ -5,10 +5,7 @@ import type { ScanResult } from './ReceiptScanner';
 import IncomeForm from './IncomeForm';
 import { BorrowForm, LendForm, ReturnLoanForm } from './LoanForms';
 import PayDebtForm from './PayDebtForm';
-import VoiceButton from './VoiceButton';
 import type { VoiceResult } from '../voiceParse';
-import { VOICE } from '../voiceText';
-import { currentLang } from '../i18n';
 import Sheet from './Sheet';
 import TransferForm from './TransferForm';
 
@@ -23,16 +20,16 @@ const KINDS: { id: Kind; label: string; icon: string }[] = [
 ];
 
 /** Варақаи якҷоя: ҷудокунак (даромад / хароҷот / гузаронидан / қарз) ва форма бо тугмачаҳои рақамӣ. */
-export default function AddSheet({ state, setState, onClose, onDone, prefill }: Props & {
+export default function AddSheet({ state, setState, onClose, onDone, prefill, voice }: Props & {
+  /** Натиҷаи сабти овозӣ (пахши дароз дар «+»): навъ, маблағ, эзоҳ, сана. */
+  voice?: VoiceResult;
   /** Натиҷаи сканери чек: шакли «Хароҷот» бо ҳамин маълумот пур мешавад. */
   prefill?: ScanResult;
   onClose: () => void;
   onDone: (msg: string) => void;
 }) {
-  const [kind, setKind] = useState<Kind>('expense');
+  const [kind, setKind] = useState<Kind>(voice?.kind === 'income' ? 'income' : 'expense');
   const [debtKind, setDebtKind] = useState<DebtKind>('lend');
-  const [voice, setVoice] = useState<(VoiceResult & { n: number }) | null>(null);
-  const [voiceMsg, setVoiceMsg] = useState('');
   const done = (msg: string) => {
     onDone(msg);
     onClose();
@@ -71,14 +68,8 @@ export default function AddSheet({ state, setState, onClose, onDone, prefill }: 
           </button>
         ))}
       </div>
-      {(kind === 'income' || kind === 'expense') && (
-        <div className="voice-row">
-          <VoiceButton onMessage={setVoiceMsg} onResult={r => { setVoice({ ...r, n: (voice?.n ?? 0) + 1 }); setKind(r.kind === 'income' ? 'income' : 'expense'); }} />
-          {voiceMsg ? <p className="voice-msg">{voiceMsg}</p> : <p className="voice-msg hint">{VOICE[currentLang()].hint}</p>}
-        </div>
-      )}
-      {kind === 'income' && <IncomeForm key={`i${voice?.n ?? 0}`} {...common} prefill={voice ?? undefined} />}
-      {kind === 'expense' && <ExpenseForm prefill={voice ? { amount: voice.amount, merchant: voice.note, date: voice.date } : prefill} key={`e${voice?.n ?? 0}`} {...common} />}
+      {kind === 'income' && <IncomeForm key="i" {...common} prefill={voice} />}
+      {kind === 'expense' && <ExpenseForm prefill={voice ? { amount: voice.amount, merchant: voice.note, date: voice.date } : prefill} key="e" {...common} />}
       {kind === 'transfer' && <TransferForm key="t" {...common} />}
       {kind === 'debt' && debtKind === 'lend' && <LendForm key="dl" {...common} afterPad={what} />}
       {kind === 'debt' && debtKind === 'back' && <ReturnLoanForm key="db" {...common} afterPad={what} />}

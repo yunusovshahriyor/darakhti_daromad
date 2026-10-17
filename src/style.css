@@ -2058,13 +2058,14 @@ input:focus, select:focus, .picker-btn:focus-visible {
 .toast { box-shadow: 6px 6px 16px var(--nm-lo), -4px -4px 12px var(--nm-hi); }
 .fab { border: 0; }
 
-/* Сабти овозӣ */
-.voice-row { display: flex; align-items: center; gap: 12px; margin: 6px 0 4px; }
-.voice-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border: 0; border-radius: 99px; background: var(--nm-bg); color: var(--text); font: inherit; font-weight: 700; box-shadow: 5px 5px 11px var(--nm-lo), -5px -5px 11px var(--nm-hi); max-width: 60%; }
-.voice-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.voice-btn i { font-style: normal; font-size: 1.15rem; }
-.voice-btn.on { color: var(--primary); box-shadow: inset 3px 3px 8px var(--nm-lo), inset -3px -3px 8px var(--nm-hi), 0 0 0 2px color-mix(in srgb, var(--primary) 60%, transparent); }
-.voice-btn.on i { animation: voice-pulse 1s ease-in-out infinite; }
-@keyframes voice-pulse { 50% { transform: scale(1.25); } }
-.voice-msg { margin: 0; flex: 1; min-width: 0; font-size: .8rem; color: var(--text); white-space: pre-line; }
+/* Сабти овозӣ (пахши дарози «+») */
+.voice-ov { position: fixed; inset: 0; z-index: 70; background: rgba(8, 12, 24, .55); display: flex; align-items: flex-end; justify-content: center; padding: 0 16px calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 26px); animation: fade .2s ease; }
+.voice-card { width: 100%; max-width: 420px; display: grid; justify-items: center; gap: 10px; padding: 22px 18px 18px; border-radius: 28px; background: var(--bg); box-shadow: 8px 8px 20px var(--nm-lo), -6px -6px 16px var(--nm-hi); text-align: center; animation: up .25s cubic-bezier(.2, .8, .2, 1); }
+.voice-mic { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-size: 2.3rem; background: var(--nm-bg); box-shadow: 6px 6px 14px var(--nm-lo), -6px -6px 14px var(--nm-hi); }
+.voice-mic.on { box-shadow: inset 4px 4px 10px var(--nm-lo), inset -4px -4px 10px var(--nm-hi), 0 0 0 4px color-mix(in srgb, var(--primary) 45%, transparent); animation: voice-pulse 1.1s ease-in-out infinite; }
+@keyframes voice-pulse { 50% { transform: scale(1.08); } }
+.voice-live { font-size: 1.15rem; min-height: 1.5em; word-break: break-word; }
+.voice-msg { margin: 0; font-size: .85rem; color: var(--text); white-space: pre-line; }
 .voice-msg.hint { color: var(--muted); }
+.voice-actions { display: grid; gap: 8px; width: 100%; margin-top: 4px; }
+.voice-actions .btn { margin-top: 0; }

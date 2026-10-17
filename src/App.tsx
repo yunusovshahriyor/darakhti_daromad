@@ -1,10 +1,13 @@
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
+import VoiceOverlay from './components/VoiceOverlay';
+import { voiceSupported } from './voice';
+import type { VoiceResult } from './voiceParse';
 import AuthPage from './components/AuthPage';
 import SyncBadge from './components/SyncBadge';
 import SyncSheet from './components/SyncSheet';
 import { BASE, activeCode, setActiveCode } from './currency';
-import { nav, refresh, success, warn } from './haptic';
+import { nav, refresh, success, tap, warn } from './haptic';
 import LockScreen from './components/LockScreen';
 import { autoHide, getLock, isLockOn } from './lock';
 import ReceiptScanner from './components/ReceiptScanner';
@@ -111,6 +114,10 @@ export default function App() {
   const reuseSub = useRef(layerOnBoot && nav0.sub !== null);
   const reuseAcct = useRef(layerOnBoot && nav0.acct !== null);
   const [adding, setAdding] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceFill, setVoiceFill] = useState<VoiceResult | null>(null);
+  const plusTimer = useRef<number | null>(null);
+  const plusLong = useRef(false);
   const [scanOpen, setScanOpen] = useState(false);
   const [prefill, setPrefill] = useState<{ amount: number | null; merchant: string; date: string | null } | null>(null);
 
@@ -485,7 +492,17 @@ export default function App() {
 
       <nav className="tabbar">
         {LEFT.map(tabButton)}
-        <button className="tab add" onClick={() => setAdding(true)} aria-label="Илова кардан">
+        <button className="tab add" aria-label="Илова кардан"
+          onClick={() => { if (plusLong.current) { plusLong.current = false; return; } setAdding(true); }}
+          onPointerDown={() => {
+            plusLong.current = false;
+            if (!voiceSupported()) return;
+            plusTimer.current = window.setTimeout(() => { plusLong.current = true; tap(); setVoiceOpen(true); }, 450);
+          }}
+          onPointerUp={() => { if (plusTimer.current) window.clearTimeout(plusTimer.current); }}
+          onPointerLeave={() => { if (plusTimer.current) window.clearTimeout(plusTimer.current); }}
+          onPointerCancel={() => { if (plusTimer.current) window.clearTimeout(plusTimer.current); }}
+          onContextMenu={e => e.preventDefault()}>
           <span className="add-circle"><PlusIcon /></span>
           <span>Илова</span>
         </button>
@@ -503,8 +520,12 @@ export default function App() {
       {scanOpen && (
         <ReceiptScanner onClose={() => setScanOpen(false)} onApply={r => { setPrefill(r); setAdding(true); }} />
       )}
+      {voiceOpen && (
+        <VoiceOverlay onClose={() => setVoiceOpen(false)} onResult={r => { setVoiceOpen(false); setVoiceFill(r); setAdding(true); }} />
+      )}
       {adding && (
-        <AddSheet {...props} prefill={prefill ?? undefined} onClose={() => { setAdding(false); setPrefill(null); }} onDone={setToast} />
+        <AddSheet {...props} prefill={prefill ?? undefined} voice={voiceFill ?? undefined}
+          onClose={() => { setAdding(false); setPrefill(null); setVoiceFill(null); }} onDone={setToast} />
       )}
     </div>
   );
