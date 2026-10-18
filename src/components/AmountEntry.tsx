@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { tap } from '../haptic';
 import { fmt, today } from '../model';
 import DatePickerSheet from './DatePickerSheet';
+import CalcSheet from './CalcSheet';
 
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 
@@ -46,6 +47,7 @@ export default function AmountEntry({ value, onChange, date, onDate, sign, locke
   onDate: (d: string) => void;
 }) {
   const [picking, setPicking] = useState(false);
+  const [calcOpen, setCalcOpen] = useState(false);
 
   const press = (k: string) => {
     tap();
@@ -59,8 +61,19 @@ export default function AmountEntry({ value, onChange, date, onDate, sign, locke
 
   return (
     <>
-      <div className={`amount-big${value ? '' : ' empty'}${sign === '+' ? ' pos' : sign === '−' ? ' neg' : ''}`}>
-        {sign && value ? <span className="sg">{sign}</span> : null}{shown(value)} <small>{unit ?? 'смн'}</small>
+      <div className="amount-wrap">
+        <div className={`amount-big${value ? '' : ' empty'}${sign === '+' ? ' pos' : sign === '−' ? ' neg' : ''}`}>
+          {sign && value ? <span className="sg">{sign}</span> : null}{shown(value)} <small>{unit ?? 'смн'}</small>
+        </div>
+        {!locked && (
+          <button type="button" className="calc-btn" aria-label="Калкулятор" onClick={() => { tap(); setCalcOpen(true); }}>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="5" y="3" width="14" height="18" rx="3" /><rect x="8" y="6" width="8" height="3.5" rx="1" />
+              <path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01" strokeWidth="2.2" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {!locked && quick && quick.length > 0 && (
@@ -98,6 +111,7 @@ export default function AmountEntry({ value, onChange, date, onDate, sign, locke
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"
           strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
       </button>
+      {calcOpen && <CalcSheet initial={value.replace(/\.$/, '')} onApply={onChange} onClose={() => setCalcOpen(false)} />}
       {picking && <DatePickerSheet value={date} onSelect={onDate} onClose={() => setPicking(false)} />}
     </>
   );

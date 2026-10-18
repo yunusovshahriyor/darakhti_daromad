@@ -2107,3 +2107,20 @@ input:focus, select:focus, .picker-btn:focus-visible {
 }
 .tab.add { padding-bottom: 6px; }
 .screen { padding-bottom: calc(env(safe-area-inset-bottom) + 104px); }
+
+/* ===== Калкулятор дар майдони маблағ ===== */
+.amount-wrap { position: relative; }
+.calc-btn {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 14px; border: 0; display: grid; place-items: center;
+  color: var(--primary); background: var(--nm-bg);
+  box-shadow: 4px 4px 9px var(--nm-lo), -4px -4px 9px var(--nm-hi); touch-action: manipulation;
+}
+.calc-btn:active { box-shadow: inset 3px 3px 7px var(--nm-lo), inset -3px -3px 7px var(--nm-hi); }
+.calc-disp { text-align: right; padding: 8px 6px 12px; min-height: 84px; }
+.calc-expr { font-size: 2.2rem; font-weight: 800; word-break: break-all; line-height: 1.15; }
+.calc-res { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-top: 4px; min-height: 1.6em; }
+.calc-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.calc-k { font-size: 1.5rem; height: 54px; }
+.calc-k.z { grid-column: span 2; }
+.calc-k.op { color: var(--primary); font-weight: 700; }
