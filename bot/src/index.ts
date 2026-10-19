@@ -368,6 +368,8 @@ async function cleanup(env: Env) {
   }
 }
 
+const MONTHLY_HOUR = 8;
+
 async function daily(env: Env, when = new Date()) {
   const tz = env.TIMEZONE ?? 'Asia/Dushanbe';
   const today = dateOf(tz, when);
@@ -378,13 +380,21 @@ async function daily(env: Env, when = new Date()) {
   for (const c of await fs.list(env, 'botChats')) {
     try {
       const p = await loadPrefs(env, c.data);
-      if (p.hour !== hour) continue;
+      const userHour = p.hour === hour;
+      const monthlyNow = dayOfMonth === 1 && hour === MONTHLY_HOUR && p.flags.monthly; // хулосаи моҳ: рӯзи 1-ум соати 08:00
+      if (!userHour && !monthlyNow) continue;
       const chat = Number(c.id);
       const t = makeT(p.lang ?? langFromCode(typeof c.data.lc === 'string' ? c.data.lc : undefined));
       const r = await stateOf(env, chat, t);
       if ('msg' in r) continue;
 
       const cu = (x: string) => swapUnit(x, r.state.currency ?? 'TJS');
+      if (monthlyNow) {
+        const last = new Date(`${today}T12:00:00Z`);
+        last.setUTCDate(0); // охирин рӯзи моҳи гузашта
+        await send(env, chat, cu(summaryText(t, r.state, last.toISOString().slice(0, 10))));
+      }
+      if (!userHour) continue;
       const rem = reminderText(t, r.state, today, { pay: p.flags.pay, overdue: p.flags.overdue });
       if (rem) await send(env, chat, cu(rem));
 
@@ -393,12 +403,7 @@ async function daily(env: Env, when = new Date()) {
       if (d.lines.length) await send(env, chat, cu(t("🔔 <b>Огоҳиномаҳои имрӯз</b>\n\n{0}", d.lines.join('\n\n'))));
       await writeChat(env, chat, c.data, d.seen);
 
-      if (dayOfWeek === 1 && p.flags.weekly) await send(env, chat, cu(summaryText(t, r.state, today)));
-      if (dayOfMonth === 1 && p.flags.monthly) {
-        const last = new Date(`${today}T12:00:00Z`);
-        last.setUTCDate(0); // охирин рӯзи моҳи гузашта
-        await send(env, chat, cu(summaryText(t, r.state, last.toISOString().slice(0, 10))));
-      }
+      if (dayOfWeek === 1 && p.flags.weekly) await send(env, chat, cu(summaryText(t, r.state, today, true)));
     } catch (e) {
       console.log(`daily ${c.id}: ${e instanceof Error ? e.message : e}`);
     }

@@ -58,12 +58,15 @@ export function debtsText(t: TFn, s: State, today: string): string {
   return parts.join('\n\n');
 }
 
-/** Хулосаи моҳи ҷорӣ. */
-export function summaryText(t: TFn, s: State, today: string): string {
+/** Хулосаи моҳи ҷорӣ (ё, бо `week`, 7 рӯзи охир). */
+export function summaryText(t: TFn, s: State, today: string, week = false): string {
   const now = new Date(`${today}T12:00:00`);
   const p = periodAt('month', 0, now);
-  const inc = s.incomes.filter(i => inPeriod(i.date, p) && !i.kind);
-  const exp = s.expenses.filter(e => inPeriod(e.date, p));
+  const from = new Date(now); from.setDate(from.getDate() - 6);
+  const wFrom = from.toLocaleDateString('sv-SE');
+  const inRange = (d: string) => (week ? d >= wFrom && d <= today : inPeriod(d, p));
+  const inc = s.incomes.filter(i => inRange(i.date) && !i.kind);
+  const exp = s.expenses.filter(e => inRange(e.date));
   const incSum = inc.reduce((a, i) => a + i.amount, 0);
   const expSum = exp.reduce((a, e) => a + e.amount, 0);
   const total = Object.values(balancesOf(s)).reduce((a, v) => a + v, 0);
@@ -73,7 +76,9 @@ export function summaryText(t: TFn, s: State, today: string): string {
   const top = [...cats.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
 
   const lines = [
-    t("📊 <b>Хулосаи моҳ</b> ({0})", esc(t(p.big))),
+    week
+      ? t("📊 <b>Хулосаи ҳафта</b> ({0} — {1})", wFrom.slice(5).split('-').reverse().join('.'), today.slice(5).split('-').reverse().join('.'))
+      : t("📊 <b>Хулосаи моҳ</b> ({0})", esc(t(p.big))),
     '',
     t("💰 Бақияи умумӣ: {0}", money(t, total)),
     t("📈 Даромад: {0}", money(t, incSum)),

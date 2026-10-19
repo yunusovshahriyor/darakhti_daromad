@@ -93,5 +93,6 @@
 "🔄 <b>Иваз кардани аккаунт</b>\n\nБот аз аккаунти ҷорӣ ҷудо мешавад. Маълумоти шумо дар сервер мемонад.": "🔄 <b>Switch account</b>\n\nThe bot will be disconnected from the current account. Your data stays on the server.",
 "✅ Ҳа, иваз кардан": "✅ Yes, switch",
 "✖️ Бекор кардан": "✖️ Cancel",
-"✅ Бот ҷудо шуд. Акнун:\n\n1️⃣ Дар барнома: Танзимот → «Баромад аз аккаунт».\n2️⃣ Ба аккаунти дигар ворид шавед.\n3️⃣ Дар Профил «Telegram-бот»-ро интихоб кунед: бот ба аккаунти нав пайваст мешавад.": "✅ The bot is disconnected. Now:\n\n1️⃣ In the app: Settings → “Sign out”.\n2️⃣ Sign in to another account.\n3️⃣ In Profile choose “Telegram bot”: the bot connects to the new account."
+"✅ Бот ҷудо шуд. Акнун:\n\n1️⃣ Дар барнома: Танзимот → «Баромад аз аккаунт».\n2️⃣ Ба аккаунти дигар ворид шавед.\n3️⃣ Дар Профил «Telegram-бот»-ро интихоб кунед: бот ба аккаунти нав пайваст мешавад.": "✅ The bot is disconnected. Now:\n\n1️⃣ In the app: Settings → “Sign out”.\n2️⃣ Sign in to another account.\n3️⃣ In Profile choose “Telegram bot”: the bot connects to the new account.",
+"📊 <b>Хулосаи ҳафта</b> ({0} — {1})": "📊 <b>Weekly summary</b> ({0} — {1})"
 }
