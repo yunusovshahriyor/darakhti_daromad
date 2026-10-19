@@ -369,6 +369,7 @@ async function cleanup(env: Env) {
 }
 
 const MONTHLY_HOUR = 8;
+const WEEKLY_HOUR = 21; // хулосаи ҳафта: якшанбе соати 21:00
 
 async function daily(env: Env, when = new Date()) {
   const tz = env.TIMEZONE ?? 'Asia/Dushanbe';
@@ -382,7 +383,8 @@ async function daily(env: Env, when = new Date()) {
       const p = await loadPrefs(env, c.data);
       const userHour = p.hour === hour;
       const monthlyNow = dayOfMonth === 1 && hour === MONTHLY_HOUR && p.flags.monthly; // хулосаи моҳ: рӯзи 1-ум соати 08:00
-      if (!userHour && !monthlyNow) continue;
+      const weeklyNow = dayOfWeek === 0 && hour === WEEKLY_HOUR && p.flags.weekly;
+      if (!userHour && !monthlyNow && !weeklyNow) continue;
       const chat = Number(c.id);
       const t = makeT(p.lang ?? langFromCode(typeof c.data.lc === 'string' ? c.data.lc : undefined));
       const r = await stateOf(env, chat, t);
@@ -394,6 +396,7 @@ async function daily(env: Env, when = new Date()) {
         last.setUTCDate(0); // охирин рӯзи моҳи гузашта
         await send(env, chat, cu(summaryText(t, r.state, last.toISOString().slice(0, 10))));
       }
+      if (weeklyNow) await send(env, chat, cu(summaryText(t, r.state, today, true)));
       if (!userHour) continue;
       const rem = reminderText(t, r.state, today, { pay: p.flags.pay, overdue: p.flags.overdue });
       if (rem) await send(env, chat, cu(rem));
@@ -403,7 +406,6 @@ async function daily(env: Env, when = new Date()) {
       if (d.lines.length) await send(env, chat, cu(t("🔔 <b>Огоҳиномаҳои имрӯз</b>\n\n{0}", d.lines.join('\n\n'))));
       await writeChat(env, chat, c.data, d.seen);
 
-      if (dayOfWeek === 1 && p.flags.weekly) await send(env, chat, cu(summaryText(t, r.state, today, true)));
     } catch (e) {
       console.log(`daily ${c.id}: ${e instanceof Error ? e.message : e}`);
     }
