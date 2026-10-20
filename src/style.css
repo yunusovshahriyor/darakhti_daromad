@@ -2024,3 +2024,13 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .calc-k { font-size: 1.5rem; height: 54px; }
 .calc-k.z { grid-column: span 2; }
 .calc-k.op { color: var(--primary); font-weight: 700; }
+
+/* «Обуна»: сатр бо чекбокс дар тарафи рост; мӯҳлатҳо танҳо баъди интихоб кушода мешаванд */
+.rec-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 2px; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.rec-toggle input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none; width: 26px; height: 26px; min-height: 0; padding: 0; margin: 0; flex: none;
+  border-radius: 8px; border: 2px solid var(--muted); background: transparent; display: grid; place-items: center; cursor: pointer;
+}
+.rec-toggle input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+.rec-toggle input[type="checkbox"]:checked::after { content: ''; width: 6px; height: 12px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: translateY(-1px) rotate(45deg); }
+.rec-chips .qa { flex: 1; }

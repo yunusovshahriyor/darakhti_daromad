@@ -14,12 +14,12 @@ export default function RecurringSheet({ state, setState, onClose }: Props & { o
   return (
     <Sheet title="Хароҷоти такрорӣ" onClose={onClose}>
       {list.length === 0 ? (
-        <p className="note">Ҳоло хароҷоти такрорӣ нест. Ҳангоми сабти хароҷот «🔁 Такрор кардан»-ро интихоб кунед (масалан иҷора, интернет, обуна): барнома дар мӯҳлат ёдрас мекунад.</p>
+        <p className="note">Ҳоло хароҷоти такрорӣ нест. Ҳангоми сабти хароҷот «🔁 Обуна»-ро интихоб кунед (масалан иҷора, интернет): барнома дар мӯҳлат ёдрас мекунад.</p>
       ) : (
         <div className="rec-list">
           {list.map(r => (
             <div className="rec-item" key={r.id}>
-              <div className="rec-info"><b>{r.title}</b><small>{r.every === 'month' ? `Ҳар моҳ, рӯзи ${r.day ?? ''}` : 'Ҳар ҳафта'} · навбатӣ {r.next}</small></div>
+              <div className="rec-info"><b>{r.title}</b><small>{r.every === 'month' ? `Ҳар моҳ, рӯзи ${r.day ?? ''}` : r.every === 'day' ? 'Ҳар рӯз' : 'Ҳар ҳафта'} · навбатӣ {r.next}</small></div>
               <input inputMode="decimal" defaultValue={String(r.amount)} aria-label="Маблағ"
                 onChange={e => setVals(v => ({ ...v, [r.id]: e.target.value }))} onBlur={() => save(r.id)} />
               <button className="rec-del" aria-label="Нест кардан" onClick={() => setState(s => ({ ...s, recurring: (s.recurring ?? []).filter(x => x.id !== r.id) }))}>🗑</button>

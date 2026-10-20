@@ -4,9 +4,10 @@ import type { Recurring, State } from './types';
 const iso = (d: Date) => d.toLocaleDateString('sv-SE');
 const parse = (s: string) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
 
-/** Санаи навбатӣ: ҳафта +7 рӯз; моҳ — ҳамон рӯзи моҳ (агар дар моҳ набошад, охирин рӯз). */
+/** Санаи навбатӣ: рӯз +1; ҳафта +7 рӯз; моҳ — ҳамон рӯзи моҳ (агар дар моҳ набошад, охирин рӯз). */
 export function addPeriod(from: string, every: Recurring['every'], day = parse(from).getDate()): string {
   const d = parse(from);
+  if (every === 'day') { d.setDate(d.getDate() + 1); return iso(d); }
   if (every === 'week') { d.setDate(d.getDate() + 7); return iso(d); }
   const y = d.getFullYear();
   const m = d.getMonth() + 1;

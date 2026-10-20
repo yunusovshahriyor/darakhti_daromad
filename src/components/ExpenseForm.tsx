@@ -22,7 +22,7 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
   // Агар категория дастӣ интихоб нашуда бошад, аз эзоҳ худкор пешниҳод мешавад
   const [manual, setManual] = useState(false);
   const [amount, setAmount] = useState(prefill?.amount ? String(prefill.amount) : '');
-  const [every, setEvery] = useState<'' | 'week' | 'month'>('');
+  const [every, setEvery] = useState<'' | 'day' | 'week' | 'month'>('');
   const [date, setDate] = useState(prefill?.date ?? today());
 
   const bal = balancesOf(state);
@@ -68,13 +68,20 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
           }} />
       </Field>
       <div className="rec-pick">
-        <div className="chips-label">🔁 Такрор кардан</div>
-        <div className="rec-chips">
-          {([['', 'Не'], ['week', 'Ҳар ҳафта'], ['month', 'Ҳар моҳ']] as const).map(([v, n]) => (
-            <button key={v} type="button" className={v === every ? 'qa on' : 'qa'} onClick={() => setEvery(v)}>{n}</button>
-          ))}
-        </div>
-        {every && <small className="rec-note">{`Мӯҳлати навбатӣ: ${addPeriod(date, every)}. Дар ҳамон рӯз барнома ёдрас мекунад ва бо тасдиқи шумо сабт мекунад.`}</small>}
+        <label className="rec-toggle">
+          <span>🔁 Обуна</span>
+          <input type="checkbox" checked={every !== ''} onChange={e => setEvery(e.target.checked ? 'month' : '')} />
+        </label>
+        {every && (
+          <>
+            <div className="rec-chips">
+              {([['day', 'Ҳар рӯз'], ['week', 'Ҳар ҳафта'], ['month', 'Ҳар моҳ']] as const).map(([v, n]) => (
+                <button key={v} type="button" className={v === every ? 'qa on' : 'qa'} onClick={() => setEvery(v)}>{n}</button>
+              ))}
+            </div>
+            <small className="rec-note">{`Мӯҳлати навбатӣ: ${addPeriod(date, every)}. Дар ҳамон рӯз барнома ёдрас мекунад ва бо тасдиқи шумо сабт мекунад.`}</small>
+          </>
+        )}
       </div>
       {hints.length > 0 && (
         <div className="hint-row">

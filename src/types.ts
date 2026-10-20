@@ -164,7 +164,7 @@ export interface Recurring {
   amount: number;
   account: AccountId;
   category?: string;
-  every: 'week' | 'month';
+  every: 'day' | 'week' | 'month';
   /** Рӯзи моҳ, ки аз он ҳисоб мешавад (барои «ҳар моҳ»). */
   day?: number;
   /** Мӯҳлати навбатӣ (сана). */
