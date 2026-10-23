@@ -4,8 +4,8 @@ export interface NotifyDef { key: string; label: string; hint: string; group: '�
 export const NOTIFY: NotifyDef[] = [
   { key: 'pay', label: '💳 Ёдоварии пардохтҳо', hint: 'Имрӯз, пагоҳ ва 3 рӯз пеш', group: 'Ҳатмӣ', def: true },
   { key: 'overdue', label: '⚠️ Пардохти дер шуда', hint: 'Ҳар рӯз то пардохт', group: 'Ҳатмӣ', def: true },
-  { key: 'weekly', label: '📊 Хулосаи ҳафтаина', hint: 'Рӯзи душанбе', group: 'Ҳатмӣ', def: true },
-  { key: 'monthly', label: '🗓 Хулосаи моҳ', hint: 'Рӯзи 1-ум, барои моҳи гузашта', group: 'Ҳатмӣ', def: true },
+  { key: 'weekly', label: '📊 Хулосаи ҳафтаина', hint: 'Рӯзи якшанбе, соати 21:00', group: 'Ҳатмӣ', def: true },
+  { key: 'monthly', label: '🗓 Хулосаи моҳ', hint: 'Рӯзи 1-ум соати 08:00, барои моҳи гузашта', group: 'Ҳатмӣ', def: true },
   { key: 'noentry', label: '✍️ «Сабт накардед»', hint: 'Агар 3 рӯз сабт нашуда бошад', group: 'Тавсияшаванда', def: true },
   { key: 'dreams', label: '✨ Орзуҳо', hint: 'Маблағ ҷамъ шуд; 30/7/1 рӯз то муҳлат', group: 'Тавсияшаванда', def: true },
   { key: 'debtpaid', label: '🎉 Қарз пардохт шуд', hint: 'Табрикӣ барои қарзи пӯшидашуда', group: 'Тавсияшаванда', def: true },
