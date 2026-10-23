@@ -12,6 +12,8 @@ export interface Env {
   BOT_USERNAME: string;
   /** Қисқа номи Mini App дар @BotFather (/newapp), масалан «app». Агар холӣ бошад, воридшавӣ тавассути /start-и бот. */
   MINIAPP_SHORTNAME?: string;
+  /** Cloudflare Workers AI (binding «AI»): шинохти паёмҳои овозӣ. Агар нест — овоз дастгирӣ намешавад. */
+  AI?: { run(model: string, input: Record<string, unknown>): Promise<{ text?: string }> };
 }
 
 type Json = Record<string, unknown>;
@@ -142,4 +144,65 @@ export async function loadState(env: Env, uid: string): Promise<unknown | null> 
   const json = parts.map(p => (p?.part as string | undefined) ?? '').join('');
   const file = JSON.parse(json) as { state?: unknown };
   return file.state ?? null;
+}
+
+const CHUNK = 250_000;
+
+/**
+ * Навсозии ҳолати корбар бевосита дар `users/{uid}/sync/*` (ҳамон формате, ки барнома менависад).
+ * Бархӯрд бо барнома: `meta` бо шарти `updateTime` навишта мешавад; агар дар ин миён тағйир ёфта бошад, аз нав мехонем.
+ * `mutate` ҳолатро мегирад ва ҳолати нав (ё null — навиштан лозим нест) бармегардонад.
+ */
+export async function updateState<T>(
+  env: Env,
+  uid: string,
+  mutate: (state: Record<string, unknown>) => { state: Record<string, unknown>; result: T } | null,
+): Promise<T | null> {
+  const root = `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const metaRes = await call(env, `users/${uid}/sync/meta`);
+    if (metaRes.status === 404) return null;
+    const metaDoc = (await metaRes.json()) as { fields?: Json; updateTime: string };
+    const meta = decode(metaDoc.fields);
+    const n = Number(meta.chunks);
+    const parts = await Promise.all(Array.from({ length: n }, (_, i) => get(env, `users/${uid}/sync/chunk_${i}`)));
+    const file = JSON.parse(parts.map(p => (p?.part as string | undefined) ?? '').join('')) as { state?: Record<string, unknown> };
+    if (!file.state) return null;
+    const out = mutate(file.state);
+    if (!out) return null;
+
+    const json = JSON.stringify({ ...file, state: out.state });
+    const chunks: string[] = [];
+    for (let i = 0; i < json.length; i += CHUNK) chunks.push(json.slice(i, i + CHUNK));
+    const writes: Json[] = chunks.map((part, i) => ({
+      update: { name: `${root}/users/${uid}/sync/chunk_${i}`, fields: { i: { integerValue: String(i) }, part: { stringValue: part } } },
+    }));
+    for (let i = chunks.length; i < n; i++) writes.push({ delete: `${root}/users/${uid}/sync/chunk_${i}` });
+    writes.push({
+      update: {
+        name: `${root}/users/${uid}/sync/meta`,
+        fields: {
+          rev: { integerValue: String(Number(meta.rev) + 1) },
+          chunks: { integerValue: String(chunks.length) },
+          size: { integerValue: String(json.length) },
+          updatedAt: { timestampValue: new Date().toISOString() },
+          device: { stringValue: 'telegram-bot' },
+        },
+      },
+      currentDocument: { updateTime: metaDoc.updateTime },
+    });
+    const res = await fetch(`${base(env)}:commit`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${await accessToken(env)}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ writes }),
+    });
+    if (res.ok) return out.result;
+    if (res.status === 409 || res.status === 400) { // шарти updateTime иҷро нашуд: барнома дар ин миён навиштааст
+      const txt = await res.text();
+      if (/FAILED_PRECONDITION|ABORTED/.test(txt)) continue;
+      throw new Error(`Firestore commit: ${res.status} ${txt}`);
+    }
+    throw new Error(`Firestore commit: ${res.status} ${await res.text()}`);
+  }
+  throw new Error('Firestore commit: бархӯрд бо барнома (4 кӯшиш)');
 }

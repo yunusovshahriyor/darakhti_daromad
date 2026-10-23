@@ -6,6 +6,10 @@ compatibility_date = "2025-01-01"
 [triggers]
 crons = ["0 * * * *"]
 
+# Шинохти паёмҳои овозӣ (Whisper): binding-и Workers AI, сирр лозим нест
+[ai]
+binding = "AI"
+
 [vars]
 FIREBASE_PROJECT_ID = "darakhti-daromad"
 TIMEZONE = "Asia/Dushanbe"

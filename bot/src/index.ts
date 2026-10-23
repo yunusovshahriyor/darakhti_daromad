@@ -7,13 +7,15 @@ import { customToken } from './firestore';
 import type { Env } from './firestore';
 import type { State } from '../../src/types';
 import { swapUnit } from '../../src/currency';
+import { syncCatalog } from '../../src/model';
 import { LOGIN_RE, LOGIN_TTL_MS, newCode, resolveUid, verifyInitData } from './auth';
 import { isLang, langFromCode, makeT } from './i18n';
 import type { Lang, TFn } from './i18n';
+import { quickCallback, quickText, quickVoice } from './quick';
 
 interface TgUser { id?: number; first_name?: string; last_name?: string; language_code?: string }
 interface Update {
-  message?: { chat: { id: number; type: string }; text?: string; from?: TgUser };
+  message?: { chat: { id: number; type: string }; text?: string; voice?: { file_id: string }; audio?: { file_id: string }; from?: TgUser };
   callback_query?: { id: string; from: TgUser; data?: string; message?: { chat: { id: number; type: string }; message_id: number } };
 }
 
@@ -23,7 +25,7 @@ interface Ctx { waitUntil(p: Promise<unknown>): void }
 type Button = { text: string; callback_data?: string; web_app?: { url: string }; url?: string };
 type Keyboard = { inline_keyboard: Button[][] };
 
-const tg = async (env: Env, method: string, body: Record<string, unknown>) => {
+export const tg = async (env: Env, method: string, body: Record<string, unknown>) => {
   const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_TOKEN}/${method}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -59,7 +61,7 @@ async function sendBanner(env: Env, chat: number, lang: string, caption: string,
   }
 }
 
-const send = (env: Env, chat: number | string, text: string, markup?: Keyboard) =>
+export const send = (env: Env, chat: number | string, text: string, markup?: Keyboard) =>
   tg(env, 'sendMessage', { chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...(markup ? { reply_markup: markup } : {}) });
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -73,10 +75,11 @@ const help = (t: TFn) =>
   t("/qarzho — қарзҳо ва пардохтҳои навбатӣ\n") +
   t("/yodovari — ёдоварии имрӯз\n") +
   t("/stop — ҷудо кардани бот аз аккаунт\n\n") +
+  t("✍️ <b>Сабт аз бот:</b> нависед <code>такси 21</code> (хароҷот) ё <code>маош 3000</code> (даромад), ё паёми овозӣ фиристед. Бот корти тасдиқ мефиристад.\n\n") +
   t("Бо забони англисӣ: /summary, /debts, /reminders.\n\n") +
   t("Огоҳиномаҳо ҳар рӯз дар соати интихобшуда меоянд (пардохтҳо, хулосаҳо, орзуҳо ва ғайра). Соат ва навъҳои огоҳӣ дар ⚙️ Танзимот → 🔔 Огоҳиномаҳо.");
 
-const notLinked = (t: TFn) =>
+export const notLinked = (t: TFn) =>
   t("Ин бот ҳанӯз ба аккаунти шумо пайваст нест.\n\n") +
   t("Тугмаи «🔗 Пайваст кардани аккаунт»-ро дар менюи /start пахш кунед.");
 
@@ -199,7 +202,7 @@ async function link(env: Env, chat: number, raw: string, t: TFn, code?: string):
 
 type StateRes = { uid: string; state: State } | { msg: string; unlinked: boolean };
 
-async function stateOf(env: Env, chat: number, t: TFn): Promise<StateRes> {
+export async function stateOf(env: Env, chat: number, t: TFn): Promise<StateRes> {
   const NL: StateRes = { msg: notLinked(t), unlinked: true };
   const c = await fs.get(env, `botChats/${chat}`);
   if (!c) return NL;
@@ -208,6 +211,7 @@ async function stateOf(env: Env, chat: number, t: TFn): Promise<StateRes> {
   if (!l || String(l.chatId) !== String(chat)) { await fs.del(env, `botChats/${chat}`); return NL; }
   const state = (await fs.loadState(env, uid)) as State | null;
   if (!state) return { msg: t("⚠️ Маълумот дар сервер нест. Дар барнома ворид шавед, то синхронизатсия оғоз шавад."), unlinked: false };
+  syncCatalog(state);
   return { uid, state };
 }
 
@@ -258,7 +262,7 @@ async function sendMenu(env: Env, chat: number, name: string, lang: Lang, t: TFn
   if (!(await sendBanner(env, chat, lang, caption, markup))) await send(env, chat, caption, markup);
 }
 
-const linkHelp = (t: TFn, env: Env): [string, Keyboard] => [
+export const linkHelp = (t: TFn, env: Env): [string, Keyboard] => [
   t("🔗 <b>Пайваст кардани аккаунт</b>\n\n") +
   t("Тугмаи поёнро пахш кунед: барнома кушода мешавад, ба ҳисоби худ ворид шавед (агар ворид нашудаед) ва «Telegram-бот»-ро дар Профил интихоб кунед. ") +
   t("Бот худаш пайваст мешавад."),
@@ -308,6 +312,7 @@ async function onMessage(env: Env, chat: number, text: string, name: string, ful
   if (cmd === '/xulosa' || cmd === '/summary') return report(env, chat, 'sum', t);
   if (cmd === '/qarzho' || cmd === '/debts') return report(env, chat, 'debts', t);
   if (cmd === '/yodovari' || cmd === '/reminders') return report(env, chat, 'rem', t);
+  if (!cmd.startsWith('/')) return quickText(env, chat, text, t);
   return send(env, chat, t("Фармон нофаҳмо аст. /help ё /start"));
 }
 
@@ -340,6 +345,7 @@ async function onCallback(env: Env, q: NonNullable<Update['callback_query']>) {
   if (data === 'close') return mid ? tg(env, 'deleteMessage', { chat_id: chat, message_id: mid }) : undefined;
 
   if (data === 'noop') return;
+  if (data.startsWith('q:')) return quickCallback(env, chat, mid, data, t);
   if (data === 'set' || data === 'sets' || data === 'nt' || data.startsWith('nt:') || data.startsWith('h:') || data.startsWith('lang:')) {
     const c = await fs.get(env, `botChats/${chat}`);
     if (!c) return send(env, chat, notLinked(t), { inline_keyboard: linkHelp(t, env)[1].inline_keyboard });
@@ -537,7 +543,16 @@ export default {
     const u = (await req.json()) as Update;
     const m = u.message;
     const q = u.callback_query;
-    if (m?.text && m.chat.type === 'private') {
+    const vf = m?.voice?.file_id ?? m?.audio?.file_id;
+    if (m && vf && m.chat.type === 'private') {
+      ctx.waitUntil((async () => {
+        const t = makeT(await resolveLang(env, m.chat.id, m.from?.language_code));
+        await quickVoice(env, m.chat.id, vf, t);
+      })().catch(e => {
+        console.log(`voice: ${e instanceof Error ? e.stack : e}`);
+        return send(env, m.chat.id, makeT(langFromCode(m.from?.language_code))("⚠️ Хатои муваққатӣ. Баъдтар кӯшиш кунед."));
+      }));
+    } else if (m?.text && m.chat.type === 'private') {
       ctx.waitUntil(onMessage(env, m.chat.id, m.text, m.from?.first_name ?? '', [m.from?.first_name, m.from?.last_name].filter(Boolean).join(' '), m.from?.language_code).catch(e => {
         console.log(`message: ${e instanceof Error ? e.stack : e}`);
         return send(env, m.chat.id, makeT(langFromCode(m.from?.language_code))("⚠️ Хатои муваққатӣ. Баъдтар кӯшиш кунед."));

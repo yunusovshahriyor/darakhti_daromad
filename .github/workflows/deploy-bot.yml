@@ -8,6 +8,13 @@ on:
       - 'src/model.ts'
       - 'src/loanPlan.ts'
       - 'src/types.ts'
+      - 'src/quickAdd.ts'
+      - 'src/voiceParse.ts'
+      - 'src/suggest.ts'
+      - 'src/categories.ts'
+      - 'src/dreams.ts'
+      - 'src/notify.ts'
+      - 'src/i18n/**'
       - '.github/workflows/deploy-bot.yml'
   workflow_dispatch:
 

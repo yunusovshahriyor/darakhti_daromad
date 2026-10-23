@@ -3,8 +3,8 @@ import { nextInstallment } from '../../src/loanPlan';
 import type { State } from '../../src/types';
 import type { TFn } from './i18n';
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const money = (t: TFn, n: number) => `<b>${fmt(n)}</b> ${t("смн")}`;
+export const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+export const money = (t: TFn, n: number) => `<b>${fmt(n)}</b> ${t("смн")}`;
 
 const parse = (s: string) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
 export const daysBetween = (a: string, b: string) => Math.round((parse(b) - parse(a)) / 86400000);

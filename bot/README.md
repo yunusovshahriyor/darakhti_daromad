@@ -5,6 +5,8 @@ Cloudflare Worker: ёдоварии пардохтҳои қарз (ҳар рӯз
 
 Фармонҳо: `/xulosa`, `/qarzho`, `/yodovari`, `/help`, `/stop`.
 
+**Сабт аз бот:** матн («такси 21», «маош 3000», «дирӯз нон 15», «+500 ҷоиза») ё паёми овозӣ → корти тасдиқ (✅ Сабт / ✖️ Бекор, тағйири категория, ҳисоб, манбаъ) → сабт бевосита дар `users/{uid}/sync/*` (бо санҷиши updateTime, ҳамон формати барнома), бо тугмаи «↩️ Бекор кардан». Овоз: Cloudflare Workers AI (Whisper), binding `AI` дар `wrangler.toml`.
+
 ## Танзим (як маротиба)
 
 1. **Бот:** дар Telegram @BotFather → `/newbot` → токенро нусха кунед. Номи корбариро (бе @) ба `TELEGRAM_BOT_USERNAME` дар `src/firebaseConfig.ts` гузоред.

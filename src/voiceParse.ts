@@ -80,7 +80,7 @@ function wordNumber(tokens: string[]): Num | null {
   return best;
 }
 
-const INC_WORDS = 'зарплат|получил|заработал|поступил|премия|музд|даромад|гирифт|income|salary|earned|received|доход';
+const INC_WORDS = 'зарплат|получил|заработал|поступил|премия|музд|даромад|гирифт|маош|бонус|ҷоиза|income|salary|earned|received|доход';
 const INCOME = new RegExp(INC_WORDS);
 const INCOME_WORD = new RegExp(`(?<![\\p{L}])\\p{L}*(?:${INC_WORDS})\\p{L}*(?![\\p{L}])`, 'giu');
 const DEBT = /(қарз|долг|debt|loan|заём|займ)/;
