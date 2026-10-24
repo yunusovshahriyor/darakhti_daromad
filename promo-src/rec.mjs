@@ -1,0 +1,15 @@
+import { chromium } from 'playwright';
+import fs from 'fs';
+const S = process.argv[2];
+fs.rmSync(S + '/promo/vid', { recursive: true, force: true });
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const c = await b.newContext({ viewport: { width: 540, height: 960 }, deviceScaleFactor: 2, recordVideo: { dir: S + '/promo/vid', size: { width: 1080, height: 1920 } } });
+const p = await c.newPage();
+p.on('pageerror', e => console.log('ERR', e.message));
+await p.goto('file://' + S + '/promo/index.html', { waitUntil: 'load' });
+const t0 = Date.now();
+await p.waitForFunction(() => window.__done === true, null, { timeout: 60000 });
+await p.waitForTimeout(400);
+console.log('elapsed', (Date.now() - t0) / 1000);
+await c.close(); await b.close();
+console.log(fs.readdirSync(S + '/promo/vid'));
