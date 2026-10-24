@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=540,initial-scale=1">
+<style>
+:root{--g:#3ddc97;--bg1:#06150f;--bg2:#0d2a1f;--tx:#f4f2ec}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#06150f;font-family:"Liberation Sans","DejaVu Sans",Arial,sans-serif}
+#stage{position:absolute;left:0;top:0;transform:scale(2);transform-origin:0 0;width:540px;height:960px;overflow:hidden;background:
+ radial-gradient(520px 420px at 78% 12%,rgba(61,220,151,.16),transparent 70%),
+ radial-gradient(500px 500px at 10% 92%,rgba(61,220,151,.10),transparent 70%),
+ linear-gradient(180deg,var(--bg2),var(--bg1) 60%)}
+.handle{position:absolute;right:22px;top:26px;font-size:12px;letter-spacing:.08em;color:rgba(244,242,236,.55);z-index:20;font-weight:700}
+.dots{position:absolute;left:24px;top:30px;display:flex;gap:6px;z-index:20}
+.dots i{width:18px;height:3px;border-radius:2px;background:rgba(255,255,255,.2)}
+.dots i.on{background:var(--g)}
+.scene{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .35s ease}
+.scene.on{opacity:1}
+.t{position:absolute;left:28px;right:28px;top:78px;text-transform:uppercase;font-weight:900;color:var(--tx);line-height:.98;letter-spacing:-.02em}
+.t .ln{display:block;overflow:hidden;padding-bottom:4px}
+.t .ln>span{display:inline-block;transform:translateY(110%);filter:blur(6px);opacity:0;transition:transform .6s cubic-bezier(.2,.9,.2,1),filter .6s,opacity .6s}
+.scene.on .t .ln>span{transform:none;filter:none;opacity:1}
+.t .ln:nth-child(2)>span{transition-delay:.12s}.t .ln:nth-child(3)>span{transition-delay:.24s}.t .ln:nth-child(4)>span{transition-delay:.36s}
+.t .big{font-size:78px}.t .mid{font-size:60px}.t .mid2{font-size:50px}.t .sm{font-size:19px;letter-spacing:.14em;color:rgba(244,242,236,.6);font-weight:700}
+.t .acc{color:var(--g)}
+.phone{position:absolute;left:50%;top:350px;width:300px;height:650px;margin-left:-150px;border-radius:44px;background:#0b0e0d;border:3px solid #4b5552;padding:8px;
+ box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);transform:translateY(120px) scale(.92);opacity:0;transition:transform .8s cubic-bezier(.2,.9,.2,1) .15s,opacity .5s .15s}
+.scene.on .phone{transform:none;opacity:1}
+.phone .scr{position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:#000}
+.phone img{position:absolute;left:0;top:0;width:100%;display:block;transition:transform var(--pan,3s) ease-in-out .5s}
+.chip{position:absolute;z-index:5;background:rgba(61,220,151,.95);color:#04140d;font-weight:800;font-size:15px;padding:9px 14px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(14px) scale(.9);transition:all .5s cubic-bezier(.2,.9,.2,1)}
+.scene.on .chip{opacity:1;transform:none}
+.drift{position:absolute;font-weight:800;color:rgba(244,242,236,.25);font-size:26px;white-space:nowrap}
+.cards{position:absolute;left:28px;right:28px;top:360px;display:flex;flex-direction:column;gap:18px}
+.card{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:20px 20px;color:var(--tx);transform:translateX(60px);opacity:0;transition:all .55s cubic-bezier(.2,.9,.2,1)}
+.card b{display:block;font-size:23px;margin-bottom:3px}.card small{font-size:16px;color:rgba(244,242,236,.6)}
+.card .ic{font-size:38px;width:54px;text-align:center}
+.scene.on .card{transform:none;opacity:1}
+.scene.on .card:nth-child(1){transition-delay:.35s}.scene.on .card:nth-child(2){transition-delay:.55s}.scene.on .card:nth-child(3){transition-delay:.75s}.scene.on .card:nth-child(4){transition-delay:.95s}
+.end{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+.end img{width:360px;transform:scale(.8);opacity:0;transition:all .8s cubic-bezier(.2,.9,.2,1)}
+.scene.on.end img{transform:none;opacity:1}
+.end .tag{color:var(--tx);font-weight:800;font-size:22px;letter-spacing:.02em;opacity:0;transform:translateY(16px);transition:all .6s .5s}
+.end .pill{margin-top:6px;background:var(--g);color:#04140d;font-weight:900;font-size:20px;padding:15px 26px;border-radius:999px;opacity:0;transform:translateY(16px);transition:all .6s .8s}
+.end .bot{color:rgba(244,242,236,.7);font-size:16px;font-weight:700;letter-spacing:.04em;opacity:0;transition:opacity .6s 1.1s}
+.scene.on.end .tag,.scene.on.end .pill{opacity:1;transform:none}.scene.on.end .bot{opacity:1}
+</style></head>
+<body>
+<div id="stage">
+  <div class="dots" id="dots"></div>
+  <div class="handle">@DARAKHTI_DAROMAD</div>
+
+  <!-- 1 -->
+  <div class="scene" id="s0">
+    <div class="drift" style="left:30px;top:520px;transition:transform 2.6s linear" data-dx="40">−450</div>
+    <div class="drift" style="right:40px;top:640px;font-size:34px" data-dx="-30">−120</div>
+    <div class="drift" style="left:90px;top:760px;font-size:30px" data-dx="30">−300</div>
+    <div class="drift" style="right:60px;top:480px;font-size:22px" data-dx="-20">+7 500</div>
+    <div class="t" style="top:330px">
+      <span class="ln"><span class="sm">Зарплата пришла,</span></span>
+      <span class="ln"><span class="big">А деньги</span></span>
+      <span class="ln"><span class="big acc">Куда-то</span></span>
+      <span class="ln"><span class="big acc">Ушли?</span></span>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="scene" id="s1">
+    <div class="t"><span class="ln"><span class="sm">Шаг 1</span></span><span class="ln"><span class="mid">Записали</span></span><span class="ln"><span class="big acc">Доход</span></span></div>
+    <div class="phone"><div class="scr"><img src="img/2-add.png" data-pan="-150" style="--pan:3s"></div></div>
+    <div class="chip" style="left:14px;top:640px">+2 500 смн</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="scene" id="s2">
+    <div class="t"><span class="ln"><span class="sm">Шаг 2</span></span><span class="ln"><span class="mid">Делит доход</span></span><span class="ln"><span class="mid acc">по счетам</span></span></div>
+    <div class="phone"><div class="scr"><img src="img/3-accounts.png" data-pan="0" style="--pan:3s"></div></div>
+    <div class="chip" style="right:16px;top:640px">Родители · Капитал · Мечты</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="scene" id="s3">
+    <div class="t"><span class="ln"><span class="big">Долги</span></span><span class="ln"><span class="mid2 acc">Под контролем</span></span></div>
+    <div class="phone"><div class="scr"><img src="img/5-debts.png" data-pan="0"></div></div>
+    <div class="chip" style="left:14px;top:690px">Сколько осталось</div>
+  </div>
+
+  <!-- 5 -->
+  <div class="scene" id="s4">
+    <div class="t"><span class="ln"><span class="big">Мечты</span></span><span class="ln"><span class="mid acc">С планом</span></span><span class="ln"><span class="sm">Игра на 52 недели</span></span></div>
+    <div class="phone"><div class="scr"><img src="img/4-dreams.png" data-pan="0"></div></div>
+    <div class="chip" style="right:14px;top:690px">10 → 520 смн</div>
+  </div>
+
+  <!-- 6 -->
+  <div class="scene" id="s5">
+    <div class="t"><span class="ln"><span class="sm">Telegram-бот</span></span><span class="ln"><span class="big">Напомнит</span></span><span class="ln"><span class="big acc">Вовремя</span></span></div>
+    <div class="cards">
+      <div class="card"><span class="ic">💳</span><div><b>Платёж по долгу</b><small>В день платежа, накануне и за 3 дня</small></div></div>
+      <div class="card"><span class="ic">⚠️</span><div><b>Просрочка</b><small>Каждый день до оплаты</small></div></div>
+      <div class="card"><span class="ic">📊</span><div><b>Сводка</b><small>За неделю и за месяц</small></div></div>
+      <div class="card"><span class="ic">✨</span><div><b>Мечты и цели</b><small>Накопили, срок близко</small></div></div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="scene end" id="s6">
+    <img src="img/logo.png">
+    <div class="tag">Просто и устойчиво</div>
+    <div class="pill">Открыть в Telegram</div>
+    <div class="bot">@darakhti_daromad_bot</div>
+  </div>
+</div>
+<script>
+const T=[0,2.4,6.0,9.6,13.2,16.8,20.4,24.6]; // начало каждой сцены, последний элемент — конец
+const sc=[...document.querySelectorAll('.scene')];
+const dots=document.getElementById('dots'); sc.forEach(()=>dots.appendChild(document.createElement('i')));
+function show(i){
+  sc.forEach((s,k)=>{s.classList.toggle('on',k===i)});
+  [...dots.children].forEach((d,k)=>d.classList.toggle('on',k<=i));
+  const s=sc[i];
+  s.querySelectorAll('img[data-pan]').forEach(im=>{const y=+im.dataset.pan; requestAnimationFrame(()=>requestAnimationFrame(()=>{im.style.transform=`translateY(${y}px)`}))});
+  s.querySelectorAll('.drift').forEach(d=>{d.style.transform=`translateX(${d.dataset.dx}px)`});
+}
+function reset(){sc.forEach(s=>{s.querySelectorAll('img[data-pan]').forEach(im=>{im.style.transition='none';im.style.transform='none';void im.offsetWidth;im.style.transition=''})})}
+window.__start=()=>{window.__startedAt=Date.now();reset();T.slice(0,7).forEach((t,i)=>setTimeout(()=>show(i),t*1000));setTimeout(()=>{window.__done=true},T[7]*1000)};
+window.addEventListener('load',()=>setTimeout(window.__start,300));
+</script>
+</body></html>
