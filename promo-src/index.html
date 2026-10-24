@@ -4,8 +4,8 @@
 <style>
 :root{--g:#3ddc97;--bg1:#06150f;--bg2:#0d2a1f;--tx:#f4f2ec}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:540px;height:960px;overflow:hidden;background:#06150f;font-family:"Liberation Sans","DejaVu Sans",Arial,sans-serif}
-#stage{position:relative;width:540px;height:960px;overflow:hidden;background:
+html,body{width:1080px;height:1920px;overflow:hidden;background:#06150f;font-family:"Liberation Sans","DejaVu Sans",Arial,sans-serif}
+#stage{position:absolute;left:0;top:0;transform:scale(2);transform-origin:0 0;width:540px;height:960px;overflow:hidden;background:
  radial-gradient(520px 420px at 78% 12%,rgba(61,220,151,.16),transparent 70%),
  radial-gradient(500px 500px at 10% 92%,rgba(61,220,151,.10),transparent 70%),
  linear-gradient(180deg,var(--bg2),var(--bg1) 60%)}
@@ -111,7 +111,7 @@ html,body{width:540px;height:960px;overflow:hidden;background:#06150f;font-famil
   </div>
 </div>
 <script>
-const T=[0,2.6,6.2,9.8,13.2,16.6,20.2,24.6]; // начало каждой сцены, последний элемент — конец
+const T=[0,2.4,6.0,9.6,13.2,16.8,20.4,24.6]; // начало каждой сцены, последний элемент — конец
 const sc=[...document.querySelectorAll('.scene')];
 const dots=document.getElementById('dots'); sc.forEach(()=>dots.appendChild(document.createElement('i')));
 function show(i){
@@ -122,7 +122,7 @@ function show(i){
   s.querySelectorAll('.drift').forEach(d=>{d.style.transform=`translateX(${d.dataset.dx}px)`});
 }
 function reset(){sc.forEach(s=>{s.querySelectorAll('img[data-pan]').forEach(im=>{im.style.transition='none';im.style.transform='none';void im.offsetWidth;im.style.transition=''})})}
-window.__start=()=>{reset();T.slice(0,7).forEach((t,i)=>setTimeout(()=>show(i),t*1000));setTimeout(()=>{window.__done=true},T[7]*1000)};
+window.__start=()=>{window.__startedAt=Date.now();reset();T.slice(0,7).forEach((t,i)=>setTimeout(()=>show(i),t*1000));setTimeout(()=>{window.__done=true},T[7]*1000)};
 window.addEventListener('load',()=>setTimeout(window.__start,300));
 </script>
 </body></html>
