@@ -2,7 +2,7 @@ import { CSSProperties, useEffect, useState } from 'react';
 import { ChevronIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import {
   ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, balancesOf, fmt, groupNote, groupSum,
-  fundDreams, hasDebt, hiddenAccounts, hasShares, mainAccountOf, remaining, sharesOf,
+  fundDreams, hasDebt, hiddenAccounts, hasShares, mainAccountOf, remaining, shareRule, sharesOf,
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
@@ -37,7 +37,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
   const hide = hiddenAccounts(state);
   const sh = sharesOf(state);
   const main = mainAccountOf(state);
-  const shareHint = (id: AccountId) => (!hasShares(state) ? '' : id === main ? `⭐ Ҳисоби асосӣ · боқимонда ${fmt(sh[id] ?? 100)}%` : sh[id] ? `${fmt(sh[id])}% аз ҳар даромад` : '');
+  const shareHint = (id: AccountId) => (!hasShares(state) ? '' : id === main ? `⭐ Ҳисоби асосӣ · боқимонда ${fmt(sh[id] ?? 100)}%` : (() => { const r = shareRule(state, id); return r ? (r.from ? `${fmt(r.pct)}% аз ҳисоби «${r.from}»` : `${fmt(r.pct)}% аз ҳар даромад`) : ''; })());
   const debtTotal = state.debts.reduce((sum, d) => sum + d.amount, 0);
   const debtPaid = state.debts.reduce((sum, d) => sum + Math.min(d.amount, d.paid), 0);
   const debtLeft = state.debts.reduce((sum, d) => sum + remaining(d), 0);

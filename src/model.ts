@@ -719,39 +719,70 @@ export function mainAccountOf(s: Pick<State, 'accounts' | 'mainAccount'>): Accou
   return (mine.find(a => a.id === 'cash') ?? mine[0])?.id ?? 'cash';
 }
 
-/** Фоизи ҳар ҳисоб аз ҳар даромад (ҳисоби асосӣ — боқимонда то 100). */
-export function sharesOf(s: Pick<State, 'accounts' | 'mainAccount'>): Record<AccountId, number> {
-  const main = mainAccountOf(s);
-  const out: Record<AccountId, number> = {};
-  let sum = 0;
-  for (const a of s.accounts) {
-    if (a.archived || a.id === main || a.id === 'debt' || !(a.share && a.share > 0)) continue;
-    out[a.id] = a.share;
-    sum += a.share;
+/** Манбаи фоизи ҳисоб: ҳисоби дигар (агар дуруст бошад, давр нест) ё `undefined` — аз ҳар даромад. */
+export function shareSource(s: Pick<State, 'accounts' | 'mainAccount'>, a: AccountDef): AccountId | undefined {
+  const f = a.shareFrom;
+  if (!f || f === a.id || f === 'debt') return undefined;
+  if (!s.accounts.some(x => x.id === f && !x.archived)) return undefined;
+  let cur: AccountId | undefined = f;
+  for (let n = 0; cur && n < 12; n++) {
+    if (cur === a.id) return undefined; // давр
+    cur = s.accounts.find(x => x.id === cur)?.shareFrom;
   }
-  if (sum > 100) for (const id of Object.keys(out)) out[id] = (out[id] * 100) / sum; // эҳтиёт: аз 100% зиёд нашавад
-  out[main] = round2(100 - Math.min(100, sum));
+  return f;
+}
+
+/** Тақсими даромад аз рӯи фоизи ҳисобҳо: боқимонда ба ҳисоби асосӣ; фоизи «аз ҳисоби дигар» аз он чи ба ҳамон ҳисоб расидааст. */
+export function allocateFlat(amount: number, s: Pick<State, 'accounts' | 'mainAccount'>): Alloc {
+  const out = emptyAlloc();
+  const main = mainAccountOf(s);
+  const rules = s.accounts.filter(a => !a.archived && a.id !== main && a.id !== 'debt' && a.share && a.share > 0)
+    .map(a => ({ id: a.id, pct: a.share as number, from: shareSource(s, a) }));
+  // Ҷамъи фоизҳои як манбаъ аз 100 зиёд нашавад
+  const k = new Map<string, number>();
+  for (const key of new Set(rules.map(r => r.from ?? '')))
+    k.set(key, Math.min(1, 100 / Math.max(1, rules.filter(r => (r.from ?? '') === key).reduce((t, r) => t + r.pct, 0))));
+  const recv: Record<string, number> = {};
+  let topSum = 0;
+  for (const r of rules.filter(r => !r.from)) {
+    recv[r.id] = round2((amount * r.pct * (k.get('') ?? 1)) / 100);
+    topSum += recv[r.id];
+  }
+  recv[main] = round2(amount - topSum);
+  const taken: Record<string, number> = {};
+  const queue = [main, ...rules.filter(r => !r.from).map(r => r.id)];
+  for (let i = 0; i < queue.length; i++) {
+    const src = queue[i];
+    for (const r of rules.filter(x => x.from === src)) {
+      const v = round2((recv[src] * r.pct * (k.get(src) ?? 1)) / 100);
+      recv[r.id] = v;
+      taken[src] = (taken[src] ?? 0) + v;
+      queue.push(r.id);
+    }
+  }
+  for (const id of Object.keys(recv)) out[id] = round2(recv[id] - (taken[id] ?? 0));
+  return out;
+}
+
+/** Қоидаи фоизи ҳисоб: чанд фоиз ва аз кадом ҳисоб (номи ҳисоб); `from` холӣ — аз ҳар даромад. */
+export function shareRule(s: Pick<State, 'accounts' | 'mainAccount'>, id: AccountId): { pct: number; from?: string } | null {
+  const a = s.accounts.find(x => x.id === id);
+  if (!a || a.archived || !(a.share && a.share > 0) || id === mainAccountOf(s)) return null;
+  const src = shareSource(s, a);
+  return { pct: a.share, ...(src ? { from: s.accounts.find(x => x.id === src)?.name } : {}) };
+}
+
+/** Фоизи воқеии ҳар ҳисоб аз ҳар 100 сомонии даромад (ҳисоби асосӣ — боқимонда). */
+export function sharesOf(s: Pick<State, 'accounts' | 'mainAccount'>): Record<AccountId, number> {
+  const all = allocateFlat(100, s);
+  const main = mainAccountOf(s);
+  const out: Record<AccountId, number> = { [main]: all[main] ?? 0 };
+  for (const [id, v] of Object.entries(all)) if (id !== main && v > 0) out[id] = v;
   return out;
 }
 
 /** Оё ягон ҳисоб (ғайр аз асосӣ) фоизи худкор дорад? */
 export const hasShares = (s: Pick<State, 'accounts' | 'mainAccount'>) => Object.keys(sharesOf(s)).length > 1;
-
-/** Тақсими даромад аз рӯи фоизи ҳисобҳо: боқимонда ба ҳисоби асосӣ. */
-export function allocateFlat(amount: number, s: Pick<State, 'accounts' | 'mainAccount'>): Alloc {
-  const out = emptyAlloc();
-  const main = mainAccountOf(s);
-  const sh = sharesOf(s);
-  let used = 0;
-  for (const [id, pct] of Object.entries(sh)) {
-    if (id === main) continue;
-    const v = round2((amount * pct) / 100);
-    out[id] = v;
-    used += v;
-  }
-  out[main] = round2(amount - used);
-  return out;
-}
 
 /** Тақсими даромад: реҷаи оддӣ — аз рӯи фоизҳо; реҷаи кӯҳна (то гузариш) — аз рӯи дарахт. */
 export const allocateIncome = (s: State, amount: number, debt = hasDebt(s.debts)): Alloc =>

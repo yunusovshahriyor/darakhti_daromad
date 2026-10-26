@@ -1047,5 +1047,11 @@
 "Ин ҳисоби асосӣ аст. Аввал ҳисоби асосии дигарро интихоб кунед": "This is the main account. Choose another main account first.",
 "Ҳисобҳои худро созед ва барои ҳар кадом фоизи муайянро аз ҳар даромад ҷудо кунед. Боқимонда ба ҳисоби асосӣ (⭐) меравад.": "Create your own accounts and set aside a percentage of every income for any of them. The remainder goes to the main account (⭐).",
 "{0} ҳисоб · аз ҳар даромад {1}% ҷудо мешавад": "{0} accounts · {1}% of every income is set aside",
-"Фоизҳои ҳисобҳо ҷудо намешаванд: даромад пурра ба ҳисоби интихобшуда меравад.": "Account percentages are not applied: the whole income goes to the chosen account."
+"Фоизҳои ҳисобҳо ҷудо намешаванд: даромад пурра ба ҳисоби интихобшуда меравад.": "Account percentages are not applied: the whole income goes to the chosen account.",
+"Чанд фоиз ҷудо шавад (%)": "How many percent to set aside (%)",
+"Аз куҷо ҷудо шавад": "Set aside from",
+"Аз ҳар даромад": "From every income",
+"Аз ҳисоби «{0}»": "From the “{0}” account",
+"Фоиз аз маблағе ҷудо мешавад, ки аз ҳар даромад ба ҳисоби интихобшуда мерасад.": "The percentage is taken from the amount that reaches the chosen account from every income.",
+"{0}% аз ҳисоби «{1}»": "{0}% from the “{1}” account"
 }
