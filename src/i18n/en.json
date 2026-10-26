@@ -1033,5 +1033,19 @@
 "Калкулятор": "Calculator",
 "Гузоштани натиҷа": "Use result",
 "🔁 Обуна": "🔁 Subscription",
-"Ҳар рӯз": "Every day"
+"Ҳар рӯз": "Every day",
+"⭐ Ҳисоби асосӣ": "⭐ Main account",
+"⭐ Ҳисоби асосӣ · боқимонда {0}%": "⭐ Main account · remainder {0}%",
+"Аз ҳар даромад (%)": "From every income (%)",
+"0 — ҷудо намешавад": "0 — nothing is set aside",
+"Масалан, 10 — аз ҳар даромад 10% ба ин ҳисоб меравад.": "For example, 10 — 10% of every income goes to this account.",
+"⭐ Ин ҳисоби асосӣ аст: аз ҳар даромад фоизҳои ҳисобҳои дигар ҷудо мешавад ва боқимонда ба ин ҷо меравад.": "⭐ This is the main account: the percentages of other accounts are set aside from every income first, and the remainder comes here.",
+"⭐ Ҳисоби асосӣ кардан": "⭐ Make it the main account",
+"Ҳисоби асосӣ иваз шуд ✓": "Main account changed ✓",
+"Фоиз аз 100 зиёд буда наметавонад": "The percentage cannot be more than 100",
+"Ҷамъи фоизҳо аз 100 зиёд мешавад: барои ин ҳисоб ҳадди аксар {0}%": "The percentages would exceed 100: the maximum for this account is {0}%",
+"Ин ҳисоби асосӣ аст. Аввал ҳисоби асосии дигарро интихоб кунед": "This is the main account. Choose another main account first.",
+"Ҳисобҳои худро созед ва барои ҳар кадом фоизи муайянро аз ҳар даромад ҷудо кунед. Боқимонда ба ҳисоби асосӣ (⭐) меравад.": "Create your own accounts and set aside a percentage of every income for any of them. The remainder goes to the main account (⭐).",
+"{0} ҳисоб · аз ҳар даромад {1}% ҷудо мешавад": "{0} accounts · {1}% of every income is set aside",
+"Фоизҳои ҳисобҳо ҷудо намешаванд: даромад пурра ба ҳисоби интихобшуда меравад.": "Account percentages are not applied: the whole income goes to the chosen account."
 }

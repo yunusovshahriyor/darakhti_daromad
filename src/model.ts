@@ -191,7 +191,7 @@ export const balancesOf = (s: State) => balances(s.incomes, s.expenses, s.transf
  * ва «Вақтхушӣ» вақте қарз ҳаст (ҳиссааш ба «Пардохти қарз» меравад).
  */
 export const hiddenAccounts = (s: State): AccountId[] => {
-  if (s.mode === 'free') return ['debt', 'fun'];
+  if (s.mode === 'free') return Math.abs(balancesOf(s).debt ?? 0) < 0.005 ? ['debt'] : [];
   if (hasDebt(s.debts)) return ['fun'];
   return Math.abs(balancesOf(s).debt) < 0.005 ? ['debt'] : [];
 };
@@ -677,7 +677,7 @@ let FREE = false;
 export const isFree = (s: Pick<State, 'mode'>) => s.mode === 'free';
 
 /** Ҳисобҳои хизматии системаи Давлатов: дар ҳолати озод дар рӯйхати ҳисобҳои корбар нестанд. */
-export const SYSTEM_IDS: AccountId[] = ['debt', 'fun', 'bigDream', 'smallDream'];
+export const SYSTEM_IDS: AccountId[] = ['debt', 'bigDream', 'smallDream'];
 
 /** Гузариш ба ҳолати озод: маълумот мемонад, танҳо фоизҳо истифода намешаванд. */
 export function toFreeMode(s: State): State {
@@ -706,6 +706,94 @@ export function newFreeAccounts(): AccountDef[] {
     { id: 'cash', name: 'Нақд', icon: '💵', color: '#2f7d55' },
     { id: 'card', name: 'Корт', icon: '💳', color: '#1f6fa3' },
   ];
+}
+
+// ----- Реҷаи оддӣ: ҳисобҳои худи корбар + фоизи муайян аз ҳар даромад -----
+
+const round2 = (v: number) => Math.round(v * 100) / 100;
+
+/** Ҳисоби асосӣ: интихоби корбар, вагарна «Нақд»/аввалин ҳисоби корбар. */
+export function mainAccountOf(s: Pick<State, 'accounts' | 'mainAccount'>): AccountId {
+  const mine = s.accounts.filter(a => !a.archived && !SYSTEM_IDS.includes(a.id));
+  if (s.mainAccount && mine.some(a => a.id === s.mainAccount)) return s.mainAccount;
+  return (mine.find(a => a.id === 'cash') ?? mine[0])?.id ?? 'cash';
+}
+
+/** Фоизи ҳар ҳисоб аз ҳар даромад (ҳисоби асосӣ — боқимонда то 100). */
+export function sharesOf(s: Pick<State, 'accounts' | 'mainAccount'>): Record<AccountId, number> {
+  const main = mainAccountOf(s);
+  const out: Record<AccountId, number> = {};
+  let sum = 0;
+  for (const a of s.accounts) {
+    if (a.archived || a.id === main || a.id === 'debt' || !(a.share && a.share > 0)) continue;
+    out[a.id] = a.share;
+    sum += a.share;
+  }
+  if (sum > 100) for (const id of Object.keys(out)) out[id] = (out[id] * 100) / sum; // эҳтиёт: аз 100% зиёд нашавад
+  out[main] = round2(100 - Math.min(100, sum));
+  return out;
+}
+
+/** Оё ягон ҳисоб (ғайр аз асосӣ) фоизи худкор дорад? */
+export const hasShares = (s: Pick<State, 'accounts' | 'mainAccount'>) => Object.keys(sharesOf(s)).length > 1;
+
+/** Тақсими даромад аз рӯи фоизи ҳисобҳо: боқимонда ба ҳисоби асосӣ. */
+export function allocateFlat(amount: number, s: Pick<State, 'accounts' | 'mainAccount'>): Alloc {
+  const out = emptyAlloc();
+  const main = mainAccountOf(s);
+  const sh = sharesOf(s);
+  let used = 0;
+  for (const [id, pct] of Object.entries(sh)) {
+    if (id === main) continue;
+    const v = round2((amount * pct) / 100);
+    out[id] = v;
+    used += v;
+  }
+  out[main] = round2(amount - used);
+  return out;
+}
+
+/** Тақсими даромад: реҷаи оддӣ — аз рӯи фоизҳо; реҷаи кӯҳна (то гузариш) — аз рӯи дарахт. */
+export const allocateIncome = (s: State, amount: number, debt = hasDebt(s.debts)): Alloc =>
+  isFree(s) ? allocateFlat(amount, s) : allocate(amount, s.tree, debt);
+
+/** Оё ҳолат бояд ба реҷаи оддӣ гузарад (маълумоти реҷаи кӯҳна ё ҳисоби хизматии «Вақтхушӣ»)? */
+export const needsSimple = (s: State, hasData: boolean): boolean => {
+  if (s.mode !== 'free') return s.mode === 'system' || hasData;
+  if (!s.mainAccount) return true;
+  const fun = s.accounts.find(a => a.id === 'fun' && !a.archived);
+  return !!fun && !(fun.share && fun.share > 0) && Math.abs(balances(s.incomes, s.expenses, s.transfers).fun ?? 0) < 0.005;
+};
+
+/**
+ * Гузариш ба реҷаи оддӣ: ҳамаи ҳисобҳо мемонанд; фоизи воқеии ҳар кадом аз ҳар даромад (аз дарахт) ба
+ * `share` меравад, то тақсими даромади нав мисли пештара шавад. Боқимондаи «Пардохти қарз» ба ҳисоби асосӣ мегузарад.
+ */
+export function toSimple(s: State): State {
+  if (s.mode === 'free') {
+    // Корбарони пештараи реҷаи озод: ҳисоби хизматии «Вақтхушӣ» дигар нест; агар холӣ бошад, нест мешавад
+    const fun = s.accounts.find(a => a.id === 'fun' && !a.archived);
+    const b = fun ? balances(s.incomes, s.expenses, s.transfers) : {};
+    const accounts = fun && Math.abs(b.fun ?? 0) < 0.005 && !(fun.share && fun.share > 0)
+      ? s.accounts.map(a => (a.id === 'fun' ? { ...a, archived: true } : a)) : s.accounts;
+    const next = { ...s, accounts };
+    return s.mainAccount ? next : { ...next, mainAccount: mainAccountOf(next) };
+  }
+  const pct = allocate(100, s.tree, false);
+  const mine = s.accounts.filter(a => !a.archived && !SYSTEM_IDS.includes(a.id));
+  const living = mine.find(a => a.id === 'living');
+  const main = (living ?? [...mine].sort((a, b) => (pct[b.id] ?? 0) - (pct[a.id] ?? 0))[0])?.id ?? 'living';
+  const accounts = s.accounts.map(a => {
+    const v = round2(pct[a.id] ?? 0);
+    return { ...a, ...(a.id !== main && v > 0 ? { share: v } : {}) };
+  });
+  const bal = balances(s.incomes, s.expenses, s.transfers);
+  const left = round2(bal.debt ?? 0);
+  const today = new Date().toLocaleDateString('sv-SE');
+  const transfers = Math.abs(left) > 0.005
+    ? [...s.transfers, left > 0 ? { id: uid(), from: 'debt', to: main, amount: left, date: today } : { id: uid(), from: main, to: 'debt', amount: -left, date: today }]
+    : s.transfers;
+  return { ...s, mode: 'free', accounts, mainAccount: main, transfers };
 }
 
 /** Рӯйхатҳои зиндаро аз ҳолати ҷорӣ нав мекунад (дар болои render-и барнома даъват мешавад). */

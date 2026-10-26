@@ -12,14 +12,13 @@ import LockScreen from './components/LockScreen';
 import { autoHide, getLock, isLockOn } from './lock';
 import ReceiptScanner from './components/ReceiptScanner';
 import Onboarding, { INTRO_RESUME_KEY } from './components/Onboarding';
-import SystemGuide from './views/SystemGuide';
 import Celebrate from './components/Celebrate';
 import InfoSheet from './components/InfoSheet';
 import {
   BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, WalletIcon,
 } from './components/Icons';
 import { setRootBackHandler, useHistoryLayer } from './components/useHistoryLayer';
-import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, newFreeAccounts, syncCatalog, toFreeMode, toSystemMode, today, uid } from './model';
+import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, needsSimple, newFreeAccounts, syncCatalog, toFreeMode, toSimple, today, uid } from './model';
 import { emptyState, loadState, saveState, stateObjHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
@@ -47,7 +46,7 @@ const RIGHT: { id: Tab; label: string; icon: ReactNode }[] = [
 ];
 
 const TITLES: Record<Tab, string> = { home: 'Асосӣ', accounts: 'Ҳисобҳо', history: 'Таърих', profile: 'Профил' };
-const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот', guide: 'Системаҳои кор' };
+const SUB_TITLES: Record<Sub, string> = { dreams: 'Орзуҳо', debts: 'Қарзҳо', settings: 'Танзимот' };
 /** Огоҳии баромад: 3 сония намоиш дода мешавад; дар ҳамин вақт бозгашти дуюм барномаро мепӯшад. */
 const EXIT_MSG = 'Барои баромадан боз тугмаи «Назад»-ро пахш кунед';
 const HIDE_KEY = 'darakhti:hide';
@@ -55,7 +54,7 @@ const NAV_KEY = 'darakhti:nav';
 const FILTER_KEY = 'darakhti:hfilter';
 
 const TAB_IDS: Tab[] = ['home', 'accounts', 'history', 'profile'];
-const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings', 'guide'];
+const SUB_IDS: Sub[] = ['dreams', 'debts', 'settings'];
 const FILTER_IDS: HistoryFilter[] = ['all', 'income', 'expense', 'transfer'];
 
 interface Nav {
@@ -162,15 +161,19 @@ export default function App() {
       setIntro(true);
     }
   }, [fresh, settled, wantTg, authOpen, sync.status]);
-  const pickMode = (m: 'system' | 'free') =>
-    setState(s => {
-      // Бе маълумот: ҳолати тоза аз нав сохта мешавад; бо маълумот: гузариш, ки маълумотро нигоҳ медорад
-      if (!stateObjHasData(s)) {
-        const base = emptyState();
-        return m === 'free' ? { ...toFreeMode(base), accounts: newFreeAccounts() } : { ...base, mode: 'system' };
-      }
-      return m === 'free' ? toFreeMode(s) : toSystemMode(s);
-    });
+  // Системаи ягона: ҳисобҳои худи корбар + фоизи муайян аз ҳар даромад. Корбари нав бо «Нақд» ва «Корт» оғоз мекунад.
+  const pickMode = () =>
+    setState(s => (stateObjHasData(s) ? toSimple(s) : { ...toFreeMode(emptyState()), accounts: newFreeAccounts() }));
+
+  // Муқаддима баста шуд, аммо услуб ҳанӯз муқаррар нашудааст: ҳолати оддии тоза
+  useEffect(() => {
+    if (!intro && introShown.current && state.mode === undefined && !stateObjHasData(state)) pickMode();
+  }, [intro, state.mode]);
+
+  // Маълумоти системаи кӯҳна (Давлатов) худкор ба реҷаи оддӣ мегузарад: ҳисобҳо ва бақияҳо мемонанд
+  useEffect(() => {
+    if (needsSimple(state, stateObjHasData(state))) setState(s => (needsSimple(s, stateObjHasData(s)) ? toSimple(s) : s));
+  }, [state]);
 
   // Ҳамаи қарзҳо пардохт шуданд: боқимондаи «Пардохти қарз» ба «Сармоя» мегузарад
   useEffect(() => {
@@ -423,8 +426,7 @@ export default function App() {
     }
     if (sub === 'dreams') return <Dreams {...props} onToast={setToast} />;
     if (sub === 'debts') return <Debts {...props} onToast={setToast} />;
-    if (sub === 'settings') return <SettingsView {...props} onToast={setToast} onGuide={() => setSub('guide')} page={setPageName} setPage={setSetPageName} />;
-    if (sub === 'guide') return <SystemGuide {...props} onToast={setToast} onIntro={() => setIntro(true)} />;
+    if (sub === 'settings') return <SettingsView {...props} onToast={setToast} onIntro={() => setIntro(true)} page={setPageName} setPage={setSetPageName} />;
     if (tab === 'home') {
       return (
         <Dashboard {...props} {...privacy} onToast={setToast} onNavigate={go} onScan={() => setScanOpen(true)}
@@ -484,7 +486,6 @@ export default function App() {
       {locked && <LockScreen onUnlock={() => setLocked(false)} />}
       {intro && (
         <Onboarding mode={state.mode} onPick={pickMode} onClose={() => setIntro(false)}
-          onGuide={() => { setAcct(null); setSub('guide'); }}
           onAddIncome={() => setAdding(true)}
           onTelegram={() => { setSub(null); setAcct(null); setWantTg(true); setTab('profile'); }} />
       )}

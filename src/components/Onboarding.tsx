@@ -1,10 +1,7 @@
 import { TouchEvent, useRef, useState } from 'react';
-import { GUIDE } from '../guideText';
 import { LANGS, currentLang, setLang } from '../i18n';
 import { brand } from '../brand';
 import { ONBOARD } from '../onboardText';
-
-type Mode = 'system' | 'free';
 
 /** Нишона: пас аз иваз шудани забон (саҳифа аз нав бор мешавад) муқаддима боз кушода мешавад. */
 export const INTRO_RESUME_KEY = 'darakhti:intro-resume';
@@ -13,27 +10,24 @@ const changeLang = (l: Parameters<typeof setLang>[0]) => {
   setLang(l);
 };
 
-/** Муқаддимаи кӯтоҳ (4 экран): хуш омадед, чӣ тавр кор мекунад, интихоби услуб, оғоз. */
-export default function Onboarding({ mode, onPick, onClose, onGuide, onAddIncome, onTelegram }: {
-  mode: Mode | undefined;
-  onPick: (m: Mode) => void;
+/** Муқаддимаи кӯтоҳ (3 экран): хуш омадед, чӣ тавр кор мекунад, оғоз. */
+export default function Onboarding({ mode, onPick, onClose, onAddIncome, onTelegram }: {
+  mode: string | undefined;
+  onPick: () => void;
   onClose: () => void;
-  onGuide: () => void;
   onAddIncome: () => void;
   onTelegram: () => void;
 }) {
   const lang = currentLang();
   const t = ONBOARD[lang];
-  const g = GUIDE[lang];
   const [i, setI] = useState(0);
   const touch = useRef<number | null>(null);
-  const last = 3;
+  const last = 2;
   const chosen = mode !== undefined;
-  // Дар экрани 3 бояд услуб интихоб шавад (пешфарз — системаи Давлатов, агар корбар ҳеҷ чиз нагирад)
   const go = (n: number) => setI(Math.max(0, Math.min(last, n)));
-  const next = () => { if (i === 2 && !chosen) onPick('system'); go(i + 1); };
-  const skip = () => { if (i < 2) go(2); else { if (!chosen) onPick('system'); onClose(); } };
-  const finish = (after?: () => void) => { if (!chosen) onPick('system'); onClose(); after?.(); };
+  const next = () => go(i + 1);
+  const skip = () => go(last);
+  const finish = (after?: () => void) => { if (!chosen) onPick(); onClose(); after?.(); };
 
   const onStart = (e: TouchEvent) => { touch.current = e.touches[0].clientX; };
   const onEnd = (e: TouchEvent) => {
@@ -78,25 +72,6 @@ export default function Onboarding({ mode, onPick, onClose, onGuide, onAddIncome
         </section>
 
         <section className="ob-slide">
-          <h1>{t.s3[0]}</h1>
-          <p>{t.s3[1]}</p>
-          <div className="ob-modes">
-            {g.cards.map((c, k) => {
-              const m: Mode = k === 0 ? 'system' : 'free';
-              return (
-                <button key={m} className={mode === m ? 'ob-mode on' : 'ob-mode'} onClick={() => onPick(m)} aria-pressed={mode === m}>
-                  <span className="ob-mi">{c.icon}</span>
-                  <b>{c.title}</b>
-                  <small>{c.text}</small>
-                  <span className="ob-check">{mode === m ? '✓' : ''}</span>
-                </button>
-              );
-            })}
-          </div>
-          <button className="ob-link center" onClick={() => { onClose(); onGuide(); }}>{t.s3more} ›</button>
-        </section>
-
-        <section className="ob-slide">
           <div className="ob-done">🌳</div>
           <h1>{t.s4[0]}</h1>
           <p>{t.s4[1]}</p>
@@ -113,9 +88,9 @@ export default function Onboarding({ mode, onPick, onClose, onGuide, onAddIncome
 
       <div className="ob-bottom">
         <div className="ob-dots" aria-hidden>
-          {[0, 1, 2, 3].map(k => <i key={k} className={k === i ? 'on' : ''} />)}
+          {[0, 1, 2].map(k => <i key={k} className={k === i ? 'on' : ''} />)}
         </div>
-        {i < last && <button className="btn big" onClick={next} disabled={i === 2 && !chosen}>{t.next}</button>}
+        {i < last && <button className="btn big" onClick={next}>{t.next}</button>}
       </div>
     </div>
   );

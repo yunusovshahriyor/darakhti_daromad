@@ -7,6 +7,8 @@ export interface AccountDef {
   icon: string;
   color: string;
   archived?: boolean;
+  /** Фоизи ин ҳисоб аз ҳар даромад (реҷаи оддӣ). Ҳисоби асосӣ боқимондаро мегирад. */
+  share?: number;
 }
 
 /** Дарахти тақсим: фоиз нисбат ба волид; фоизи охирини гурӯҳ — боқимонда (то 100%). */
@@ -173,6 +175,8 @@ export interface Recurring {
 
 export interface State {
   mode?: AppMode;
+  /** Ҳисоби асосӣ: боқимондаи даромад (баъди ҷудо кардани фоизҳо) ба ин ҷо меравад. */
+  mainAccount?: AccountId;
   /** Рамзи асъор (ISO): TJS — пешфарз. Ҳамаи маблағҳо дар ҳамин асъор нигоҳ дошта мешаванд. */
   currency?: string;
   recurring?: Recurring[];

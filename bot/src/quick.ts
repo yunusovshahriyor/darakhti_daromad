@@ -1,7 +1,7 @@
 /** Сабти хароҷот ва даромад аз Telegram: матн («такси 21») ё паёми овозӣ. Пеш аз сабт корти тасдиқ фиристода мешавад. */
 import { swapUnit } from '../../src/currency';
 import { categoryIcon, orderedSources, sourceIcon } from '../../src/categories';
-import { ACCOUNTS, balancesOf, fmt, isFree, syncCatalog } from '../../src/model';
+import { ACCOUNTS, balancesOf, fmt, hasShares, syncCatalog } from '../../src/model';
 import { applyDraft, categoryNames, draftFrom, undoApplied, visibleAccounts } from '../../src/quickAdd';
 import type { Draft } from '../../src/quickAdd';
 import type { State } from '../../src/types';
@@ -35,7 +35,7 @@ function card(t: TFn, s: State, d: Draft, today: string): { text: string; markup
   } else {
     const ic = sourceIcon(d.source, s.incomeSources ?? []);
     lines.push(t("Манбаъ: {0}", `${ic ? `${ic} ` : ''}${esc(t(d.source))}`));
-    lines.push(isFree(s) || d.direct ? t("Ҳисоб: {0}", accName(t, d.account)) : t("Тақсим: аз рӯи системаи Давлатов"));
+    lines.push(d.direct || !hasShares(s) ? t("Ҳисоб: {0}", accName(t, d.account)) : t("Тақсим: аз рӯи фоизҳои ҳисобҳо"));
   }
   if (d.note) lines.push(t("Эзоҳ: {0}", esc(d.note)));
   if (d.date !== today) lines.push(t("Сана: {0}", d.date.split('-').reverse().join('.')));
@@ -153,7 +153,7 @@ export async function quickCallback(env: Env, chat: number, mid: number | undefi
     const head = draft.kind === 'expense'
       ? t("✅ <b>Хароҷот сабт шуд</b>\n{0} · {1}", money(t, draft.amount), esc(draft.note || (draft.category ? t(draft.category) : '') || accName(t, draft.account)))
       : t("✅ <b>Даромад сабт шуд</b>\n{0} · {1}", money(t, draft.amount), esc(t(draft.source)));
-    const tail = draft.kind === 'expense' || isFree(res.state) || draft.direct
+    const tail = draft.kind === 'expense' || !hasShares(res.state) || draft.direct
       ? `\n${t("Бақияи «{0}»: {1}", accName(t, draft.account), money(t, bal[draft.account] ?? 0))}` : '';
     return void await edit(cu(res.state, head + tail), { inline_keyboard: [[{ text: t("↩️ Бекор кардан"), callback_data: `q:u:${draft.kind === 'income' ? 'i' : 'e'}:${res.id}` }]] });
   }

@@ -4,7 +4,7 @@
  */
 import { orderedCategories, orderedSources } from './categories';
 import { poolOf } from './dreams';
-import { ACCOUNTS, ACCOUNT_ORDER, allocate, hasDebt, hiddenAccounts, isFree, uid } from './model';
+import { ACCOUNTS, ACCOUNT_ORDER, allocateIncome, emptyAlloc, hasShares, hiddenAccounts, mainAccountOf, uid } from './model';
 import { smartCategory } from './suggest';
 import type { AccountId, Expense, Income, State, Transfer } from './types';
 import { parseVoice } from './voiceParse';
@@ -17,7 +17,7 @@ export interface Draft {
   category: string | null;
   account: AccountId;
   source: string;
-  /** Даромад бе тақсим, танҳо ба як ҳисоб (системаи Давлатов). */
+  /** Даромад бе тақсим, танҳо ба як ҳисоб. */
   direct: boolean;
 }
 
@@ -35,11 +35,11 @@ const defaultAccount = (state: State): AccountId => {
   return vis[0] ?? ACCOUNT_ORDER[0] ?? 'cash';
 };
 
-/** Ҳолати озод: даромад ба ҳамон ҳисобе меравад, ки охирин бор гирифта буд. */
+/** Бе фоизи худкор: даромад ба ҳамон ҳисобе меравад, ки охирин бор гирифта буд. */
 const lastIncomeAccount = (state: State): AccountId => {
   const last = state.incomes.find(i => !i.kind && Object.keys(i.alloc).some(k => (i.alloc[k] ?? 0) > 0));
   const prev = last ? Object.keys(last.alloc).find(k => (last.alloc[k] ?? 0) > 0) : undefined;
-  return prev && ACCOUNT_ORDER.includes(prev) ? prev : ACCOUNT_ORDER[0] ?? 'cash';
+  return prev && ACCOUNT_ORDER.includes(prev) ? prev : mainAccountOf(state);
 };
 
 export function draftFrom(state: State, text: string, today: string): DraftResult {
@@ -58,7 +58,7 @@ export function draftFrom(state: State, text: string, today: string): DraftResul
     draft: {
       kind: r.kind, amount: r.amount, note, date: r.date ?? today,
       category: income ? null : (smartCategory(state, note) ?? null),
-      account: income && isFree(state) ? lastIncomeAccount(state) : defaultAccount(state),
+      account: income ? (hasShares(state) ? mainAccountOf(state) : lastIncomeAccount(state)) : defaultAccount(state),
       source, direct: false,
     },
   };
@@ -78,12 +78,11 @@ export function applyDraft(s: State, d: Draft): Applied {
     };
     return { id, state: { ...s, expenses: [...s.expenses, expense].sort((a, b) => b.date.localeCompare(a.date)) } };
   }
-  const free = isFree(s);
-  const one = free || d.direct;
+  const one = d.direct || !hasShares(s);
   const note = d.note.trim();
   const income: Income = {
     id, title: note ? `${d.source} · ${note}` : d.source, source: d.source, amount: d.amount, date: d.date,
-    alloc: one ? { ...allocate(0, s.tree, false), [d.account]: d.amount } : allocate(d.amount, s.tree, hasDebt(s.debts)),
+    alloc: one ? { ...emptyAlloc(), [d.account]: d.amount } : allocateIncome(s, d.amount),
   };
   // Ҳиссаи худкор ба орзуҳо: id-и интиқол = id-и даромад + k (барои бекор кардан)
   let k = 0;

@@ -12,7 +12,7 @@ import Sheet from '../components/Sheet';
 import TransferForm from '../components/TransferForm';
 import {
   ACCOUNTS, CARD_COLORS, balancesOf, boughtDreams, fmt, dayTitle, fundDreams, groupByDay, hasDebt, ledger, monthTitle,
-  remaining, shareOfIncome, splitDebts, subtitleOf, today, uid,
+  hasShares, remaining, sharesOf, splitDebts, subtitleOf, today, uid,
 } from '../model';
 import type { AccountId, Debt, Dream } from '../types';
 import type { Privacy } from './Accounts';
@@ -83,7 +83,7 @@ export default function AccountDetail({ state, setState, id, hidden, onToggleHid
   const goal = state.goals[id];
   const goalPct = goal ? Math.max(0, Math.min(100, (bal / goal) * 100)) : 0;
   const reached = !!goal && bal >= goal;
-  const share = shareOfIncome(id, state.tree, debt);
+  const share = hasShares(state) ? (sharesOf(state)[id] ?? 0) : 0;
 
   const entries = ledger(state, id);
   const month = today().slice(0, 7);

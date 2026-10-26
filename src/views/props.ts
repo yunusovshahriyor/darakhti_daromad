@@ -8,4 +8,4 @@ export interface Props {
   setState: Dispatch<SetStateAction<State>>;
 }
 
-export type Sub = 'dreams' | 'debts' | 'settings' | 'guide';
+export type Sub = 'dreams' | 'debts' | 'settings';

@@ -1,47 +1,34 @@
 import { useEffect, useState } from 'react';
 import { useConfirm } from '../components/ConfirmSheet';
-import { AddAccountSheet, EditNodeSheet } from '../components/AccountEditor';
 import CurrencySheet from '../components/CurrencySheet';
 import LockSheet from '../components/LockSheet';
 import RecurringSheet from '../components/RecurringSheet';
 import { isLockOn } from '../lock';
-import TreeDiagram, { TREE_ENABLED } from '../components/TreeDiagram';
 import FreeAccounts from '../components/FreeAccounts';
 import { defOf } from '../currency';
-import { ChevronIcon, PencilIcon, PlusIcon } from '../components/Icons';
+import { ChevronIcon } from '../components/Icons';
 import { useHistoryLayer } from '../components/useHistoryLayer';
 import Sheet from '../components/Sheet';
 import { ACCENTS, getAccent, getTheme, setTheme } from '../theme';
 import { hapticOn, setHapticOn, success } from '../haptic';
 import type { Accent, ThemeMode } from '../theme';
 import { LANGS, currentLang, setLang } from '../i18n';
+import { ONBOARD } from '../onboardText';
 import type { Lang } from '../i18n';
 import { hasUnsynced, saveLangToAccount, signOutAndWipe, syncNow, useSync } from '../sync';
-import { ACCOUNTS, CARD_COLORS, effectiveShareNode, findAccountNode, fmt, hasDebt, isFree, isRemainderNode } from '../model';
+import { fmt, hasShares, mainAccountOf, sharesOf, SYSTEM_IDS } from '../model';
 import { emptyState } from '../storage';
-import type { DistNode } from '../types';
 import type { Props } from './props';
-
-const CLOSED_KEY = 'darakhti:setclosed';
-
-const readClosed = (): string[] => {
-  try { return JSON.parse(localStorage.getItem(CLOSED_KEY) ?? '[]') as string[]; } catch { return []; }
-};
 
 export type SettingsPage = 'menu' | 'accounts';
 
-export default function SettingsView({ state, setState, onToast, onGuide, page, setPage }: Props & {
+export default function SettingsView({ state, setState, onToast, onIntro, page, setPage }: Props & {
   onToast: (m: string) => void;
-  onGuide: () => void;
+  onIntro: () => void;
   /** Зерсаҳифа дар App нигоҳ дошта мешавад: сарлавҳа ва тугмаи «бозгашт» дар ActionBar. */
   page: SettingsPage;
   setPage: (p: SettingsPage) => void;
 }) {
-  const [editId, setEditId] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
-  const [closed, setClosed] = useState(readClosed);
-  const [treeView, setTreeView] = useState(() => { try { return localStorage.getItem('darakhti:acctview') === 'tree'; } catch { return false; } });
-  const pickView = (t: boolean) => { setTreeView(t); try { localStorage.setItem('darakhti:acctview', t ? 'tree' : 'list'); } catch { /* ignore */ } };
   const sync = useSync();
   const [langOpen, setLangOpen] = useState(false);
   const [lookOpen, setLookOpen] = useState(false);
@@ -54,7 +41,6 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const [accent, setAccent] = useState<Accent>(getAccent);
   const MODES: [ThemeMode, string, string][] = [['auto', 'Худкор', '🌓'], ['light', 'Равшан', '☀️'], ['dark', 'Торик', '🌙']];
   const pickLook = (m: ThemeMode, a: Accent) => { setMode(m); setAccent(a); setTheme(m, a); };
-  const free = isFree(state);
   const lang = currentLang();
   const chooseLang = async (l: Lang) => {
     if (l === lang) { setLangOpen(false); return; }
@@ -65,15 +51,6 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
   const signed = sync.configured && sync.status !== 'signedout' && sync.status !== 'off' && sync.email !== '';
   // «Бозгашт»-и телефон аз зерсаҳифаи «Ҳисобҳо ва фоизҳо» ба менюи танзимот бармегардонад
   useHistoryLayer(page === 'accounts', () => setPage('menu'));
-  const root = state.tree;
-  const debt = hasDebt(state.debts);
-
-  useEffect(() => {
-    try { localStorage.setItem(CLOSED_KEY, JSON.stringify(closed)); } catch { /* ignore */ }
-  }, [closed]);
-
-  const toggle = (id: string) =>
-    setClosed(c => (c.includes(id) ? c.filter(k => k !== id) : [...c, id]));
 
   const [ask, confirmDialog] = useConfirm();
 
@@ -158,77 +135,23 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
     try { await signOutAndWipe(); } catch { onToast('Баромад нашуд: аз нав кӯшиш кунед'); }
   };
 
-  const n2 = (v: number) => fmt(Math.round(v * 100) / 100);
-
-  const row = (node: DistNode, depth: number): React.ReactNode => {
-    const remainder = isRemainderNode(root, node.id);
-    const share = effectiveShareNode(root, node.id);
-    if (node.type === 'account') {
-      const def = state.accounts.find(a => a.id === node.accountId);
-      if (!def || def.archived) return null;
-      const isDebt = node.accountId === 'debt';
-      const off = debt ? node.accountId === 'fun' : isDebt;
-      const funNode = state.tree.type === 'group' ? findAccountNode(root, 'fun')?.node : undefined;
-      const sub = off && !isDebt ? 'Нофаъол: аввал қарзҳоро пардохт кунед'
-        : isDebt ? (debt ? `${n2(share + (funNode ? effectiveShareNode(root, funNode.id) : 0))}% аз ҳар даромад (бо «Вақтхушӣ»)` : 'Нофаъол: қарз нест, бо қарзи нав фаъол мешавад')
-        : `${n2(share)}% аз ҳар даромад`;
-      return (
-        <button key={node.id} className={off ? 'cell tree-row off' : 'cell tap tree-row'}
-          style={{ paddingLeft: 14 + depth * 16 }} disabled={off}
-          onClick={() => setEditId(node.id)}>
-          <span className="tr-ic" style={{ background: CARD_COLORS[node.accountId] }}>{ACCOUNTS[node.accountId]?.icon}</span>
-          <span className="grow">
-            <b>{def.name}</b>
-            <small>{sub}</small>
-          </span>
-          <span className="tr-pct">{n2(node.percent)}%{remainder && <em>боқимонда</em>}</span>
-          {!off && <ChevronIcon />}
-        </button>
-      );
-    }
-    const isRoot = node.id === 'root';
-    const open = isRoot || !closed.includes(node.id);
-    const rows = open ? node.children.map(c => row(c, depth + 1)) : null;
-    return (
-      <div key={node.id}>
-        {!isRoot && (
-          <div className="cell tree-row group" style={{ paddingLeft: 14 + depth * 16 }}>
-            <button className="tr-main tap" onClick={() => toggle(node.id)} aria-expanded={open}>
-              <span className={open ? 'chev open' : 'chev'}><ChevronIcon /></span>
-              <span className="tr-ic soft">{node.icon}</span>
-              <span className="grow">
-                <b>{node.title}</b>
-                <small>{n2(share)}% аз ҳар даромад</small>
-              </span>
-              <span className="tr-pct">{n2(node.percent)}%{remainder && <em>боқимонда</em>}</span>
-            </button>
-            <button className="icon-btn tr-edit" onClick={() => setEditId(node.id)} aria-label="Таҳрир">
-              <PencilIcon />
-            </button>
-          </div>
-        )}
-        {rows}
-      </div>
-    );
-  };
-
-  const accountCount = state.accounts.filter(a => !a.archived).length;
+  const accountCount = state.accounts.filter(a => !a.archived && !SYSTEM_IDS.includes(a.id)).length;
 
   if (page === 'menu') {
     return (
       <>
         <div className="cells">
-          <button className="cell tap link" onClick={onGuide}>
-            <div className="ic">🌳</div>
-            <div className="grow"><b>Системаи кор</b><small>{free ? 'Ба тарзи худам' : 'Системаи Саидмурод Давлатов'}</small></div>
-            <ChevronIcon />
-          </button>
           <button className="cell tap link" onClick={() => setPage('accounts')}>
             <div className="ic">🧩</div>
             <div className="grow">
-              <b>{free ? 'Ҳисобҳо' : 'Ҳисобҳо ва фоизҳо'}</b>
-              <small>{free ? `${state.accounts.filter(a => !a.archived && !['debt', 'fun', 'bigDream', 'smallDream'].includes(a.id)).length} ҳисоб` : `${accountCount} ҳисоб · тақсими даромад`}</small>
+              <b>Ҳисобҳо ва фоизҳо</b>
+              <small>{hasShares(state) ? `${accountCount} ҳисоб · аз ҳар даромад ${fmt(Math.round((100 - (sharesOf(state)[mainAccountOf(state)] ?? 100)) * 100) / 100)}% ҷудо мешавад` : `${accountCount} ҳисоб`}</small>
             </div>
+            <ChevronIcon />
+          </button>
+          <button className="cell tap link" onClick={onIntro}>
+            <div className="ic">👋</div>
+            <div className="grow"><b>{ONBOARD[lang].replay}</b></div>
             <ChevronIcon />
           </button>
           <button className="cell tap link" onClick={() => setLangOpen(true)}>
@@ -340,40 +263,5 @@ export default function SettingsView({ state, setState, onToast, onGuide, page, 
     );
   }
 
-  if (free) {
-    return (
-      <>
-        <FreeAccounts state={state} setState={setState} onToast={onToast} />
-      </>
-    );
-  }
-
-  return (
-    <>
-      {TREE_ENABLED && <div className="seg-tabs acct-view" role="tablist">
-        <button role="tab" aria-selected={!treeView} className={!treeView ? 'on' : ''} onClick={() => pickView(false)}>Рӯйхат</button>
-        <button role="tab" aria-selected={treeView} className={treeView ? 'on' : ''} onClick={() => pickView(true)}>Дарахт</button>
-      </div>}
-      {TREE_ENABLED && treeView && <p className="note td-hint">Дарахтро ба ҳар тараф кашед. Қуттиро пахш кунед — таҳрир мешавад.</p>}
-      {TREE_ENABLED && treeView ? (
-        <TreeDiagram root={root} accounts={state.accounts} onPick={n => setEditId(n.id)}
-          isOff={id => (debt ? id === 'fun' : id === 'debt')} />
-      ) : (
-        <div className="cells tree">
-          {row(root, -1)}
-        </div>
-      )}
-      <button className="btn btn-add" onClick={() => setAdding(true)}><i><PlusIcon /></i><span>Ҳисоби нав</span></button>
-
-      {confirmDialog}
-
-      {editId && (
-        <EditNodeSheet state={state} setState={setState} nodeId={editId}
-          onClose={() => setEditId(null)} onToast={onToast} />
-      )}
-      {adding && (
-        <AddAccountSheet state={state} setState={setState} onClose={() => setAdding(false)} onToast={onToast} />
-      )}
-    </>
-  );
+  return <FreeAccounts state={state} setState={setState} onToast={onToast} />;
 }

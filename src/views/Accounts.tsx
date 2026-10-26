@@ -2,12 +2,11 @@ import { CSSProperties, useEffect, useState } from 'react';
 import { ChevronIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import {
   ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, balancesOf, fmt, groupNote, groupSum,
-  fundDreams, hasDebt, hiddenAccounts, isFree, leafHint, remaining,
+  fundDreams, hasDebt, hiddenAccounts, hasShares, mainAccountOf, remaining, sharesOf,
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
 import { Count } from '../useCountUp';
-import TreeDiagram, { TREE_ENABLED } from '../components/TreeDiagram';
 import type { Props } from './props';
 
 export interface Privacy {
@@ -25,9 +24,6 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
   onOpenAccount: (id: AccountId) => void;
 }) {
   const [closed, setClosed] = useState(readClosed);
-  const [treeView, setTreeView] = useState(() => { try { return localStorage.getItem('darakhti:balview') === 'tree'; } catch { return false; } });
-  const pickView = (t: boolean) => { setTreeView(t); try { localStorage.setItem('darakhti:balview', t ? 'tree' : 'list'); } catch { /* ignore */ } };
-
   useEffect(() => {
     try { localStorage.setItem(CLOSED_KEY, JSON.stringify(closed)); } catch { /* ignore */ }
   }, [closed]);
@@ -39,6 +35,9 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
   const total = Object.values(bal).reduce((s, v) => s + v, 0);
   const debt = hasDebt(state.debts);
   const hide = hiddenAccounts(state);
+  const sh = sharesOf(state);
+  const main = mainAccountOf(state);
+  const shareHint = (id: AccountId) => (!hasShares(state) ? '' : id === main ? `⭐ Ҳисоби асосӣ · боқимонда ${fmt(sh[id] ?? 100)}%` : sh[id] ? `${fmt(sh[id])}% аз ҳар даромад` : '');
   const debtTotal = state.debts.reduce((sum, d) => sum + d.amount, 0);
   const debtPaid = state.debts.reduce((sum, d) => sum + Math.min(d.amount, d.paid), 0);
   const debtLeft = state.debts.reduce((sum, d) => sum + remaining(d), 0);
@@ -72,7 +71,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
             <small>{isDebt ? `${Math.floor(pct)}% қарз пардохт шуд · боқӣ ${mask(fmt(debtLeft))}` : isDream ? `${dreamList.length} орзу${dreamReady ? ` · ${dreamReady} тайёр ✓` : ''} · ${Math.floor(pct)}%` : pct >= 100 ? '🎉 Мақсад расид' : `${Math.floor(pct)}% аз ${mask(fmt(goal ?? 0))}`}</small>
           </span>
         ) : (
-          <small className="ac-hint">{leafHint(id, debt)}</small>
+          <small className="ac-hint">{shareHint(id)}</small>
         )}
       </button>
     );
@@ -118,22 +117,7 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
         <div className="bh-total"><Count value={total} hidden={hidden} /> <small>смн</small></div>
       </section>
 
-      {TREE_ENABLED && !isFree(state) && (
-        <div className="seg-tabs acct-view" role="tablist">
-          <button role="tab" aria-selected={!treeView} className={!treeView ? 'on' : ''} onClick={() => pickView(false)}>Гурӯҳҳо</button>
-          <button role="tab" aria-selected={treeView} className={treeView ? 'on' : ''} onClick={() => pickView(true)}>Дарахт</button>
-        </div>
-      )}
-      {TREE_ENABLED && treeView && !isFree(state) ? (
-        <>
-          <p className="note td-hint">Дарахт нишон медиҳад, ки пул дар куҷост. Ҳисобро пахш кунед — ҷузъиёт кушода мешавад.</p>
-          <TreeDiagram root={state.tree} accounts={state.accounts} balances={bal} hidden={hidden}
-            isOff={id => hide.includes(id as AccountId)}
-            onPick={n => { if (n.type === 'account') onOpenAccount(n.accountId); }} />
-        </>
-      ) : (
-        <div className="groups">{ACCOUNT_TREE.map(g => group(g))}</div>
-      )}
+      <div className="groups">{ACCOUNT_TREE.map(g => group(g))}</div>
     </>
   );
 }

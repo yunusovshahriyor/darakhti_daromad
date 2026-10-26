@@ -448,7 +448,7 @@ function feedbackMsg(env: Env, f: { type: string; text: string; contact: string;
   if (tc) {
     lines.push(
       `📱 <b>Дастгоҳ:</b> ${esc(deviceOf(tc.ua))}${tc.screen ? ` · ${esc(tc.screen.replace('x', '×'))}` : ''}`,
-      `🧩 <b>Барнома:</b> ${tc.mode === 'free' ? 'ба тарзи худам' : 'системаи Давлатов'} · ${esc(tc.currency ?? 'TJS')}${tc.standalone ? ' · насбшуда' : ' · дар браузер'}${tc.telegram ? ' · Telegram' : ''}${tc.online === false ? ' · офлайн' : ''}`,
+      `🧩 <b>Барнома:</b> ${esc(tc.currency ?? 'TJS')}${tc.standalone ? ' · насбшуда' : ' · дар браузер'}${tc.telegram ? ' · Telegram' : ''}${tc.online === false ? ' · офлайн' : ''}`,
     );
     lines.push(tc.errors?.length ? `⚠️ <b>Хатоҳо:</b>\n<pre>${esc(tc.errors.join('\n').slice(0, 700))}</pre>` : '✅ <b>Хатои техникӣ:</b> нест');
   }

@@ -24,7 +24,7 @@
 "дар бораи пардохтҳо ёдрас менамоям ва хулосаи молиявиро мефиристам.\n\n": "remind you about payments and send a financial summary.\n\n",
 "смн": "TJS",
 "Қарзҳои бонкиро бо санаи пардохт нигоҳ доред, то ҷарима нашавад.": "Keep bank loans with their payment date to avoid penalties.",
-"Ҳадди хароҷоти моҳро ба ҳисоби «Вақтхушӣ» пешакӣ ҷудо кунед.": "Set aside the monthly spending limit on the \"Fun\" account in advance.",
+"Ҳадди хароҷоти моҳро ба як ҳисоби алоҳида (масалан, бо фоизи ҳар даромад) пешакӣ ҷудо кунед.": "Set aside the monthly spending limit on a separate account in advance (for example, as a percentage of every income).",
 "Ҳамаи огоҳиҳои як рӯз дар як паём меояд.": "All notifications for the day arrive in one message.",
 "Ҳар даромадро фавран тақсим кунед: бе тақсим пул «гум» мешавад.": "Distribute every income right away: without it money \"disappears\".",
 "Ҳар моҳ дар хулоса бубинед, кадом категория аз ҳама зиёд аст.": "Every month check in the summary which category is the biggest.",
@@ -132,5 +132,6 @@
 "🔄 Ин даромад аст": "🔄 This is income",
 "🔄 Ин хароҷот аст": "🔄 This is an expense",
 "🧾 <b>Хароҷот</b>": "🧾 <b>Expense</b>",
-"✍️ <b>Сабт аз бот:</b> нависед <code>такси 21</code> (хароҷот) ё <code>маош 3000</code> (даромад), ё паёми овозӣ фиристед. Бот корти тасдиқ мефиристад.\n\n": "✍️ <b>Adding entries via the bot:</b> type <code>taxi 21</code> (expense) or <code>salary 3000</code> (income), or send a voice message. The bot sends a confirmation card.\n\n"
+"✍️ <b>Сабт аз бот:</b> нависед <code>такси 21</code> (хароҷот) ё <code>маош 3000</code> (даромад), ё паёми овозӣ фиристед. Бот корти тасдиқ мефиристад.\n\n": "✍️ <b>Adding entries via the bot:</b> type <code>taxi 21</code> (expense) or <code>salary 3000</code> (income), or send a voice message. The bot sends a confirmation card.\n\n",
+"Тақсим: аз рӯи фоизҳои ҳисобҳо": "Split: by the account percentages"
 }
