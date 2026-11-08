@@ -112,7 +112,17 @@ export default function App() {
   const layerOnBoot = typeof history !== 'undefined' && history.state?.layer === true;
   const reuseSub = useRef(layerOnBoot && nav0.sub !== null);
   const reuseAcct = useRef(layerOnBoot && nav0.acct !== null);
-  const [adding, setAdding] = useState(false);
+  // Миёнбури нишони барнома (?add=expense / ?add=income): шакли сабт ҳамон лаҳза кушода мешавад
+  const [addKind, setAddKind] = useState<'expense' | 'income' | undefined>(() => {
+    const a = new URLSearchParams(location.search).get('add');
+    return a === 'expense' || a === 'income' ? a : undefined;
+  });
+  const [adding, setAdding] = useState(() => addKind !== undefined);
+  useEffect(() => {
+    if (new URLSearchParams(location.search).has('add')) {
+      try { history.replaceState(null, '', location.pathname + location.hash); } catch { /* ignore */ }
+    }
+  }, []);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceFill, setVoiceFill] = useState<VoiceResult | null>(null);
   const plusTimer = useRef<number | null>(null);
@@ -526,7 +536,8 @@ export default function App() {
       )}
       {adding && (
         <AddSheet {...props} prefill={prefill ?? undefined} voice={voiceFill ?? undefined}
-          onClose={() => { setAdding(false); setPrefill(null); setVoiceFill(null); }} onDone={setToast} />
+          initialKind={addKind}
+          onClose={() => { setAdding(false); setPrefill(null); setVoiceFill(null); setAddKind(undefined); }} onDone={setToast} />
       )}
     </div>
   );

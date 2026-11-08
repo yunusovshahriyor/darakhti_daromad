@@ -1053,5 +1053,9 @@
 "Аз ҳар даромад": "From every income",
 "Аз ҳисоби «{0}»": "From the “{0}” account",
 "Фоиз аз маблағе ҷудо мешавад, ки аз ҳар даромад ба ҳисоби интихобшуда мерасад.": "The percentage is taken from the amount that reaches the chosen account from every income.",
-"{0}% аз ҳисоби «{1}»": "{0}% from the “{1}” account"
+"{0}% аз ҳисоби «{1}»": "{0}% from the “{1}” account",
+"Зуд: «такси 21» ё «маош 3000»": "Quick: “taxi 21” or “salary 3000”",
+"Сабти зуд": "Quick entry",
+"Қарзро аз бахши «Қарз» сабт кунед": "Record debts in the “Debts” section",
+"Сабт ва нав": "Save and add another"
 }

@@ -2034,3 +2034,18 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .rec-toggle input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
 .rec-toggle input[type="checkbox"]:checked::after { content: ''; width: 6px; height: 12px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: translateY(-1px) rotate(45deg); }
 .rec-chips .qa { flex: 1; }
+
+/* ===== Сабти зуд: сатри матн, тугмаҳои сабт дар поёни варақа ===== */
+.quick-line { margin: 0 0 10px; }
+.ql-row { display: flex; gap: 8px; }
+.ql-row input { flex: 1; min-width: 0; }
+.ql-go { flex: none; width: 52px; border: 0; border-radius: 16px; font-size: 1.4rem; font-weight: 800; color: #fff; background: var(--primary); }
+.ql-go:disabled { opacity: .35; }
+.ql-prev { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 8px 2px 0; font-size: .85rem; color: var(--muted); }
+.ql-prev b { color: var(--text); font-size: 1rem; }
+.ql-prev span { background: color-mix(in srgb, var(--primary) 12%, transparent); border-radius: 99px; padding: 2px 10px; }
+.ql-prev .ql-note { background: transparent; padding: 0; font-style: italic; }
+.ql-prev .ql-warn { background: transparent; padding: 0; }
+.save-row { position: sticky; bottom: 0; z-index: 3; display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; padding: 10px 0 calc(env(safe-area-inset-bottom) + 6px); background: linear-gradient(to top, var(--bg) 78%, transparent); }
+.save-row .btn { margin: 0; }
+.save-row .btn.secondary { box-shadow: none; }

@@ -10,13 +10,16 @@ import AmountEntry from './AmountEntry';
 import CategoryChips from './CategoryChips';
 import Field from './Field';
 import { useConfirm } from './ConfirmSheet';
+import { defaultAccount } from '../quickAdd';
 
-export default function ExpenseForm({ state, setState, onDone, initialAccount, prefill }: Props & {
+export default function ExpenseForm({ state, setState, onDone, onAgain, initialAccount, prefill }: Props & {
   prefill?: ScanResult;
   onDone: (msg: string) => void;
+  /** «Сабт ва нав»: паём нишон медиҳад, аммо варақа баста намешавад. */
+  onAgain?: (msg: string) => void;
   initialAccount?: AccountId;
 }) {
-  const [account, setAccount] = useState<AccountId>(initialAccount ?? 'living');
+  const [account, setAccount] = useState<AccountId>(() => initialAccount ?? defaultAccount(state));
   const [note, setNote] = useState(prefill?.merchant ?? '');
   const [category, setCategory] = useState<string | null>(() => (prefill?.merchant ? smartCategory(state, prefill.merchant) : null));
   // Агар категория дастӣ интихоб нашуда бошад, аз эзоҳ худкор пешниҳод мешавад
@@ -39,10 +42,10 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
   const over = num > bal[account] + 0.005;
 
   const [ask, confirmDialog] = useConfirm();
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (num <= 0) return;
-    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account])} сомонӣ мавҷуд аст. Ба ҳар ҳол харҷ мекунед?`, ok: 'Харҷ кардан' }))) return;
+  /** Сабт: `true` — сабт шуд (пас аз тасдиқи ҳисоби нокифоя). */
+  const commit = async (): Promise<boolean> => {
+    if (num <= 0) return false;
+    if (over && !(await ask({ title: 'Маблағи кофӣ нест', text: `Дар ҳисоби «${ACCOUNTS[account].name}» ҳамагӣ ${fmt(bal[account])} сомонӣ мавҷуд аст. Ба ҳар ҳол харҷ мекунед?`, ok: 'Харҷ кардан' }))) return false;
     const expense = { id: uid(), account, title: note.trim() || category || ACCOUNTS[account].name, amount: num, date,
       ...(category ? { category } : {}) };
     const rec = every ? newRecurring({ title: expense.title, amount: num, account, category: category ?? undefined, every, date }) : null;
@@ -51,7 +54,17 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
       expenses: [...s.expenses, expense].sort((a, b) => b.date.localeCompare(a.date)),
       ...(rec ? { recurring: [...(s.recurring ?? []), rec] } : {}),
     }));
-    onDone('Хароҷот сабт шуд ✓');
+    return true;
+  };
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (await commit()) onDone('Хароҷот сабт шуд ✓');
+  };
+  // «Сабт ва нав»: маблағ ва эзоҳ тоза мешаванд; ҳисоб, категория ва сана мемонанд
+  const again = async () => {
+    if (!(await commit())) return;
+    onAgain?.(`Хароҷот сабт шуд ✓ · ${fmt(num)}`);
+    setAmount(''); setNote(''); setEvery(''); setManual(false); setCategory(null);
   };
 
   return (
@@ -95,7 +108,10 @@ export default function ExpenseForm({ state, setState, onDone, initialAccount, p
       {over && num > 0 && (
         <div className="alert danger">⚠️ Маблағ аз тавозуни ҳисоб зиёд аст ({fmt(bal[account])}).</div>
       )}
-      <button className="btn big" type="submit" disabled={num <= 0}>Сабти хароҷот</button>
+      <div className="save-row">
+        <button className="btn big" type="submit" disabled={num <= 0}>Сабти хароҷот</button>
+        {onAgain && <button className="btn secondary big" type="button" disabled={num <= 0} onClick={again}>Сабт ва нав</button>}
+      </div>
       {confirmDialog}
     </form>
   );

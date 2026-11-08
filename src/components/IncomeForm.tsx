@@ -9,7 +9,7 @@ import AddCategorySheet from './AddCategorySheet';
 import AccountSelect from './AccountSelect';
 import Field from './Field';
 
-export default function IncomeForm({ state, setState, onDone, prefill }: Props & { onDone: (msg: string) => void; prefill?: { amount: number | null; note: string; date: string | null } }) {
+export default function IncomeForm({ state, setState, onDone, onAgain, prefill }: Props & { onDone: (msg: string) => void; onAgain?: (msg: string) => void; prefill?: { amount: number | null; note: string; date: string | null } }) {
   const [source, setSource] = useState('Музд');
   const [adding, setAdding] = useState(false);
   const row = useRef<HTMLDivElement>(null);
@@ -42,9 +42,8 @@ export default function IncomeForm({ state, setState, onDone, prefill }: Props &
   const direct = !hasShares || single;
   const preview = direct ? {} : allocateIncome(state, num);
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (num <= 0) return;
+  const commit = (): boolean => {
+    if (num <= 0) return false;
     const n = note.trim();
     const income = {
       id: uid(), title: n ? `${source} · ${n}` : source, source, amount: num, date,
@@ -65,8 +64,18 @@ export default function IncomeForm({ state, setState, onDone, prefill }: Props &
         transfers: shares.length ? [...shares, ...s.transfers] : s.transfers,
       };
     });
-    onDone('Даромад илова шуд ✓');
+    return true;
   };
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (commit()) onDone('Даромад илова шуд ✓');
+  };
+  const again = () => {
+    if (!commit()) return;
+    onAgain?.(`Даромад илова шуд ✓ · ${fmt(num)}`);
+    setAmount(''); setNote('');
+  };
+
 
   return (
     <form onSubmit={onSubmit}>
@@ -127,7 +136,10 @@ export default function IncomeForm({ state, setState, onDone, prefill }: Props &
         </div>
       )}
 
-      <button className="btn big" type="submit" disabled={num <= 0}>Сабти даромад</button>
+      <div className="save-row">
+        <button className="btn big" type="submit" disabled={num <= 0}>Сабти даромад</button>
+        {onAgain && <button className="btn secondary big" type="button" disabled={num <= 0} onClick={again}>Сабт ва нав</button>}
+      </div>
     </form>
   );
 }

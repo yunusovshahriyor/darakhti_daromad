@@ -29,8 +29,13 @@ export const visibleAccounts = (state: State): AccountId[] => {
   return ACCOUNT_ORDER.filter(id => !hidden.includes(id));
 };
 
-const defaultAccount = (state: State): AccountId => {
+/** Ҳисоби пешфарзи хароҷот: ҳамон ки охирин хароҷоти оддӣ аз он шуд, вагарна «Хароҷоти зиндагӣ»/аввалин ҳисоб. */
+export const defaultAccount = (state: State): AccountId => {
   const vis = visibleAccounts(state);
+  const last = state.expenses
+    .filter(e => e.debtId === undefined && e.dreamId === undefined && e.loanId === undefined && vis.includes(e.account))
+    .reduce<Expense | null>((best, e) => (!best || e.id > best.id ? e : best), null);
+  if (last) return last.account;
   if (vis.includes('living')) return 'living';
   return vis[0] ?? ACCOUNT_ORDER[0] ?? 'cash';
 };
