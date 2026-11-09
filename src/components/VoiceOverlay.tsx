@@ -6,7 +6,13 @@ import type { VoiceResult } from '../voiceParse';
 import { VOICE } from '../voiceText';
 
 /** Сабти овозӣ: бо пахши дарози «+» кушода мешавад ва худаш гӯш мекунад; натиҷа шакли «Амалиёти нав»-ро пур мекунад. */
-export default function VoiceOverlay({ onResult, onClose }: { onResult: (r: VoiceResult) => void; onClose: () => void }) {
+export default function VoiceOverlay({ onResult, onText, onClose }: {
+  /** Пахши дарози «+»: натиҷа шакли «Амалиёти нав»-ро пур мекунад. */
+  onResult?: (r: VoiceResult) => void;
+  /** Сатри зуд: матни шунидашуда ба сатр меравад. */
+  onText?: (text: string) => void;
+  onClose: () => void;
+}) {
   const t = VOICE[currentLang()];
   const [live, setLive] = useState('');
   const [msg, setMsg] = useState('');
@@ -20,13 +26,14 @@ export default function VoiceOverlay({ onResult, onClose }: { onResult: (r: Voic
       onInterim: setLive,
       onFinal: txt => {
         done.current = true;
+        if (onText) { onText(txt); onClose(); return; }
         const r = parseVoice(txt);
         if (r.kind === 'debt') { setMsg(`${t.heard} «${txt}»\n${t.debt}`); return; }
-        onResult(r);
+        onResult?.(r);
       },
       onError: e => setMsg(e === 'denied' ? t.denied : e === 'none' ? t.none : e === 'network' ? t.network : t.other),
       onEnd: () => setOn(false),
-    });
+    }, t.processing);
   };
   useEffect(() => { start(); return () => stop.current?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

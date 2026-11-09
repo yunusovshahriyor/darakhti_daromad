@@ -105,3 +105,24 @@ export function parseVoice(text: string, now = new Date()): VoiceResult {
   const note = rest.join(' ').replace(NOISE, ' ').replace(INCOME_WORD, ' ').replace(/\s+/g, ' ').trim();
   return { kind, amount: num ? num.value : null, note: note ? note.charAt(0).toUpperCase() + note.slice(1) : '', date, heard };
 }
+
+/**
+ * Якчанд амалиёт дар як гап: «нон 15, такси 21 ва чой 8». Ҷудокунакҳо: «, », «;», «ва», «и», «and», «баъд», «потом».
+ * Қисми бе маблағ ба қисми баъдӣ пайваст мешавад («нон ва гӯшт 85» → як амалиёт). Агар як амалиёт бошад — рӯйхати як унсур.
+ */
+export function parseMulti(text: string, now = new Date()): VoiceResult[] {
+  const parts = text.split(/,\s+|;\s*|\s+(?:ва|и|and|баъд|потом|боз)\s+/i).map(x => x.trim()).filter(Boolean);
+  const out: VoiceResult[] = [];
+  let carry = '';
+  for (const part of parts) {
+    const r = parseVoice(`${carry} ${part}`.trim(), now);
+    if (r.amount === null) { carry = `${carry} ${part}`.trim(); continue; }
+    carry = '';
+    out.push(r);
+  }
+  if (out.length < 2) return [parseVoice(text, now)];
+  // Сана («дирӯз …») аз аввалин амалиёт ба ҳамаи бесана паҳн мешавад
+  const d = out[0].date;
+  if (d) for (const r of out) r.date ??= d;
+  return out;
+}

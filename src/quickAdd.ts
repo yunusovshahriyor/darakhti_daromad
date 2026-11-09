@@ -7,7 +7,8 @@ import { poolOf } from './dreams';
 import { ACCOUNTS, ACCOUNT_ORDER, allocateIncome, emptyAlloc, hasShares, hiddenAccounts, mainAccountOf, uid } from './model';
 import { smartCategory } from './suggest';
 import type { AccountId, Expense, Income, State, Transfer } from './types';
-import { parseVoice } from './voiceParse';
+import { parseMulti, parseVoice } from './voiceParse';
+import type { VoiceResult } from './voiceParse';
 
 export interface Draft {
   kind: 'expense' | 'income';
@@ -47,11 +48,7 @@ const lastIncomeAccount = (state: State): AccountId => {
   return prev && ACCOUNT_ORDER.includes(prev) ? prev : mainAccountOf(state);
 };
 
-export function draftFrom(state: State, text: string, today: string): DraftResult {
-  // «+500 ҷоиза» — даромад, «-20 нон» — хароҷот (аломат дар аввал)
-  const sign = /^\s*([+＋]|[-−–])\s*/.exec(text);
-  const r = parseVoice(sign ? text.slice(sign[0].length) : text, new Date(`${today}T12:00:00`));
-  if (sign && r.kind !== 'debt') r.kind = /[+＋]/.test(sign[1]) ? 'income' : 'expense';
+function draftOf(state: State, r: VoiceResult, today: string): DraftResult {
   if (r.kind === 'debt') return { error: 'debt' };
   if (!r.amount || r.amount <= 0) return { error: 'amount' };
   const note = r.note;
@@ -67,6 +64,32 @@ export function draftFrom(state: State, text: string, today: string): DraftResul
       source, direct: false,
     },
   };
+}
+
+const SIGN = /^\s*([+＋]|[-−–])\s*/;
+
+/** Як амалиёт аз матн («такси 21», «+500 ҷоиза», «-20 нон»). */
+export function draftFrom(state: State, text: string, today: string): DraftResult {
+  const sign = SIGN.exec(text);
+  const r = parseVoice(sign ? text.slice(sign[0].length) : text, new Date(`${today}T12:00:00`));
+  if (sign && r.kind !== 'debt') r.kind = /[+＋]/.test(sign[1]) ? 'income' : 'expense';
+  return draftOf(state, r, today);
+}
+
+export type DraftsResult = { drafts: Draft[] } | { error: 'amount' | 'debt' };
+
+/** Як ё якчанд амалиёт аз як гап («нон 15, такси 21»). Агар ягон қисм фаҳмида нашуд, он партофта мешавад. */
+export function draftsFrom(state: State, text: string, today: string): DraftsResult {
+  const sign = SIGN.exec(text);
+  const rs = parseMulti(sign ? text.slice(sign[0].length) : text, new Date(`${today}T12:00:00`));
+  if (sign && rs[0] && rs[0].kind !== 'debt') rs[0].kind = /[+＋]/.test(sign[1]) ? 'income' : 'expense';
+  const ds: Draft[] = [];
+  let err: 'amount' | 'debt' = 'amount';
+  for (const r of rs) {
+    const d = draftOf(state, r, today);
+    if ('draft' in d) ds.push(d.draft); else err = d.error;
+  }
+  return ds.length ? { drafts: ds } : { error: err };
 }
 
 export const categoryNames = (state: State) => orderedCategories(state.categories ?? [], state.expenses).map(c => c.name);
@@ -103,6 +126,14 @@ export function applyDraft(s: State, d: Draft): Applied {
       transfers: shares.length ? [...shares, ...s.transfers] : s.transfers,
     },
   };
+}
+
+/** Якчанд сабт пай дар пай; `ids` барои бекор кардан. */
+export function applyDrafts(s: State, ds: Draft[]): { state: State; items: { kind: Draft['kind']; id: number }[] } {
+  let st = s;
+  const items: { kind: Draft['kind']; id: number }[] = [];
+  for (const d of ds) { const a = applyDraft(st, d); st = a.state; items.push({ kind: d.kind, id: a.id }); }
+  return { state: st, items };
 }
 
 /** Бекор кардани сабти бот: хароҷот/даромад ва интиқолҳои ҳиссаи ҳамон даромад. */

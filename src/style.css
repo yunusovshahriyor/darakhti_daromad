@@ -2054,3 +2054,7 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .quick-line.home { margin: 10px 0 14px; }
 .quick-line.home input { border: 0; background: var(--bg); box-shadow: inset 4px 4px 9px var(--nm-lo), inset -4px -4px 9px var(--nm-hi); }
 .quick-line.home .ql-go { background: var(--primary); box-shadow: 4px 4px 10px var(--nm-lo), -3px -3px 8px var(--nm-hi); }
+.ql-mic { flex: none; width: 52px; border: 0; border-radius: 16px; font-size: 1.35rem; background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+.ql-mic:active { transform: scale(.94); }
+.quick-line.home .ql-mic { background: var(--bg); box-shadow: 4px 4px 9px var(--nm-lo), -3px -3px 8px var(--nm-hi); }
+.ql-prev .ql-warn { color: var(--danger); }

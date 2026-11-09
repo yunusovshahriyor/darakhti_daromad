@@ -12,9 +12,14 @@ const ctor = (): RecCtor | null => {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 };
 
-export const voiceSupported = () => ctor() !== null;
+import { recordAvailable, recordToText } from './voiceRec';
+import { getIdToken } from './sync';
+
+export const voiceSupported = () => ctor() !== null || recordAvailable();
 
 export type VoiceError = 'denied' | 'none' | 'network' | 'other';
+
+export interface ListenHandlers { onInterim: (t: string) => void; onFinal: (t: string) => void; onError: (e: VoiceError) => void; onEnd: () => void }
 
 /** Забонҳои сабт: тоҷикӣ → аввал `tg-TJ`, агар дастгирӣ нашавад — русӣ. */
 const LANGS = { tg: ['tg-TJ', 'ru-RU'], ru: ['ru-RU'], en: ['en-US'] } as const;
@@ -23,7 +28,7 @@ const LANGS = { tg: ['tg-TJ', 'ru-RU'], ru: ['ru-RU'], en: ['en-US'] } as const;
  * Сабти як ҷумла. `onInterim` — матни ҷорӣ (дар вақти гуфтан), `onFinal` — матни тайёр.
  * Қиматбозгашт — функсия барои қатъ кардан.
  */
-export function listen(lang: 'tg' | 'ru' | 'en', h: { onInterim: (t: string) => void; onFinal: (t: string) => void; onError: (e: VoiceError) => void; onEnd: () => void }): () => void {
+function listenBrowser(lang: 'tg' | 'ru' | 'en', h: ListenHandlers): () => void {
   const C = ctor();
   if (!C) { h.onError('other'); h.onEnd(); return () => {}; }
   const tries = [...LANGS[lang]];
@@ -56,4 +61,29 @@ export function listen(lang: 'tg' | 'ru' | 'en', h: { onInterim: (t: string) => 
   let cur: Rec | null = null;
   run();
   return () => { stopped = true; try { cur?.stop(); } catch { /* ignore */ } };
+}
+
+/**
+ * Сабт: агар корбар ворид шуда бошад ва микрофон бошад — овоз ба сервер (Whisper) меравад: ҳамон сифат дар ҳама дастгоҳ.
+ * Дар акс ё агар сервер ҷавоб надиҳад — Web Speech API-и браузер. `working` — матни «коркард…» дар вақти шинохт.
+ */
+export function listen(lang: 'tg' | 'ru' | 'en', h: ListenHandlers, working = '…'): () => void {
+  let cancel: () => void = () => {};
+  let dead = false;
+  void (async () => {
+    if (!recordAvailable() || !(await getIdToken())) { cancel = listenBrowser(lang, h); return; }
+    const r = recordToText(lang, { onState: s => { if (s === 'working') h.onInterim(working); } });
+    cancel = r.stop;
+    try {
+      const text = await r.result;
+      if (!dead) { h.onFinal(text); h.onEnd(); }
+    } catch (e) {
+      if (dead) return;
+      if (e === 'denied') { h.onError('denied'); h.onEnd(); }
+      else if (e === 'none') { h.onError('none'); h.onEnd(); }
+      else if (ctor()) cancel = listenBrowser(lang, h); // сервер дастрас нест: Web Speech
+      else { h.onError(e === 'network' ? 'network' : 'other'); h.onEnd(); }
+    }
+  })();
+  return () => { dead = true; cancel(); };
 }

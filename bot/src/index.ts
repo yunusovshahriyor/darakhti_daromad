@@ -12,6 +12,8 @@ import { LOGIN_RE, LOGIN_TTL_MS, newCode, resolveUid, verifyInitData } from './a
 import { isLang, langFromCode, makeT } from './i18n';
 import type { Lang, TFn } from './i18n';
 import { quickCallback, quickText, quickVoice } from './quick';
+import { verifyIdToken } from './idtoken';
+import { transcribe } from './stt';
 
 interface TgUser { id?: number; first_name?: string; last_name?: string; language_code?: string }
 interface Update {
@@ -421,6 +423,7 @@ async function daily(env: Env, when = new Date()) {
 const ALLOWED_ORIGINS = ['https://yunusovshahriyor.github.io', 'http://localhost:4173', 'http://localhost:5173'];
 
 const FB_HITS = new Map<string, number[]>();
+const VOICE_HITS = new Map<string, number[]>();
 
 type Tech = { mode?: string; currency?: string; screen?: string; standalone?: boolean; telegram?: boolean; online?: boolean; ua?: string; page?: string; errors?: string[] };
 
@@ -459,12 +462,26 @@ function feedbackMsg(env: Env, f: { type: string; text: string; contact: string;
 async function api(req: Request, env: Env, path: string): Promise<Response> {
   const origin = req.headers.get('origin') ?? '';
   const cors: Record<string, string> = ALLOWED_ORIGINS.includes(origin)
-    ? { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type', vary: 'origin' }
+    ? { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type, authorization, x-lang', vary: 'origin' }
     : {};
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...cors } });
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
   try {
+    // Барнома: овози сабтшуда (WAV) → матн. Танҳо барои корбари воридшуда (токени Firebase)
+    if (path === '/voice') {
+      const uid = await verifyIdToken(env, (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, ''));
+      if (!uid) return json({ error: 'auth' }, 401);
+      const now = Date.now();
+      const hits = (VOICE_HITS.get(uid) ?? []).filter(x => now - x < 60_000);
+      if (hits.length >= 20) return json({ error: 'rate' }, 429);
+      VOICE_HITS.set(uid, [...hits, now]);
+      const audio = new Uint8Array(await req.arrayBuffer());
+      if (audio.length < 2000 || audio.length > 2_000_000) return json({ error: 'size' }, 400);
+      if (!env.AI) return json({ error: 'noai' }, 501);
+      const l = req.headers.get('x-lang') ?? '';
+      return json({ text: await transcribe(env, audio, isLang(l) ? l : 'ru') });
+    }
     const body = (await req.json().catch(() => ({}))) as { initData?: string; code?: string } & Record<string, unknown>;
 
     // Хабар дар бораи хато / пешниҳод / савол
@@ -537,7 +554,7 @@ async function api(req: Request, env: Env, path: string): Promise<Response> {
 export default {
   async fetch(req: Request, env: Env, ctx: Ctx): Promise<Response> {
     const url = new URL(req.url);
-    if (url.pathname.startsWith('/auth/') || url.pathname === '/feedback') return api(req, env, url.pathname);
+    if (url.pathname.startsWith('/auth/') || url.pathname === '/feedback' || url.pathname === '/voice') return api(req, env, url.pathname);
     if (req.method !== 'POST' || url.pathname !== '/webhook') return new Response('Дарахти даромад — бот', { status: 200 });
     if (req.headers.get('x-telegram-bot-api-secret-token') !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });
     const u = (await req.json()) as Update;
@@ -546,8 +563,8 @@ export default {
     const vf = m?.voice?.file_id ?? m?.audio?.file_id;
     if (m && vf && m.chat.type === 'private') {
       ctx.waitUntil((async () => {
-        const t = makeT(await resolveLang(env, m.chat.id, m.from?.language_code));
-        await quickVoice(env, m.chat.id, vf, t);
+        const lang = await resolveLang(env, m.chat.id, m.from?.language_code);
+        await quickVoice(env, m.chat.id, vf, makeT(lang), lang);
       })().catch(e => {
         console.log(`voice: ${e instanceof Error ? e.stack : e}`);
         return send(env, m.chat.id, makeT(langFromCode(m.from?.language_code))("⚠️ Хатои муваққатӣ. Баъдтар кӯшиш кунед."));

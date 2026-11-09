@@ -636,6 +636,15 @@ export async function telegramPrefsSet(p: NotifyPrefs): Promise<void> {
   await setDoc(doc(f.db, 'users', curUser.uid, 'bot', 'prefs'), prefsToDoc(p));
 }
 
+/** Токени Firebase ID (барои дархости овоз ба сервер); `null` — корбар ворид нашудааст. */
+export async function getIdToken(): Promise<string | null> {
+  try {
+    if (!curUser) return null;
+    const f = await load();
+    return (await f?.auth.currentUser?.getIdToken()) ?? null;
+  } catch { return null; }
+}
+
 /** Забони интихобшударо ба аккаунт сабт мекунад (бот низ бо ҳамин забон менависад). Хатогӣ муҳим нест. */
 export async function saveLangToAccount(lang: 'tg' | 'ru' | 'en'): Promise<void> {
   if (!curUser) return;

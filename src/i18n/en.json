@@ -1057,5 +1057,10 @@
 "Зуд: «такси 21» ё «маош 3000»": "Quick: “taxi 21” or “salary 3000”",
 "Сабти зуд": "Quick entry",
 "Қарзро аз бахши «Қарз» сабт кунед": "Record debts in the “Debts” section",
-"Сабт ва нав": "Save and add another"
+"Сабт ва нав": "Save and add another",
+"Зуд: «такси 21» ё «нон 15, чой 8»": "Quick: “taxi 21” or “bread 15, tea 8”",
+"Сабти овозӣ": "Voice entry",
+"Сабт шуд: {0} амалиёт ✓": "Saved: {0} ✓",
+"⚠️ Маблағ аз тавозуни ҳисоб зиёд аст": "⚠️ The amount exceeds the account balance",
+"Коркард…": "Processing…"
 }

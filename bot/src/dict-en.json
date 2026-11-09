@@ -133,5 +133,7 @@
 "🔄 Ин хароҷот аст": "🔄 This is an expense",
 "🧾 <b>Хароҷот</b>": "🧾 <b>Expense</b>",
 "✍️ <b>Сабт аз бот:</b> нависед <code>такси 21</code> (хароҷот) ё <code>маош 3000</code> (даромад), ё паёми овозӣ фиристед. Бот корти тасдиқ мефиристад.\n\n": "✍️ <b>Adding entries via the bot:</b> type <code>taxi 21</code> (expense) or <code>salary 3000</code> (income), or send a voice message. The bot sends a confirmation card.\n\n",
-"Тақсим: аз рӯи фоизҳои ҳисобҳо": "Split: by the account percentages"
+"Тақсим: аз рӯи фоизҳои ҳисобҳо": "Split: by the account percentages",
+"🧾 <b>Якчанд амалиёт: {0}</b>": "🧾 <b>Several entries: {0}</b>",
+"✅ <b>Сабт шуд: {0} амалиёт</b>": "✅ <b>Saved: {0}</b>"
 }

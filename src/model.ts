@@ -2,7 +2,9 @@ import { defOf } from './currency';
 import { nextInstallment } from './loanPlan';
 import type { AccountDef, AccountId, Alloc, Debt, DebtPlan, DistNode, Loan, Dream, Expense, Income, Settings, State, Transfer } from './types';
 
-export const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
+let lastUid = 0;
+/** Шиносаи ягона: ҳамеша афзоянда (ду даъвати пай дар пай як қимат намедиҳанд). */
+export const uid = () => { const v = Date.now() * 1000 + Math.floor(Math.random() * 1000); lastUid = v > lastUid ? v : lastUid + 1; return lastUid; };
 
 export const today = () => new Date().toLocaleDateString('sv-SE');
 
