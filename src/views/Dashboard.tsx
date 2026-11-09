@@ -3,6 +3,7 @@ import { CSSProperties, useEffect, useState } from 'react';
 import Donut from '../components/Donut';
 import AccountScopeSheet from '../components/AccountScopeSheet';
 import RecurringDue from '../components/RecurringDue';
+import QuickLine from '../components/QuickLine';
 import { Count, useCountUp } from '../useCountUp';
 import { BackIcon, ChevronDownIcon, ChevronIcon, EyeIcon, EyeOffIcon, FilterIcon, ScanIcon } from '../components/Icons';
 import PeriodSheet from '../components/PeriodSheet';
@@ -178,6 +179,8 @@ export default function Dashboard({ state, setState, hidden, onToggleHidden, onN
 
         <div className="line"><i style={{ width: `${pctSpent}%` }} className={pctSpent > 90 ? 'warn' : ''} /></div>
       </div>
+
+      <QuickLine state={state} setState={setState} onSaved={onToast} className="home" />
 
       <div className="mini-cards">
         <div className="mini">

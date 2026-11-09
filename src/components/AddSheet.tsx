@@ -1,7 +1,4 @@
-import { FormEvent, useState } from 'react';
-import { categoryIcon } from '../categories';
-import { ACCOUNTS, balancesOf, fmt, today } from '../model';
-import { applyDraft, draftFrom } from '../quickAdd';
+import { useState } from 'react';
 import type { Props } from '../views/props';
 import ExpenseForm from './ExpenseForm';
 import type { ScanResult } from './ReceiptScanner';
@@ -21,42 +18,6 @@ const KINDS: { id: Kind; label: string; icon: string }[] = [
   { id: 'transfer', label: 'Гузаронидан', icon: 'M7 7h12m0 0-3-3m3 3-3 3M17 17H5m0 0 3-3m-3 3 3 3' },
   { id: 'debt', label: 'Қарз', icon: 'M3 7h18v12H3zM3 11h18M16 15h2' },
 ];
-
-/** Сатри зуд: «такси 21» → маълумот худкор фаҳмида мешавад ва бо як пахш сабт мешавад; варақа баста намешавад. */
-function QuickLine({ state, setState, onSaved }: Props & { onSaved: (msg: string) => void }) {
-  const [text, setText] = useState('');
-  const res = text.trim() ? draftFrom(state, text, today()) : null;
-  const d = res && 'draft' in res ? res.draft : null;
-  const exp = d?.kind === 'expense';
-  const over = !!d && exp && d.amount > (balancesOf(state)[d.account] ?? 0) + 0.005;
-  const save = (e: FormEvent) => {
-    e.preventDefault();
-    if (!d) return;
-    setState(s => applyDraft(s, d).state);
-    onSaved(`${exp ? 'Хароҷот сабт шуд' : 'Даромад илова шуд'} ✓ · ${fmt(d.amount)}`);
-    setText('');
-  };
-  return (
-    <form className="quick-line" onSubmit={save}>
-      <div className="ql-row">
-        <input value={text} onChange={e => setText(e.target.value)} enterKeyHint="done"
-          placeholder="Зуд: «такси 21» ё «маош 3000»" aria-label="Сабти зуд" />
-        <button type="submit" className="ql-go" disabled={!d} aria-label="Сабт">↵</button>
-      </div>
-      {d && (
-        <div className="ql-prev">
-          <b>{exp ? '−' : '+'}{fmt(d.amount)}</b>
-          {exp
-            ? <><span>{categoryIcon(d.category ?? undefined, state.categories ?? []) ?? ''} {d.category ?? '—'}</span><span>{ACCOUNTS[d.account]?.icon} {ACCOUNTS[d.account]?.name}</span></>
-            : <span>{d.source}</span>}
-          {d.note && <span className="ql-note">{d.note}</span>}
-          {over && <span className="ql-warn">⚠️</span>}
-        </div>
-      )}
-      {res && 'error' in res && res.error === 'debt' && <div className="ql-prev"><span>Қарзро аз бахши «Қарз» сабт кунед</span></div>}
-    </form>
-  );
-}
 
 /** Варақаи якҷоя: ҷудокунак (даромад / хароҷот / гузаронидан / қарз) ва форма бо тугмачаҳои рақамӣ. */
 export default function AddSheet({ state, setState, onClose, onDone, prefill, voice, initialKind }: Props & {
@@ -111,7 +72,6 @@ export default function AddSheet({ state, setState, onClose, onDone, prefill, vo
           </button>
         ))}
       </div>
-      {(kind === 'income' || kind === 'expense') && !voice && !prefill && <QuickLine state={state} setState={setState} onSaved={onDone} />}
       {kind === 'income' && <IncomeForm key="i" {...common} {...more} prefill={voice} />}
       {kind === 'expense' && <ExpenseForm prefill={voice ? { amount: voice.amount, merchant: voice.note, date: voice.date } : prefill} key="e" {...common} {...more} />}
       {kind === 'transfer' && <TransferForm key="t" {...common} />}

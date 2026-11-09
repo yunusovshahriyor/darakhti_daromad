@@ -2049,3 +2049,8 @@ button.tp-root.on { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--p
 .save-row { position: sticky; bottom: 0; z-index: 3; display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; padding: 10px 0 calc(env(safe-area-inset-bottom) + 6px); background: linear-gradient(to top, var(--bg) 78%, transparent); }
 .save-row .btn { margin: 0; }
 .save-row .btn.secondary { box-shadow: none; }
+
+/* Сатри зуд дар саҳифаи асосӣ: мисли кортҳои дигар нармҳисс */
+.quick-line.home { margin: 10px 0 14px; }
+.quick-line.home input { border: 0; background: var(--bg); box-shadow: inset 4px 4px 9px var(--nm-lo), inset -4px -4px 9px var(--nm-hi); }
+.quick-line.home .ql-go { background: var(--primary); box-shadow: 4px 4px 10px var(--nm-lo), -3px -3px 8px var(--nm-hi); }
