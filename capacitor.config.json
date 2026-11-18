@@ -1,0 +1,11 @@
+{
+  "appId": "tj.darakhti.daromad",
+  "appName": "Дарахти даромад",
+  "webDir": "android-www",
+  "server": {
+    "url": "https://yunusovshahriyor.github.io/darakhti_daromad/",
+    "androidScheme": "https",
+    "allowNavigation": ["yunusovshahriyor.github.io", "darakhti-daromad.firebaseapp.com", "*.googleapis.com", "darakhti-bot.yunusov-shahriyor98.workers.dev"]
+  },
+  "android": { "allowMixedContent": false }
+}

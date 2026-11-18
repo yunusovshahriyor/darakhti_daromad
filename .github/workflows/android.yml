@@ -1,0 +1,61 @@
+name: Build Android APK
+
+# APK — қолаби Android дар атрофи сайти зинда (GitHub Pages): мундариҷа худкор нав мешавад, APK-ро танҳо барои тағйироти
+# қисми нативӣ (иҷозатҳо, нишона, танзимот) аз нав сохтан лозим аст.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'android-www/**'
+      - 'capacitor.config.json'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      APK_VERSION_CODE: ${{ github.run_number }}
+      APK_VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Name the APK
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk darakhti-daromad.apk
+          ls -la darakhti-daromad.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: darakhti-daromad-apk
+          path: darakhti-daromad.apk
+      - name: Publish to GitHub Release (android-latest)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete android-latest --cleanup-tag --yes || true
+          gh release create android-latest darakhti-daromad.apk \
+            --title "Android APK (debug, ${APK_VERSION_NAME})" \
+            --notes "Android APK for testing. Install: download darakhti-daromad.apk on the phone, open it and allow installs from this source." \
+            --prerelease
