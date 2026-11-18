@@ -1062,5 +1062,12 @@
 "Сабти овозӣ": "Voice entry",
 "Сабт шуд: {0} амалиёт ✓": "Saved: {0} ✓",
 "⚠️ Маблағ аз тавозуни ҳисоб зиёд аст": "⚠️ The amount exceeds the account balance",
-"Коркард…": "Processing…"
+"Коркард…": "Processing…",
+"Тугмаи шино болои барномаҳо": "Floating button over other apps",
+"Сабти зуд аз ҳар барнома": "Quick entry from any app",
+"Тугмаи хурди «+» болои ҳамаи барномаҳо мемонад. Пахш — кушодани шакли хароҷот, пахши дароз — сабти овозӣ. Барнома экрани барномаҳои дигарро намехонад.": "A small “+” button stays on top of all apps. Tap — the expense form, long press — voice entry. The app does not read the screen of other apps.",
+"Тугма ҳозир фаъол аст": "The button is on",
+"Тугма ғайрифаъол аст": "The button is off",
+"Аввал иҷозати «Болои барномаҳои дигар» диҳед: танзимоти система кушода мешавад. Иҷозат диҳед ва ба ин ҷо баргашта, боз «Фаъол кардан»-ро пахш кунед.": "First allow “Display over other apps”: system settings will open. Allow it, come back here and tap “Turn on” again.",
+"Тугмаро бо дарозии ангушт кашида ба ҷои дигар гузоштан мумкин аст. Барои хомӯш кардан дар ҳамин ҷо ё дар огоҳиномаи барнома «Ғайрифаъол кардан»-ро пахш кунед.": "You can drag the button to another place. To turn it off, switch it off here or tap “Turn off” in the app notification."
 }

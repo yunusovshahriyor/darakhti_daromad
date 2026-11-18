@@ -3,6 +3,8 @@ import { useConfirm } from '../components/ConfirmSheet';
 import CurrencySheet from '../components/CurrencySheet';
 import LockSheet from '../components/LockSheet';
 import RecurringSheet from '../components/RecurringSheet';
+import OverlaySheet from '../components/OverlaySheet';
+import { overlayApi } from '../native';
 import { isLockOn } from '../lock';
 import FreeAccounts from '../components/FreeAccounts';
 import { defOf } from '../currency';
@@ -35,6 +37,7 @@ export default function SettingsView({ state, setState, onToast, onIntro, page, 
   const [curOpen, setCurOpen] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [recOpen, setRecOpen] = useState(false);
+  const [ovOpen, setOvOpen] = useState(false);
   const [lockTick, setLockTick] = useState(0);
   const [haptic, setHaptic] = useState(hapticOn);
   const [mode, setMode] = useState<ThemeMode>(getTheme);
@@ -149,6 +152,13 @@ export default function SettingsView({ state, setState, onToast, onIntro, page, 
             </div>
             <ChevronIcon />
           </button>
+          {overlayApi() && (
+            <button className="cell tap link" onClick={() => setOvOpen(true)}>
+              <div className="ic">🫧</div>
+              <div className="grow"><b>Тугмаи шино болои барномаҳо</b><small>Сабти зуд аз ҳар барнома</small></div>
+              <ChevronIcon />
+            </button>
+          )}
           <button className="cell tap link" onClick={onIntro}>
             <div className="ic">👋</div>
             <div className="grow"><b>{ONBOARD[lang].replay}</b></div>
@@ -214,6 +224,7 @@ export default function SettingsView({ state, setState, onToast, onIntro, page, 
           </Sheet>
         )}
 
+        {ovOpen && <OverlaySheet onClose={() => setOvOpen(false)} />}
         {recOpen && <RecurringSheet state={state} setState={setState} onClose={() => setRecOpen(false)} />}
         {lockOpen && <LockSheet onClose={() => setLockOpen(false)} onChange={() => setLockTick(x => x + 1)} />}
         {curOpen && <CurrencySheet state={state} setState={setState} onClose={() => setCurOpen(false)} />}

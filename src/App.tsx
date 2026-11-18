@@ -18,6 +18,7 @@ import {
   BackIcon, GridIcon, InfoIcon, ListIcon, PersonIcon, PlusIcon, WalletIcon,
 } from './components/Icons';
 import { setRootBackHandler, useHistoryLayer } from './components/useHistoryLayer';
+import { overlayApi } from './native';
 import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, needsSimple, newFreeAccounts, syncCatalog, toFreeMode, toSimple, today, uid } from './model';
 import { emptyState, loadState, saveState, stateObjHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
@@ -174,6 +175,24 @@ export default function App() {
   // Системаи ягона: ҳисобҳои худи корбар + фоизи муайян аз ҳар даромад. Корбари нав бо «Нақд» ва «Корт» оғоз мекунад.
   const pickMode = () =>
     setState(s => (stateObjHasData(s) ? toSimple(s) : { ...toFreeMode(emptyState()), accounts: newFreeAccounts() }));
+
+  // Тугмаи шино болои барномаҳои дигар (APK): пахш → шакли хароҷот, пахши дароз → сабти овозӣ
+  useEffect(() => {
+    const o = overlayApi();
+    if (!o) return;
+    const take = async () => {
+      try {
+        const { value } = await o.takePending();
+        if (value === 'voice') setVoiceOpen(true);
+        else if (value === 'expense' || value === 'income') { setAddKind(value); setAdding(true); }
+      } catch { /* ignore */ }
+    };
+    void take();
+    const vis = () => { if (document.visibilityState === 'visible') void take(); };
+    window.addEventListener('native-open', take);
+    document.addEventListener('visibilitychange', vis);
+    return () => { window.removeEventListener('native-open', take); document.removeEventListener('visibilitychange', vis); };
+  }, []);
 
   // Муқаддима баста шуд, аммо услуб ҳанӯз муқаррар нашудааст: ҳолати оддии тоза
   useEffect(() => {
