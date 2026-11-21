@@ -11,7 +11,7 @@ export function FxCurrencyPicker({ value, base, onChange }: { value: string; bas
   const idx = NAME_IDX[currentLang()];
   return (
     <Field label="Асъори қарз">
-      <PickerField value={value} title="Асъори қарз" onChange={onChange}
+      <PickerField value={value} title="Асъори қарз" onChange={onChange} noCur
         options={[base, ...CURRENCIES.map(c => c.code).filter(c => c !== base)].map(c => ({
           value: c, label: defOf(c).name[idx], note: c === 'TJS' ? 'TJS' : defOf(c).label,
         }))} />

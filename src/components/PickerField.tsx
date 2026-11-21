@@ -13,7 +13,9 @@ export interface PickerOption {
 }
 
 /** Ивазкунандаи `<select>`: тугма + варақаи поёнӣ бо рӯйхат (на диалоги стандартии браузер). */
-export default function PickerField({ value, options, onChange, title }: {
+export default function PickerField({ value, options, onChange, title, noCur = false }: {
+  /** Рӯйхати асъорҳо: «Сомони»/«смн» ба аломати асъори барнома иваз намешавад. */
+  noCur?: boolean;
   value: string;
   options: PickerOption[];
   onChange: (v: string) => void;
@@ -24,7 +26,7 @@ export default function PickerField({ value, options, onChange, title }: {
 
   return (
     <>
-      <button type="button" className="picker-btn" onClick={() => setOpen(true)}>
+      <button type="button" className="picker-btn" onClick={() => setOpen(true)} {...(noCur ? { 'data-nocur': '' } : {})}>
         {cur?.icon !== undefined && <span className="pk-ic">{cur.icon}</span>}
         <span className="pk-t">{cur?.label ?? '—'}</span>
         {cur?.note && <small>{cur.note}</small>}
@@ -32,7 +34,7 @@ export default function PickerField({ value, options, onChange, title }: {
       </button>
       {open && createPortal(
         <Sheet title={title} onClose={() => setOpen(false)}>
-          <div className="pk-list">
+          <div className="pk-list" {...(noCur ? { 'data-nocur': '' } : {})}>
             {options.map((o, i) => (
               <div key={o.value}>
                 {o.group && o.group !== options[i - 1]?.group && <div className="pk-group">{o.group}</div>}
