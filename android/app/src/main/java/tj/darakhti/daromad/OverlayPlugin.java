@@ -141,6 +141,15 @@ public class OverlayPlugin extends Plugin {
         call.resolve();
     }
 
+    /** Комиссияи Яндекс ва парк (%): аз маблағи ҳар фармоиш кам карда мешавад. */
+    @PluginMethod
+    public void setYandexFees(PluginCall call) {
+        String ya = String.valueOf(call.getString("yandex", "18.3")).replace(',', '.');
+        String park = String.valueOf(call.getString("park", "2")).replace(',', '.');
+        prefs().edit().putString("yp_fee_ya", ya).putString("yp_fee_park", park).apply();
+        call.resolve();
+    }
+
     @PluginMethod
     public void getYandex(PluginCall call) {
         JSObject r = new JSObject();
@@ -148,6 +157,9 @@ public class OverlayPlugin extends Plugin {
         r.put("amount", prefs().getString("yp_amount", ""));
         r.put("date", prefs().getString("yp_date", ""));
         // Ташхис (танҳо барои намоиш дар танзимот)
+        r.put("feeYa", prefs().getString("yp_fee_ya", "18.3"));
+        r.put("feePark", prefs().getString("yp_fee_park", "2"));
+        r.put("last", prefs().getString("yp_last", ""));
         r.put("events", prefs().getInt("dbg_events", 0));
         r.put("items", prefs().getInt("dbg_items", 0));
         r.put("texts", prefs().getString("dbg_texts", ""));

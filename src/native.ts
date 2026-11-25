@@ -17,7 +17,8 @@ export interface OverlayApi {
   hasScreenReader(): Promise<{ value: boolean }>;
   requestScreenReader(): Promise<void>;
   setYandex(o: { enabled: boolean }): Promise<void>;
-  getYandex(): Promise<{ enabled: boolean; amount: string; date: string; events: number; items: number; texts: string; ypPkg: string; curPkg: string; curName: string }>;
+  setYandexFees(o: { yandex: string; park: string }): Promise<void>;
+  getYandex(): Promise<{ feeYa: string; feePark: string; last: string; enabled: boolean; amount: string; date: string; events: number; items: number; texts: string; ypPkg: string; curPkg: string; curName: string }>;
 }
 
 let cached: OverlayApi | null | undefined;

@@ -14,6 +14,9 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [reader, setReader] = useState(true);
   const [amount, setAmount] = useState('');
   const [dbg, setDbg] = useState('');
+  const [feeYa, setFeeYa] = useState('18.3');
+  const [feePark, setFeePark] = useState('2');
+  const [last, setLast] = useState('');
 
   const refresh = useCallback(async () => {
     if (!api) return;
@@ -26,6 +29,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       const y = await api.getYandex();
       setYp(y.enabled);
       setAmount(y.amount);
+      setFeeYa(y.feeYa); setFeePark(y.feePark); setLast(y.last);
       setDbg(`events: ${y.events} · items: ${y.items} · yp_pkg: ${y.ypPkg || '-'} · foreground: ${y.curPkg || '-'} (${y.curName || '-'}) · amount: ${y.amount || '-'} (${y.date || '-'}) · texts: ${y.texts.slice(0, 300)}`);
     } catch { /* ignore */ }
   }, [api]);
@@ -60,6 +64,8 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     } catch { /* ignore */ }
     setBusy(false);
   };
+
+  const saveFees = (ya: string, park: string) => { void api?.setYandexFees({ yandex: ya || '0', park: park || '0' }); };
 
   const toggleYp = async () => {
     if (!api || busy) return;
@@ -125,6 +131,18 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       </label>
       {!reader && !yp && (
         <div className="alert">Дар танзимоти «Дастрасӣ» хидмати «Дарахти даромад: маблағи Яндекс Про»-ро фаъол кунед. Агар Android «Танзимоти маҳдудшуда» гӯяд: Танзимот → Барномаҳо → Дарахти даромад → ⋮ → «Иҷозат додани танзимоти маҳдудшуда», баъд боз кӯшиш кунед. Баъд ба ин ҷо баргашта, тугмаро боз пахш кунед.</div>
+      )}
+      {yp && (
+        <>
+          <p className="note">Ҳангоми «Заказ завершён» маблағи фармоиш минус комиссия худкор ба маблағи имрӯза илова мешавад. Комиссияро (%) дар ин ҷо танзим кунед:</p>
+          <div className="rec-chips">
+            <label className="field" style={{ flex: 1 }}><span>Яндекс (%)</span>
+              <input value={feeYa} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setFeeYa(v); saveFees(v, feePark); }} /></label>
+            <label className="field" style={{ flex: 1 }}><span>Парк (%)</span>
+              <input value={feePark} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setFeePark(v); saveFees(feeYa, v); }} /></label>
+          </div>
+          {last && <p className="note" data-nocur>{`Охирин фармоиш: ${last}`}</p>}
+        </>
       )}
       {yp && <p className="note" data-nocur style={{ wordBreak: 'break-word', fontSize: '.72rem' }}>{dbg}</p>}
       <p className="note">Тугмаро бо дарозии ангушт кашида ба ҷои дигар гузоштан мумкин аст. Барои хомӯш кардан дар ҳамин ҷо ё дар огоҳиномаи барнома «Ғайрифаъол кардан»-ро пахш кунед.</p>

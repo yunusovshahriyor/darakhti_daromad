@@ -275,7 +275,7 @@ public class OverlayService extends Service {
             t.setTypeface(Typeface.DEFAULT_BOLD);
             t.setShadowLayer(8f, 0f, 1f, Color.BLACK);
             t.setGravity(Gravity.CENTER);
-            t.setSingleLine(true);
+            t.setMaxLines(2);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setMaxWidth(dp(240));
             t.setMinWidth(dp(40));

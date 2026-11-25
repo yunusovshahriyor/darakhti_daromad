@@ -32,6 +32,13 @@ public class ScreenReaderService extends AccessibilityService {
         if ("yp_pkg".equals(key)) retarget();
     };
 
+    /** Маблағи ҷамъшуда бо ₽ (ҳатто бе аъшор): «452 ₽», «7 058,49 ₽». */
+    private static final Pattern RUB = Pattern.compile("-?\\d[\\d\\s\\u00a0\\u202f]*(?:[.,]\\d{1,2})?\\s*[₽Р]");
+    /** Саҳифаи «Заказ завершён» дар ҳамон вақт як маротиба ҳисоб карда мешавад. */
+    private boolean completedShown = false;
+    private long lastOrderAt = 0;
+    private double lastOrderGross = -1;
+
     private static class Item {
         final String text;
         final Rect r;
@@ -108,6 +115,18 @@ public class ScreenReaderService extends AccessibilityService {
         for (int i = 0; i < items.size() && sb.length() < 400; i++) sb.append(items.get(i).text).append(" | ");
         prefs.edit().putInt("dbg_items", items.size()).putString("dbg_texts", sb.toString()).apply();
 
+        // «Заказ завершён»: маблағи фармоиш (минус комиссия) худкор ба маблағи имрӯза илова мешавад, бе гузаштан ба «Деньги»
+        int doneIdx = -1;
+        for (int i = 0; i < items.size(); i++) if (has(items.get(i), "заказ заверш")) { doneIdx = i; break; }
+        if (doneIdx >= 0) {
+            if (!completedShown) {
+                double gross = orderAmount(items, doneIdx);
+                if (gross > 0) { addOrder(gross); completedShown = true; }
+            }
+            return;
+        }
+        completedShown = false;
+
         int todayIdx = -1;
         boolean page = false;
         for (int i = 0; i < items.size(); i++) {
@@ -145,6 +164,48 @@ public class ScreenReaderService extends AccessibilityService {
         amt = amt.replaceAll("[\\s\\u00a0\\u202f]+", " ").trim();
         if (!amt.endsWith("₽") && !amt.endsWith("Р")) amt += " ₽";
         prefs.edit().putString("yp_amount", amt).putString("yp_date", OverlayService.todayKey()).apply();
+    }
+
+    private static double num(String t) {
+        try { return Double.parseDouble(t.replaceAll("[^0-9,.-]", "").replace(',', '.')); } catch (Exception e) { return -1; }
+    }
+
+    /** Маблағи фармоиш аз саҳифаи «Заказ завершён»: сатри «Доход» ё маблағи калони наздик. */
+    private double orderAmount(List<Item> items, int doneIdx) {
+        Item income = null;
+        for (Item it : items) if (it.text.equalsIgnoreCase("Доход")) { income = it; break; }
+        if (income != null) {
+            int cy = income.r.centerY();
+            for (Item it : items) {
+                if (it.text.length() > 24 || !RUB.matcher(it.text).matches()) continue;
+                if (Math.abs(it.r.centerY() - cy) < 80 && it.r.left >= income.r.right - 10) return num(it.text);
+            }
+        }
+        for (int i = Math.max(0, doneIdx - 4); i <= Math.min(items.size() - 1, doneIdx + 4); i++) {
+            Item it = items.get(i);
+            if (it.text.length() <= 24 && RUB.matcher(it.text).matches()) return num(it.text);
+        }
+        return -1;
+    }
+
+    private static String fmtRub(double v) {
+        String[] p = String.format(java.util.Locale.US, "%.2f", v).split("\\.");
+        return p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " ₽";
+    }
+
+    /** Маблағи фармоиш − комиссияи Яндекс ва парк = воқеан ба даромад меояд. */
+    private void addOrder(double gross) {
+        long now = SystemClock.uptimeMillis();
+        if (gross == lastOrderGross && now - lastOrderAt < 15000) return; // як фармоиш ду маротиба не
+        lastOrderGross = gross;
+        lastOrderAt = now;
+        double fee = num(prefs.getString("yp_fee_ya", "18.3")) + num(prefs.getString("yp_fee_park", "2"));
+        if (fee < 0 || fee > 100) fee = 20.3;
+        double net = gross * (1 - fee / 100.0);
+        String today = OverlayService.todayKey();
+        double base = today.equals(prefs.getString("yp_date", "")) ? Math.max(0, num(prefs.getString("yp_amount", "0"))) : 0;
+        prefs.edit().putString("yp_amount", fmtRub(base + net)).putString("yp_date", today)
+            .putString("yp_last", fmtRub(gross) + " → +" + fmtRub(net)).apply();
     }
 
     @Override
