@@ -150,6 +150,21 @@ public class OverlayPlugin extends Plugin {
         call.resolve();
     }
 
+    /** Лимити кор (соат) ва истироҳат (соат) — қоидаҳои Яндекс. */
+    @PluginMethod
+    public void setWorkLimits(PluginCall call) {
+        prefs().edit().putString("wk_limit_h", String.valueOf(call.getString("limit", "12")).replace(',', '.'))
+            .putString("wk_rest_h", String.valueOf(call.getString("rest", "6")).replace(',', '.')).apply();
+        call.resolve();
+    }
+
+    /** Ҳисобкунакро аз нав оғоз кардан (ҳолат ва вақти кор тоза мешавад). */
+    @PluginMethod
+    public void resetWork(PluginCall call) {
+        prefs().edit().remove("wk_state").putLong("wk_worked", 0).putLong("wk_since", 0).apply();
+        call.resolve();
+    }
+
     @PluginMethod
     public void getYandex(PluginCall call) {
         JSObject r = new JSObject();
@@ -157,6 +172,12 @@ public class OverlayPlugin extends Plugin {
         r.put("amount", prefs().getString("yp_amount", ""));
         r.put("date", prefs().getString("yp_date", ""));
         // Ташхис (танҳо барои намоиш дар танзимот)
+        r.put("wkState", prefs().getString("wk_state", ""));
+        r.put("wkWorked", prefs().getLong("wk_worked", 0));
+        r.put("wkSince", prefs().getLong("wk_since", 0));
+        r.put("wkLimit", prefs().getString("wk_limit_h", "12"));
+        r.put("wkRest", prefs().getString("wk_rest_h", "6"));
+        r.put("power", prefs().getString("dbg_power", ""));
         r.put("feeYa", prefs().getString("yp_fee_ya", "18.3"));
         r.put("feePark", prefs().getString("yp_fee_park", "2"));
         r.put("last", prefs().getString("yp_last", ""));

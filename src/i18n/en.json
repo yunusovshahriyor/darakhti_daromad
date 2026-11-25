@@ -1082,5 +1082,11 @@
 "Дар танзимоти «Дастрасӣ» хидмати «Дарахти даромад: маблағи Яндекс Про»-ро фаъол кунед. Агар Android «Танзимоти маҳдудшуда» гӯяд: Танзимот → Барномаҳо → Дарахти даромад → ⋮ → «Иҷозат додани танзимоти маҳдудшуда», баъд боз кӯшиш кунед. Баъд ба ин ҷо баргашта, тугмаро боз пахш кунед.": "In the Accessibility settings turn on the service “Дарахти даромад: маблағи Яндекс Про”. If Android says “Restricted setting”: Settings → Apps → Дарахти даромад → ⋮ → “Allow restricted settings”, then try again. Then come back here and tap the switch again.",
 "Ҳангоми «Заказ завершён» маблағи фармоиш минус комиссия худкор ба маблағи имрӯза илова мешавад. Комиссияро (%) дар ин ҷо танзим кунед:": "On “Заказ завершён” the order amount minus the commission is added automatically to today's total. Set the commission (%) here:",
 "Яндекс (%)": "Yandex (%)",
-"Парк (%)": "Park (%)"
+"Парк (%)": "Park (%)",
+"Вақти кор: аз «дар линия» то «Уйти с линии» ҳисоб мешавад (аз диалогҳои Яндекс Про ва аз ранги тугмаи ⏻ муайян мешавад). Лимит ва истироҳатро (соат) танзим кунед:": "Working time is counted from “on the line” to “Уйти с линии” (detected from the Yandex Pro dialogs and the colour of the ⏻ button). Set the limit and the rest (in hours):",
+"Лимити кор (соат)": "Work limit (hours)",
+"Истироҳат (соат)": "Rest (hours)",
+"Ҳолат: дар линия": "Status: on the line",
+"Ҳолат: не дар линия": "Status: off the line",
+"Ҳисобкунакро аз нав оғоз кардан": "Reset the counter"
 }

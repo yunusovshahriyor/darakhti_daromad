@@ -3,7 +3,10 @@ package tj.darakhti.daromad;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.os.Build;
+import android.view.Display;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -38,6 +41,34 @@ public class ScreenReaderService extends AccessibilityService {
     private boolean completedShown = false;
     private long lastOrderAt = 0;
     private double lastOrderGross = -1;
+
+    // ---------- Вақти кор: «дар линия» / «не дар линия» ----------
+    private long lastShot = 0;
+    private int pixelStreak = 0;
+    private int pixelLast = 0;
+
+    private static boolean has(Item it, String w) {
+        return it.text.toLowerCase(java.util.Locale.ROOT).contains(w);
+    }
+
+    /** Ҳолати «дар линия» (on) ё не (off): ҳисобкунакҳои вақт. Танҳо ҳангоми тағйир ҳисоб мешавад. */
+    private void setOnline(boolean online) {
+        long now = System.currentTimeMillis();
+        String st = prefs.getString("wk_state", "");
+        String want = online ? "on" : "off";
+        if (st.equals(want)) return;
+        SharedPreferences.Editor e = prefs.edit();
+        long worked = prefs.getLong("wk_worked", 0);
+        long since = prefs.getLong("wk_since", now);
+        long restMs = (long) (num(prefs.getString("wk_rest_h", "6")) * 3600_000L);
+        if (online) {
+            // Баъд аз истироҳати пурра ҳисоб аз сифр оғоз мешавад
+            if (st.equals("off") && restMs > 0 && now - since >= restMs) worked = 0;
+        } else if (st.equals("on")) {
+            worked += now - since; // ҳисоб кардани фосилаи кор
+        }
+        e.putString("wk_state", want).putLong("wk_worked", worked).putLong("wk_since", now).apply();
+    }
 
     private static class Item {
         final String text;
@@ -78,6 +109,15 @@ public class ScreenReaderService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent e) {
         if (prefs == null || e == null || e.getPackageName() == null || !target().contentEquals(e.getPackageName())) return;
         if (!prefs.getBoolean("yp_on", false)) return;
+        // Пахши тугмаи «Уйти с линии» / «Выйти на линию»: ҳолат фавран иваз мешавад
+        if (e.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED) {
+            StringBuilder t = new StringBuilder();
+            if (e.getText() != null) for (CharSequence c : e.getText()) t.append(c).append(' ');
+            if (e.getContentDescription() != null) t.append(e.getContentDescription());
+            String tl = t.toString().toLowerCase(java.util.Locale.ROOT);
+            if (tl.contains("уйти с линии")) setOnline(false);
+            else if (tl.contains("выйти на линию")) setOnline(true);
+        }
         prefs.edit().putInt("dbg_events", prefs.getInt("dbg_events", 0) + 1).apply();
         // Кам-кам хондан: бештар аз як маротиба дар 0,7 сония не, аммо ҳолати охирин ҳатман хонда мешавад
         long wait = Math.max(0, 700 - (SystemClock.uptimeMillis() - last));
@@ -99,10 +139,6 @@ public class ScreenReaderService extends AccessibilityService {
         for (int i = 0; i < n.getChildCount(); i++) collect(n.getChild(i), out, depth + 1);
     }
 
-    private static boolean has(Item it, String w) {
-        return it.text.toLowerCase(java.util.Locale.ROOT).contains(w);
-    }
-
     private void read() {
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) { prefs.edit().putString("dbg_texts", "(root=null)").apply(); return; }
@@ -114,6 +150,13 @@ public class ScreenReaderService extends AccessibilityService {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < items.size() && sb.length() < 400; i++) sb.append(items.get(i).text).append(" | ");
         prefs.edit().putInt("dbg_items", items.size()).putString("dbg_texts", sb.toString()).apply();
+
+        // Диалогҳои Яндекс Про: ҳолати воқеиро нишон медиҳанд (баъд аз пахши ⏻)
+        for (Item it : items) {
+            if (has(it, "перестать получать заказы")) { setOnline(true); break; }
+            if (has(it, "готовы получать заказы")) { setOnline(false); break; }
+        }
+        shot();
 
         // «Заказ завершён»: маблағи фармоиш (минус комиссия) худкор ба маблағи имрӯза илова мешавад, бе гузаштан ба «Деньги»
         int doneIdx = -1;
@@ -206,6 +249,55 @@ public class ScreenReaderService extends AccessibilityService {
         double base = today.equals(prefs.getString("yp_date", "")) ? Math.max(0, num(prefs.getString("yp_amount", "0"))) : 0;
         prefs.edit().putString("yp_amount", fmtRub(base + net)).putString("yp_date", today)
             .putString("yp_last", fmtRub(gross) + " → +" + fmtRub(net)).apply();
+    }
+
+    /** Тугмаи ⏻ (боло чап): зард — дар линия, хокистарӣ — не. Скриншот ҳар 4 сония, танҳо Android 11+. */
+    private void shot() {
+        if (Build.VERSION.SDK_INT < 30) return;
+        long now = SystemClock.uptimeMillis();
+        if (now - lastShot < 4000) return;
+        lastShot = now;
+        try {
+            takeScreenshot(Display.DEFAULT_DISPLAY, getMainExecutor(), new TakeScreenshotCallback() {
+                @Override
+                public void onSuccess(ScreenshotResult r) {
+                    try {
+                        Bitmap hw = Bitmap.wrapHardwareBuffer(r.getHardwareBuffer(), r.getColorSpace());
+                        if (hw != null) {
+                            Bitmap b = hw.copy(Bitmap.Config.ARGB_8888, false);
+                            if (b != null) classifyPower(b);
+                        }
+                        r.getHardwareBuffer().close();
+                    } catch (Exception ignored) { /* skip */ }
+                }
+
+                @Override
+                public void onFailure(int errorCode) { prefs.edit().putInt("dbg_shot_err", errorCode).apply(); }
+            });
+        } catch (Exception ignored) { /* skip */ }
+    }
+
+    /** 8 нуқта дар гирдгарди тугмаи ⏻: агар ≥6 нуқта зард (дар линия) ё хокистарӣ (не) бошанд, ва ду маротиба пай дар пай — ҳолат иваз мешавад. */
+    private void classifyPower(Bitmap b) {
+        int w = b.getWidth(), h = b.getHeight();
+        int cx = (int) (0.097 * w), cy = (int) (0.075 * h);
+        double rad = 0.05 * w;
+        int yellow = 0, grey = 0;
+        for (int i = 0; i < 8; i++) {
+            double a = i * Math.PI / 4;
+            int x = cx + (int) Math.round(rad * Math.cos(a)), y = cy + (int) Math.round(rad * Math.sin(a));
+            if (x < 0 || y < 0 || x >= w || y >= h) return;
+            int p = b.getPixel(x, y);
+            int r = (p >> 16) & 255, g = (p >> 8) & 255, bl = p & 255;
+            if (r > 200 && g > 160 && bl < 120) yellow++;
+            else if (r > 150 && Math.abs(r - g) < 25 && Math.abs(g - bl) < 30) grey++;
+        }
+        int cls = yellow >= 6 ? 1 : grey >= 6 ? 2 : 0;
+        prefs.edit().putString("dbg_power", "yellow=" + yellow + " grey=" + grey).apply();
+        if (cls == 0) { pixelStreak = 0; return; }
+        pixelStreak = cls == pixelLast ? pixelStreak + 1 : 1;
+        pixelLast = cls;
+        if (pixelStreak >= 2) setOnline(cls == 1);
     }
 
     @Override

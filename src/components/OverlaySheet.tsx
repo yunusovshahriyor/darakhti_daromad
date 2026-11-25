@@ -17,6 +17,9 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [feeYa, setFeeYa] = useState('18.3');
   const [feePark, setFeePark] = useState('2');
   const [last, setLast] = useState('');
+  const [limit, setLimit] = useState('12');
+  const [rest, setRest] = useState('6');
+  const [wk, setWk] = useState('');
 
   const refresh = useCallback(async () => {
     if (!api) return;
@@ -30,6 +33,8 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       setYp(y.enabled);
       setAmount(y.amount);
       setFeeYa(y.feeYa); setFeePark(y.feePark); setLast(y.last);
+      setLimit(y.wkLimit); setRest(y.wkRest);
+      setWk(y.wkState === 'on' ? 'дар линия' : y.wkState === 'off' ? 'не дар линия' : 'ҳанӯз номаълум (як маротиба тугмаи ⏻-ро пахш кунед)');
       setDbg(`events: ${y.events} · items: ${y.items} · yp_pkg: ${y.ypPkg || '-'} · foreground: ${y.curPkg || '-'} (${y.curName || '-'}) · amount: ${y.amount || '-'} (${y.date || '-'}) · texts: ${y.texts.slice(0, 300)}`);
     } catch { /* ignore */ }
   }, [api]);
@@ -65,6 +70,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     setBusy(false);
   };
 
+  const saveLimits = (l: string, r: string) => { void api?.setWorkLimits({ limit: l || '12', rest: r || '6' }); };
   const saveFees = (ya: string, park: string) => { void api?.setYandexFees({ yandex: ya || '0', park: park || '0' }); };
 
   const toggleYp = async () => {
@@ -141,6 +147,15 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
             <label className="field" style={{ flex: 1 }}><span>Парк (%)</span>
               <input value={feePark} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setFeePark(v); saveFees(feeYa, v); }} /></label>
           </div>
+          <p className="note">Вақти кор: аз «дар линия» то «Уйти с линии» ҳисоб мешавад (аз диалогҳои Яндекс Про ва аз ранги тугмаи ⏻ муайян мешавад). Лимит ва истироҳатро (соат) танзим кунед:</p>
+          <div className="rec-chips">
+            <label className="field" style={{ flex: 1 }}><span>Лимити кор (соат)</span>
+              <input value={limit} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setLimit(v); saveLimits(v, rest); }} /></label>
+            <label className="field" style={{ flex: 1 }}><span>Истироҳат (соат)</span>
+              <input value={rest} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setRest(v); saveLimits(limit, v); }} /></label>
+          </div>
+          <p className="note">{`Ҳолат: ${wk || '—'}`}</p>
+          <button type="button" className="btn secondary" onClick={() => { void api?.resetWork(); setWk('ҳанӯз номаълум (як маротиба тугмаи ⏻-ро пахш кунед)'); }}>Ҳисобкунакро аз нав оғоз кардан</button>
           {last && <p className="note" data-nocur>{`Охирин фармоиш: ${last}`}</p>}
         </>
       )}

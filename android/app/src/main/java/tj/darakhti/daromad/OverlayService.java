@@ -154,10 +154,13 @@ public class OverlayService extends Service {
             second = toSomoni(amt);
         }
         String shown = name.isEmpty() ? "+" : name;
+        // Вақти кор (аз «дар линия»): зери маблағ ва сомонӣ
+        String work = (prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG))) ? workLine() : "";
         String full = second.isEmpty() ? shown : shown + "\n" + second;
+        if (!work.isEmpty()) full += "\n" + work;
         if (!full.equals(lastShown)) {
             lastShown = full;
-            if (second.isEmpty()) label.setText(shown);
+            if (second.isEmpty() && work.isEmpty()) label.setText(shown);
             else {
                 android.text.SpannableString sp = new android.text.SpannableString(full);
                 sp.setSpan(new android.text.style.RelativeSizeSpan(0.78f), shown.length() + 1, full.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -165,6 +168,37 @@ public class OverlayService extends Service {
             }
             keepOnScreen();
         }
+    }
+
+    private static String hm(long ms) {
+        long m = Math.max(0, ms) / 60000;
+        return (m / 60) + ":" + String.format(java.util.Locale.US, "%02d", m % 60);
+    }
+
+    private static double numOf(String s, double def) {
+        try { return Double.parseDouble(s.replace(',', '.')); } catch (Exception e) { return def; }
+    }
+
+    /**
+     * Вақти кор ва боқимонда (ё истироҳат). `wk_state`: on | off | холӣ (ҳанӯз номаълум).
+     * Дар линия: «⏱ 5:32 · монд 6:28»; не дар линия: «😴 истироҳат 2:10 / 6:00» (то ҳисоб аз нав оғоз шавад).
+     */
+    private String workLine() {
+        String st = prefs.getString("wk_state", "");
+        if (st.isEmpty()) return "";
+        long now = System.currentTimeMillis();
+        long limit = (long) (numOf(prefs.getString("wk_limit_h", "12"), 12) * 3600_000L);
+        long rest = (long) (numOf(prefs.getString("wk_rest_h", "6"), 6) * 3600_000L);
+        long worked = prefs.getLong("wk_worked", 0);
+        long since = prefs.getLong("wk_since", now);
+        if (st.equals("on")) {
+            long cur = worked + (now - since);
+            long left = limit - cur;
+            return left > 0 ? "⏱ " + hm(cur) + " · монд " + hm(left) : "⏱ " + hm(cur) + " · лимит!";
+        }
+        long off = now - since;
+        if (worked <= 0 || off >= rest) return "⏸ не дар линия";
+        return "😴 истироҳат " + hm(off) + " / " + hm(rest);
     }
 
     // ---------- Қурби рубл → сомонӣ (барои маблағи «Яндекс Про») ----------
@@ -275,7 +309,7 @@ public class OverlayService extends Service {
             t.setTypeface(Typeface.DEFAULT_BOLD);
             t.setShadowLayer(8f, 0f, 1f, Color.BLACK);
             t.setGravity(Gravity.CENTER);
-            t.setMaxLines(2);
+            t.setMaxLines(3);
             t.setEllipsize(android.text.TextUtils.TruncateAt.END);
             t.setMaxWidth(dp(240));
             t.setMinWidth(dp(40));

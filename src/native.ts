@@ -18,7 +18,10 @@ export interface OverlayApi {
   requestScreenReader(): Promise<void>;
   setYandex(o: { enabled: boolean }): Promise<void>;
   setYandexFees(o: { yandex: string; park: string }): Promise<void>;
-  getYandex(): Promise<{ feeYa: string; feePark: string; last: string; enabled: boolean; amount: string; date: string; events: number; items: number; texts: string; ypPkg: string; curPkg: string; curName: string }>;
+  /** Вақти кор: лимит ва истироҳат (соат); ҳолат аз диалогҳо ва ранги тугмаи ⏻. */
+  setWorkLimits(o: { limit: string; rest: string }): Promise<void>;
+  resetWork(): Promise<void>;
+  getYandex(): Promise<{ wkState: string; wkWorked: number; wkSince: number; wkLimit: string; wkRest: string; power: string; feeYa: string; feePark: string; last: string; enabled: boolean; amount: string; date: string; events: number; items: number; texts: string; ypPkg: string; curPkg: string; curName: string }>;
 }
 
 let cached: OverlayApi | null | undefined;
