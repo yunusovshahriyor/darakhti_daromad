@@ -8,12 +8,16 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [on, setOn] = useState(false);
   const [allowed, setAllowed] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [name, setName] = useState(false);
+  const [usage, setUsage] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!api) return;
     try {
       setAllowed((await api.canDraw()).value);
       setOn((await api.isRunning()).value);
+      setName((await api.isAppName()).value);
+      setUsage((await api.hasUsageAccess()).value);
     } catch { /* ignore */ }
   }, [api]);
 
@@ -36,6 +40,18 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     setBusy(false);
   };
 
+  const toggleName = async () => {
+    if (!api || busy) return;
+    setBusy(true);
+    try {
+      if (name) { await api.setAppName({ enabled: false }); setName(false); }
+      else if (!(await api.canDraw()).value) { setAllowed(false); await api.requestPermission(); }
+      else if (!(await api.hasUsageAccess()).value) { setUsage(false); await api.requestUsageAccess(); }
+      else { await api.setAppName({ enabled: true }); setName(true); }
+    } catch { /* ignore */ }
+    setBusy(false);
+  };
+
   return (
     <Sheet title="Тугмаи шино болои барномаҳо" onClose={onClose}>
       <p className="note">Тугмаи хурди «+» болои ҳамаи барномаҳо мемонад. Пахш — кушодани шакли хароҷот, пахши дароз — сабти овозӣ. Барнома экрани барномаҳои дигарро намехонад.</p>
@@ -51,6 +67,19 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       </label>
       {!allowed && !on && (
         <div className="alert">Аввал иҷозати «Болои барномаҳои дигар» диҳед: танзимоти система кушода мешавад. Иҷозат диҳед ва ба ин ҷо баргашта, боз «Фаъол кардан»-ро пахш кунед.</div>
+      )}
+      <label className="switch-row">
+        <span>
+          <b>Номи барномаи кушодашуда</b>
+          <small>Дар болои экран номи барномаи ҳозира бо фони шаффоф навишта мешавад. Танҳо ном нишон дода мешавад: мундариҷаи экран хонда ва ба ҷое фиристода намешавад.</small>
+        </span>
+        <span className="switch">
+          <input type="checkbox" checked={name} onChange={toggleName} disabled={busy} />
+          <i />
+        </span>
+      </label>
+      {!usage && !name && (
+        <div className="alert">Иҷозати «Дастрасӣ ба маълумоти истифода» лозим аст: танзимоти система кушода мешавад. Ин барномаро ёфта, иҷозат диҳед, баргардед ва боз «Номи барномаи кушодашуда»-ро фаъол кунед.</div>
       )}
       <p className="note">Тугмаро бо дарозии ангушт кашида ба ҷои дигар гузоштан мумкин аст. Барои хомӯш кардан дар ҳамин ҷо ё дар огоҳиномаи барнома «Ғайрифаъол кардан»-ро пахш кунед.</p>
     </Sheet>

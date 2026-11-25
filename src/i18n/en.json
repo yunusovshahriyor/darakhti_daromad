@@ -1069,5 +1069,8 @@
 "Тугма ҳозир фаъол аст": "The button is on",
 "Тугма ғайрифаъол аст": "The button is off",
 "Аввал иҷозати «Болои барномаҳои дигар» диҳед: танзимоти система кушода мешавад. Иҷозат диҳед ва ба ин ҷо баргашта, боз «Фаъол кардан»-ро пахш кунед.": "First allow “Display over other apps”: system settings will open. Allow it, come back here and tap “Turn on” again.",
-"Тугмаро бо дарозии ангушт кашида ба ҷои дигар гузоштан мумкин аст. Барои хомӯш кардан дар ҳамин ҷо ё дар огоҳиномаи барнома «Ғайрифаъол кардан»-ро пахш кунед.": "You can drag the button to another place. To turn it off, switch it off here or tap “Turn off” in the app notification."
+"Тугмаро бо дарозии ангушт кашида ба ҷои дигар гузоштан мумкин аст. Барои хомӯш кардан дар ҳамин ҷо ё дар огоҳиномаи барнома «Ғайрифаъол кардан»-ро пахш кунед.": "You can drag the button to another place. To turn it off, switch it off here or tap “Turn off” in the app notification.",
+"Номи барномаи кушодашуда": "Name of the open app",
+"Дар болои экран номи барномаи ҳозира бо фони шаффоф навишта мешавад. Танҳо ном нишон дода мешавад: мундариҷаи экран хонда ва ба ҷое фиристода намешавад.": "The name of the current app is shown at the top of the screen on a transparent background. Only the name is shown: the screen content is not read and not sent anywhere.",
+"Иҷозати «Дастрасӣ ба маълумоти истифода» лозим аст: танзимоти система кушода мешавад. Ин барномаро ёфта, иҷозат диҳед, баргардед ва боз «Номи барномаи кушодашуда»-ро фаъол кунед.": "The “Usage data access” permission is needed: system settings will open. Find this app, allow it, come back and turn “Name of the open app” on again."
 }

@@ -1,6 +1,7 @@
 package tj.darakhti.daromad;
 
 import android.Manifest;
+import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -41,6 +42,15 @@ public class OverlayPlugin extends Plugin {
         call.resolve();
     }
 
+    private android.content.SharedPreferences prefs() {
+        return getContext().getSharedPreferences("overlay", Context.MODE_PRIVATE);
+    }
+
+    private void sync() {
+        Context ctx = getContext();
+        ContextCompat.startForegroundService(ctx, new Intent(ctx, OverlayService.class).setAction("tj.darakhti.daromad.SYNC_OVERLAY"));
+    }
+
     @PluginMethod
     public void start(PluginCall call) {
         Context ctx = getContext();
@@ -52,20 +62,53 @@ public class OverlayPlugin extends Plugin {
             && getActivity() != null) {
             ActivityCompat.requestPermissions(getActivity(), new String[] { Manifest.permission.POST_NOTIFICATIONS }, 1001);
         }
-        ContextCompat.startForegroundService(ctx, new Intent(ctx, OverlayService.class));
+        prefs().edit().putBoolean("bubble", true).apply();
+        sync();
         call.resolve();
     }
 
     @PluginMethod
     public void stop(PluginCall call) {
-        Context ctx = getContext();
-        ctx.stopService(new Intent(ctx, OverlayService.class));
+        prefs().edit().putBoolean("bubble", false).apply();
+        if (OverlayService.running) sync();
         call.resolve();
     }
 
     @PluginMethod
     public void isRunning(PluginCall call) {
-        call.resolve(value(OverlayService.running));
+        call.resolve(value(OverlayService.running && prefs().getBoolean("bubble", false)));
+    }
+
+    // ---------- Номи барномаи кушодашуда ----------
+    @PluginMethod
+    public void hasUsageAccess(PluginCall call) {
+        Context ctx = getContext();
+        AppOpsManager ops = (AppOpsManager) ctx.getSystemService(Context.APP_OPS_SERVICE);
+        int mode = ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), ctx.getPackageName());
+        call.resolve(value(mode == AppOpsManager.MODE_ALLOWED));
+    }
+
+    @PluginMethod
+    public void requestUsageAccess(PluginCall call) {
+        Intent i = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(i);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void setAppName(PluginCall call) {
+        boolean on = Boolean.TRUE.equals(call.getBoolean("enabled", false));
+        Context ctx = getContext();
+        if (on && !Settings.canDrawOverlays(ctx)) { call.reject("permission"); return; }
+        prefs().edit().putBoolean("appname", on).apply();
+        if (on || OverlayService.running) sync();
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void isAppName(PluginCall call) {
+        call.resolve(value(OverlayService.running && prefs().getBoolean("appname", false)));
     }
 
     /** Амали охирини тугмаи шино (як маротиба): саҳифа онро ҳангоми кушодан ё баргашт мепурсад. */

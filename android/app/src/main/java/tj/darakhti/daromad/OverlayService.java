@@ -5,6 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.usage.UsageEvents;
+import android.app.usage.UsageStatsManager;
+import android.content.pm.PackageManager;
+import android.os.PowerManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -36,10 +40,14 @@ public class OverlayService extends Service {
     public static boolean running = false;
     private static final String CHANNEL = "overlay";
     private static final String ACTION_STOP = "tj.darakhti.daromad.STOP_OVERLAY";
+    private static final String ACTION_SYNC = "tj.darakhti.daromad.SYNC_OVERLAY";
     private static final int SIZE_DP = 56;
 
     private WindowManager wm;
     private View bubble;
+    private TextView label;
+    private String currentPkg = "";
+    private long lastEventTime = 0;
     private WindowManager.LayoutParams lp;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
@@ -56,13 +64,94 @@ public class OverlayService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && ACTION_STOP.equals(intent.getAction())) {
+            // Тугма дар огоҳинома: ҳарду функсияро хомӯш мекунем
+            getSharedPreferences("overlay", MODE_PRIVATE).edit().putBoolean("bubble", false).putBoolean("appname", false).apply();
             stopSelf();
             return START_NOT_STICKY;
         }
         startAsForeground();
-        if (bubble == null) addBubble();
         running = true;
+        syncViews();
         return START_STICKY;
+    }
+
+    /** Тугмаи шино ва/ё номи барномаи кушодашуда: мувофиқи танзимот илова ё хориҷ мешавад; агар ҳарду хомӯш бошанд — хидмат қатъ мешавад. */
+    private void syncViews() {
+        prefs = getSharedPreferences("overlay", MODE_PRIVATE);
+        if (wm == null) wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        boolean bubbleOn = prefs.getBoolean("bubble", false);
+        boolean appOn = prefs.getBoolean("appname", false);
+        if (!bubbleOn && !appOn) { stopSelf(); return; }
+        if (bubbleOn && bubble == null) addBubble();
+        if (!bubbleOn && bubble != null) { try { wm.removeView(bubble); } catch (Exception ignored) { /* already removed */ } bubble = null; }
+        if (appOn) startLabel();
+        else stopLabel();
+    }
+
+    // ---------- Номи барномаи кушодашуда ----------
+    private final Runnable poll = new Runnable() {
+        @Override
+        public void run() {
+            updateLabel();
+            handler.postDelayed(this, 1000);
+        }
+    };
+
+    private void startLabel() {
+        if (label == null) {
+            label = new TextView(this);
+            label.setTextColor(Color.WHITE);
+            label.setTextSize(13);
+            label.setTypeface(Typeface.DEFAULT_BOLD);
+            label.setShadowLayer(6f, 0f, 1f, Color.BLACK);
+            label.setGravity(Gravity.CENTER);
+            label.setPadding(dp(8), 0, dp(8), 0);
+            label.setBackgroundColor(Color.TRANSPARENT); // фони шаффоф
+            int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
+            WindowManager.LayoutParams p = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, type,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT);
+            p.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+            p.y = dp(6);
+            label.setText("");
+            wm.addView(label, p);
+        }
+        handler.removeCallbacks(poll);
+        handler.post(poll);
+    }
+
+    private void stopLabel() {
+        handler.removeCallbacks(poll);
+        if (label != null) {
+            try { wm.removeView(label); } catch (Exception ignored) { /* already removed */ }
+            label = null;
+        }
+    }
+
+    /** Аз UsageStats охирин барномаи ба пеш омада (танҳо номи бастаи барнома, на мундариҷаи экран). */
+    private void updateLabel() {
+        if (label == null) return;
+        PowerManager pmgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pmgr != null && !pmgr.isInteractive()) { label.setText(""); return; }
+        try {
+            UsageStatsManager usm = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+            long now = System.currentTimeMillis();
+            UsageEvents ev = usm.queryEvents(lastEventTime > 0 ? lastEventTime : now - 6 * 60 * 60 * 1000L, now);
+            UsageEvents.Event e = new UsageEvents.Event();
+            while (ev.hasNextEvent()) {
+                ev.getNextEvent(e);
+                if (e.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) currentPkg = e.getPackageName();
+                lastEventTime = Math.max(lastEventTime, e.getTimeStamp() + 1);
+            }
+            if (currentPkg.isEmpty()) { label.setText(""); return; }
+            PackageManager pm = getPackageManager();
+            String name;
+            try { name = pm.getApplicationLabel(pm.getApplicationInfo(currentPkg, 0)).toString(); }
+            catch (PackageManager.NameNotFoundException ex) { name = currentPkg; }
+            if (!name.contentEquals(label.getText())) label.setText(name);
+        } catch (SecurityException ex) {
+            label.setText(""); // иҷозати «Дастрасӣ ба маълумоти истифода» нест
+        }
     }
 
     private void startAsForeground() {
@@ -76,7 +165,7 @@ public class OverlayService extends Service {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
         b.setSmallIcon(android.R.drawable.ic_input_add)
             .setContentTitle("Дарахти даромад")
-            .setContentText("Тугмаи сабти зуд фаъол аст")
+            .setContentText("Тугмаи сабти зуд / номи барнома фаъол аст")
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(new Notification.Action.Builder(Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel), "Ғайрифаъол кардан", stop).build());
@@ -86,8 +175,6 @@ public class OverlayService extends Service {
     }
 
     private void addBubble() {
-        wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-        prefs = getSharedPreferences("overlay", MODE_PRIVATE);
         final int size = dp(SIZE_DP);
 
         FrameLayout root = new FrameLayout(this);
@@ -179,6 +266,7 @@ public class OverlayService extends Service {
             try { wm.removeView(bubble); } catch (Exception ignored) { /* already removed */ }
         }
         bubble = null;
+        stopLabel();
         super.onDestroy();
     }
 }

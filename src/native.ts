@@ -6,6 +6,11 @@ export interface OverlayApi {
   stop(): Promise<void>;
   isRunning(): Promise<{ value: boolean }>;
   takePending(): Promise<{ value: string }>;
+  /** Номи барномаи кушодашуда дар болои экран: иҷозати «Дастрасӣ ба маълумоти истифода». */
+  hasUsageAccess(): Promise<{ value: boolean }>;
+  requestUsageAccess(): Promise<void>;
+  setAppName(o: { enabled: boolean }): Promise<void>;
+  isAppName(): Promise<{ value: boolean }>;
 }
 
 interface CapacitorGlobal { isNativePlatform?: () => boolean; getPlatform?: () => string; registerPlugin?: (name: string) => unknown }
