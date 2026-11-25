@@ -156,6 +156,8 @@ public class ScreenReaderService extends AccessibilityService {
             if (has(it, "перестать получать заказы")) { setOnline(true); break; }
             if (has(it, "готовы получать заказы")) { setOnline(false); break; }
         }
+        for (Item it : items) if (has(it, "офлайн")) { setOnline(false); break; } // панели поёнӣ «Офлайн / Выйти на линию»
+        syncRemaining(items);
         shot();
 
         // «Заказ завершён»: маблағи фармоиш (минус комиссия) худкор ба маблағи имрӯза илова мешавад, бе гузаштан ба «Деньги»
@@ -251,6 +253,53 @@ public class ScreenReaderService extends AccessibilityService {
             .putString("yp_last", fmtRub(gross) + " → +" + fmtRub(net)).apply();
     }
 
+    private static final Pattern YA_TIME = Pattern.compile("^\\s*(?:(\\d+)\\s*ч)?\\s*(?:(\\d+)\\s*м)?\\s*$");
+
+    /** «1ч 21м» → миллисония; агар шакл дигар бошад — -1. */
+    private static long yaTime(String t) {
+        Matcher m = YA_TIME.matcher(t.replace('\u00a0', ' ').replace('\u202f', ' ').toLowerCase(java.util.Locale.ROOT));
+        if (!m.matches() || (m.group(1) == null && m.group(2) == null)) return -1;
+        long h = m.group(1) == null ? 0 : Long.parseLong(m.group(1));
+        long mi = m.group(2) == null ? 0 : Long.parseLong(m.group(2));
+        return (h * 60 + mi) * 60000L;
+    }
+
+    /**
+     * «Пора отдохнуть» / «Осталось времени 1ч 21м»: вақти боқимондаи худи Яндекс. Ҳисоби мо ба он мувофиқ мешавад
+     * (кори ҷамъшуда = лимит − боқимонда), агар фарқ кунад.
+     */
+    private void syncRemaining(List<Item> items) {
+        int idx = -1;
+        boolean rest = false;
+        for (int i = 0; i < items.size(); i++) {
+            if (has(items.get(i), "осталось времени")) idx = i;
+            if (has(items.get(i), "отдохнуть")) rest = true;
+        }
+        if (idx < 0 || !rest) return; // танҳо саҳифаи «Пора отдохнуть»
+        Item base = items.get(idx);
+        long rem = -1;
+        String txt = "";
+        for (Item it : items) {
+            if (it == base) continue;
+            long t = yaTime(it.text);
+            if (t >= 0 && Math.abs(it.r.centerY() - base.r.centerY()) < 90 && it.r.left > base.r.left) { rem = t; txt = it.text; break; }
+        }
+        if (rem < 0) {
+            for (int i = idx + 1; i <= Math.min(items.size() - 1, idx + 3); i++) {
+                long t = yaTime(items.get(i).text);
+                if (t >= 0) { rem = t; txt = items.get(i).text; break; }
+            }
+        }
+        if (rem < 0) return;
+        long now = System.currentTimeMillis();
+        long limit = (long) (num(prefs.getString("wk_limit_h", "12")) * 3600_000L);
+        if (limit <= 0) limit = 12 * 3600_000L;
+        long worked = Math.max(0, limit - rem);
+        SharedPreferences.Editor e = prefs.edit().putLong("wk_worked", worked).putString("wk_ya_left", txt).putLong("wk_sync", now);
+        if ("on".equals(prefs.getString("wk_state", ""))) e.putLong("wk_since", now); // ҳисоб аз ҳоло ба ҳисоби Яндекс идома мекунад
+        e.apply();
+    }
+
     /** Тугмаи ⏻ (боло чап): зард — дар линия, хокистарӣ — не. Скриншот ҳар 4 сония, танҳо Android 11+. */
     private void shot() {
         if (Build.VERSION.SDK_INT < 30) return;
@@ -280,24 +329,44 @@ public class ScreenReaderService extends AccessibilityService {
     /** 8 нуқта дар гирдгарди тугмаи ⏻: агар ≥6 нуқта зард (дар линия) ё хокистарӣ (не) бошанд, ва ду маротиба пай дар пай — ҳолат иваз мешавад. */
     private void classifyPower(Bitmap b) {
         int w = b.getWidth(), h = b.getHeight();
-        int cx = (int) (0.097 * w), cy = (int) (0.075 * h);
-        double rad = 0.05 * w;
-        int yellow = 0, grey = 0;
-        for (int i = 0; i < 8; i++) {
-            double a = i * Math.PI / 4;
-            int x = cx + (int) Math.round(rad * Math.cos(a)), y = cy + (int) Math.round(rad * Math.sin(a));
-            if (x < 0 || y < 0 || x >= w || y >= h) return;
-            int p = b.getPixel(x, y);
-            int r = (p >> 16) & 255, g = (p >> 8) & 255, bl = p & 255;
-            if (r > 200 && g > 160 && bl < 120) yellow++;
-            else if (r > 150 && Math.abs(r - g) < 25 && Math.abs(g - bl) < 30) grey++;
+        // Тугма ҷойи собит надорад: бо баннери «Пора отдохнуть» поёнтар меравад. Ду ҷойи эҳтимолӣ + ҳалқаи сиёҳи гирду атроф тасдиқ мекунад.
+        double[] ys = { 0.075, 0.1125 };
+        int cls = 0;
+        String dbg = "";
+        for (double fy : ys) {
+            int cx = (int) (0.097 * w), cy = (int) (fy * h);
+            int dark = 0, yellow = 0, grey = 0;
+            for (int i = 0; i < 8; i++) {
+                double a = i * Math.PI / 4;
+                if (ringDark(b, cx, cy, a, w)) dark++;
+                int x = cx + (int) Math.round(0.05 * w * Math.cos(a)), y = cy + (int) Math.round(0.05 * w * Math.sin(a));
+                if (x < 0 || y < 0 || x >= w || y >= h) continue;
+                int p = b.getPixel(x, y);
+                int r = (p >> 16) & 255, g = (p >> 8) & 255, bl = p & 255;
+                if (r > 200 && g > 160 && bl < 120) yellow++;
+                else if (r > 150 && Math.abs(r - g) < 25 && Math.abs(g - bl) < 30) grey++;
+            }
+            dbg += "y=" + fy + ":dark" + dark + "/yel" + yellow + "/gry" + grey + " ";
+            if (dark < 6) continue; // тугма ин ҷо нест
+            if (yellow >= 6) { cls = 1; break; }
+            if (grey >= 6) { cls = 2; break; }
         }
-        int cls = yellow >= 6 ? 1 : grey >= 6 ? 2 : 0;
-        prefs.edit().putString("dbg_power", "yellow=" + yellow + " grey=" + grey).apply();
+        prefs.edit().putString("dbg_power", dbg).apply();
         if (cls == 0) { pixelStreak = 0; return; }
         pixelStreak = cls == pixelLast ? pixelStreak + 1 : 1;
         pixelLast = cls;
         if (pixelStreak >= 2) setOnline(cls == 1);
+    }
+
+    /** Ҳалқаи сиёҳи берунии тугмаи ⏻ дар кунҷи `a`. */
+    private static boolean ringDark(Bitmap b, int cx, int cy, double a, int w) {
+        for (double rr : new double[] { 0.068, 0.072, 0.076 }) {
+            int x = cx + (int) Math.round(rr * w * Math.cos(a)), y = cy + (int) Math.round(rr * w * Math.sin(a));
+            if (x < 0 || y < 0 || x >= b.getWidth() || y >= b.getHeight()) continue;
+            int p = b.getPixel(x, y);
+            if (((p >> 16) & 255) < 70 && ((p >> 8) & 255) < 70 && (p & 255) < 70) return true;
+        }
+        return false;
     }
 
     @Override

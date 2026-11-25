@@ -20,6 +20,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [limit, setLimit] = useState('12');
   const [rest, setRest] = useState('6');
   const [wk, setWk] = useState('');
+  const [syncTxt, setSyncTxt] = useState('');
 
   const refresh = useCallback(async () => {
     if (!api) return;
@@ -34,6 +35,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       setAmount(y.amount);
       setFeeYa(y.feeYa); setFeePark(y.feePark); setLast(y.last);
       setLimit(y.wkLimit); setRest(y.wkRest);
+      setSyncTxt(y.wkYaLeft ? `Охирин мувофиқшавӣ бо Яндекс: монд ${y.wkYaLeft} (${new Date(y.wkSync).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})` : '');
       setWk(y.wkState === 'on' ? 'дар линия' : y.wkState === 'off' ? 'не дар линия' : 'ҳанӯз номаълум (як маротиба тугмаи ⏻-ро пахш кунед)');
       setDbg(`events: ${y.events} · items: ${y.items} · yp_pkg: ${y.ypPkg || '-'} · foreground: ${y.curPkg || '-'} (${y.curName || '-'}) · amount: ${y.amount || '-'} (${y.date || '-'}) · texts: ${y.texts.slice(0, 300)}`);
     } catch { /* ignore */ }
@@ -155,6 +157,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
               <input value={rest} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setRest(v); saveLimits(limit, v); }} /></label>
           </div>
           <p className="note">{`Ҳолат: ${wk || '—'}`}</p>
+          {syncTxt && <p className="note">{syncTxt}</p>}
           <button type="button" className="btn secondary" onClick={() => { void api?.resetWork(); setWk('ҳанӯз номаълум (як маротиба тугмаи ⏻-ро пахш кунед)'); }}>Ҳисобкунакро аз нав оғоз кардан</button>
           {last && <p className="note" data-nocur>{`Охирин фармоиш: ${last}`}</p>}
         </>

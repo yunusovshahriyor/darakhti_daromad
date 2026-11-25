@@ -194,7 +194,8 @@ public class OverlayService extends Service {
         if (st.equals("on")) {
             long cur = worked + (now - since);
             long left = limit - cur;
-            return left > 0 ? "⏱ " + hm(cur) + " · монд " + hm(left) : "⏱ " + hm(cur) + " · лимит!";
+            boolean sync = now - prefs.getLong("wk_sync", 0) < 20 * 60_000L; // ба вақти Яндекс мувофиқ шудааст
+            return left > 0 ? "⏱ " + hm(cur) + " · монд " + hm(left) + (sync ? " ✓" : "") : "⏱ " + hm(cur) + " · лимит!";
         }
         long off = now - since;
         if (worked <= 0 || off >= rest) return "⏸ не дар линия";

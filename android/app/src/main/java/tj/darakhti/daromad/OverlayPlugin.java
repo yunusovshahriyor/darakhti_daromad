@@ -172,6 +172,8 @@ public class OverlayPlugin extends Plugin {
         r.put("amount", prefs().getString("yp_amount", ""));
         r.put("date", prefs().getString("yp_date", ""));
         // Ташхис (танҳо барои намоиш дар танзимот)
+        r.put("wkYaLeft", prefs().getString("wk_ya_left", ""));
+        r.put("wkSync", prefs().getLong("wk_sync", 0));
         r.put("wkState", prefs().getString("wk_state", ""));
         r.put("wkWorked", prefs().getLong("wk_worked", 0));
         r.put("wkSince", prefs().getLong("wk_since", 0));
