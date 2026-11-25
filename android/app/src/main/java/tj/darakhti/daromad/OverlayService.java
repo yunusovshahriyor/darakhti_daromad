@@ -38,6 +38,12 @@ import android.widget.TextView;
  */
 public class OverlayService extends Service {
     public static boolean running = false;
+
+    /** Санаи имрӯза (барои маблағи «Яндекс Про»). */
+    public static String todayKey() {
+        return new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
+    }
+
     private static final String CHANNEL = "overlay";
     private static final String ACTION_STOP = "tj.darakhti.daromad.STOP_OVERLAY";
     private static final String ACTION_SYNC = "tj.darakhti.daromad.SYNC_OVERLAY";
@@ -131,6 +137,11 @@ public class OverlayService extends Service {
             }
         } catch (SecurityException ex) {
             name = ""; // иҷозати «Дастрасӣ ба маълумоти истифода» нест
+        }
+        // «Яндекс Про»: ба ҷои ном маблағи имрӯза (агар хондашуда бошад)
+        if (prefs.getBoolean("yp_on", false) && ScreenReaderService.TARGET_PKG.equals(currentPkg)
+            && todayKey().equals(prefs.getString("yp_date", "")) && !prefs.getString("yp_amount", "").isEmpty()) {
+            name = "💰 " + prefs.getString("yp_amount", "");
         }
         String shown = name.isEmpty() ? "+" : name;
         if (!shown.contentEquals(label.getText())) {

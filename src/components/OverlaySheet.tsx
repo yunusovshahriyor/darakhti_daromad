@@ -10,6 +10,9 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState(false);
   const [usage, setUsage] = useState(true);
+  const [yp, setYp] = useState(false);
+  const [reader, setReader] = useState(true);
+  const [amount, setAmount] = useState('');
 
   const refresh = useCallback(async () => {
     if (!api) return;
@@ -18,6 +21,10 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       setOn((await api.isRunning()).value);
       setName((await api.isAppName()).value);
       setUsage((await api.hasUsageAccess()).value);
+      setReader((await api.hasScreenReader()).value);
+      const y = await api.getYandex();
+      setYp(y.enabled);
+      setAmount(y.amount);
     } catch { /* ignore */ }
   }, [api]);
 
@@ -48,6 +55,17 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       else if (!(await api.canDraw()).value) { setAllowed(false); await api.requestPermission(); }
       else if (!(await api.hasUsageAccess()).value) { setUsage(false); await api.requestUsageAccess(); }
       else { await api.setAppName({ enabled: true }); setName(true); }
+    } catch { /* ignore */ }
+    setBusy(false);
+  };
+
+  const toggleYp = async () => {
+    if (!api || busy) return;
+    setBusy(true);
+    try {
+      if (yp) { await api.setYandex({ enabled: false }); setYp(false); }
+      else if (!(await api.hasScreenReader()).value) { setReader(false); await api.requestScreenReader(); }
+      else { await api.setYandex({ enabled: true }); setYp(true); }
     } catch { /* ignore */ }
     setBusy(false);
   };
@@ -92,6 +110,19 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       </label>
       {!usage && !name && (
         <div className="alert">Иҷозати «Дастрасӣ ба маълумоти истифода» лозим аст: танзимоти система кушода мешавад. Ин барномаро ёфта, иҷозат диҳед, баргардед ва боз «Номи барномаи кушодашуда»-ро фаъол кунед.</div>
+      )}
+      <label className="switch-row">
+        <span>
+          <b>Маблағи имрӯзаи «Яндекс Про»</b>
+          <small>Дар «Яндекс Про» ба ҷои ном маблағи имрӯза (аз саҳифаи «Деньги») навишта мешавад. Танҳо экрани Яндекс Про хонда мешавад, маблағ танҳо дар ин телефон нигоҳ дошта мешавад. Аввал «Номи барномаи кушодашуда»-ро фаъол кунед.{amount ? ` Охирин: ${amount}` : ''}</small>
+        </span>
+        <span className="switch">
+          <input type="checkbox" checked={yp} onChange={toggleYp} disabled={busy || !name} />
+          <i />
+        </span>
+      </label>
+      {!reader && !yp && (
+        <div className="alert">Дар танзимоти «Дастрасӣ» хидмати «Дарахти даромад: маблағи Яндекс Про»-ро фаъол кунед. Агар Android «Танзимоти маҳдудшуда» гӯяд: Танзимот → Барномаҳо → Дарахти даромад → ⋮ → «Иҷозат додани танзимоти маҳдудшуда», баъд боз кӯшиш кунед. Баъд ба ин ҷо баргашта, тугмаро боз пахш кунед.</div>
       )}
       <p className="note">Тугмаро бо дарозии ангушт кашида ба ҷои дигар гузоштан мумкин аст. Барои хомӯш кардан дар ҳамин ҷо ё дар огоҳиномаи барнома «Ғайрифаъол кардан»-ро пахш кунед.</p>
     </Sheet>

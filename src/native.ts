@@ -13,6 +13,11 @@ export interface OverlayApi {
   requestUsageAccess(): Promise<void>;
   setAppName(o: { enabled: boolean }): Promise<void>;
   isAppName(): Promise<{ value: boolean }>;
+  /** Маблағи имрӯзаи «Яндекс Про»: хидмати дастрасӣ (AccessibilityService), танҳо барои ҳамин барнома. */
+  hasScreenReader(): Promise<{ value: boolean }>;
+  requestScreenReader(): Promise<void>;
+  setYandex(o: { enabled: boolean }): Promise<void>;
+  getYandex(): Promise<{ enabled: boolean; amount: string; date: string }>;
 }
 
 let cached: OverlayApi | null | undefined;

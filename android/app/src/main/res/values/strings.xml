@@ -4,4 +4,5 @@
     <string name="title_activity_main">Дарахти даромад</string>
     <string name="package_name">tj.darakhti.daromad</string>
     <string name="custom_url_scheme">tj.darakhti.daromad</string>
+    <string name="a11y_desc">Дарахти даромад: танҳо экрани «Яндекс Про»-ро мехонад, то маблағи имрӯзаро дар болои экран нишон диҳад. Ба барномаҳои дигар дастрасӣ надорад ва маълумотро ба ҷое намефиристад.</string>
 </resources>

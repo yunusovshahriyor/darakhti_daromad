@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Танҳо экрани «Яндекс Про» (ru.yandex.taximeter): Android ба ин хидмат рӯйдодҳои барномаҳои дигарро намефиристад. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowContentChanged|typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="300"
+    android:packageNames="ru.yandex.taximeter"
+    android:description="@string/a11y_desc" />

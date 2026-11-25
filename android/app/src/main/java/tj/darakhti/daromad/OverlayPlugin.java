@@ -118,4 +118,35 @@ public class OverlayPlugin extends Plugin {
         pending = "";
         call.resolve(value(p));
     }
+
+    // ---------- Маблағи «Яндекс Про» ----------
+    @PluginMethod
+    public void hasScreenReader(PluginCall call) {
+        String enabled = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        call.resolve(value(enabled != null && enabled.contains(ScreenReaderService.class.getName())));
+    }
+
+    @PluginMethod
+    public void requestScreenReader(PluginCall call) {
+        Intent i = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(i);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void setYandex(PluginCall call) {
+        boolean on = Boolean.TRUE.equals(call.getBoolean("enabled", false));
+        prefs().edit().putBoolean("yp_on", on).apply();
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getYandex(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("enabled", prefs().getBoolean("yp_on", false));
+        r.put("amount", prefs().getString("yp_amount", ""));
+        r.put("date", prefs().getString("yp_date", ""));
+        call.resolve(r);
+    }
 }
