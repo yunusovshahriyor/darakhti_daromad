@@ -4,7 +4,6 @@ import CurrencySheet from '../components/CurrencySheet';
 import LockSheet from '../components/LockSheet';
 import RecurringSheet from '../components/RecurringSheet';
 import OverlaySheet from '../components/OverlaySheet';
-import { overlayApi } from '../native';
 import { isLockOn } from '../lock';
 import FreeAccounts from '../components/FreeAccounts';
 import { defOf } from '../currency';
@@ -152,7 +151,7 @@ export default function SettingsView({ state, setState, onToast, onIntro, page, 
             </div>
             <ChevronIcon />
           </button>
-          {overlayApi() && (
+          {(
             <button className="cell tap link" onClick={() => setOvOpen(true)}>
               <div className="ic">🫧</div>
               <div className="grow"><b>Тугмаи шино болои барномаҳо</b><small>Сабти зуд аз ҳар барнома</small></div>

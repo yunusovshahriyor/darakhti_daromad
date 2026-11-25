@@ -52,6 +52,18 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     setBusy(false);
   };
 
+  if (!api) {
+    const c = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
+    return (
+      <Sheet title="Тугмаи шино болои барномаҳо" onClose={onClose}>
+        <p className="note">Ин функсия (тугмаи шино ва номи барномаи кушодашуда) танҳо дар APK-и Android кор мекунад. Шумо ҳоло барномаро дар браузер ё ҳамчун PWA кушодаед.</p>
+        <a className="btn" href="https://github.com/yunusovshahriyor/darakhti_daromad/releases/download/android-latest/darakhti-daromad.apk">Боргирии APK</a>
+        <p className="note">Агар APK-ро насб кардаед ва ин матнро мебинед, сатри поёнро ба ман фиристед:</p>
+        <p className="note">{`Capacitor: ${c ? 'yes' : 'no'} · platform: ${c?.getPlatform?.() ?? '-'} · native: ${String(c?.isNativePlatform?.() ?? false)}`}</p>
+      </Sheet>
+    );
+  }
+
   return (
     <Sheet title="Тугмаи шино болои барномаҳо" onClose={onClose}>
       <p className="note">Тугмаи хурди «+» болои ҳамаи барномаҳо мемонад. Пахш — кушодани шакли хароҷот, пахши дароз — сабти овозӣ. Барнома экрани барномаҳои дигарро намехонад.</p>
