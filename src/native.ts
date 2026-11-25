@@ -1,3 +1,5 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
 /** Пули барномаи Android (Capacitor): дар браузер/PWA ҳамеша `null`. Плагини «Overlay» — тугмаи шино болои барномаҳо. */
 export interface OverlayApi {
   canDraw(): Promise<{ value: boolean }>;
@@ -13,14 +15,16 @@ export interface OverlayApi {
   isAppName(): Promise<{ value: boolean }>;
 }
 
-interface CapacitorGlobal { isNativePlatform?: () => boolean; getPlatform?: () => string; registerPlugin?: (name: string) => unknown }
-
 let cached: OverlayApi | null | undefined;
 
-/** Тугмаи шино: танҳо дар APK-и Android. */
+/**
+ * Тугмаи шино: танҳо дар APK-и Android. `registerPlugin` аз @capacitor/core (ҷузъи бастаи сайт) гирифта мешавад:
+ * пули нативӣ дар саҳифаи дурдаст танҳо `window.Capacitor`-ро медиҳад, на `registerPlugin`-ро.
+ */
 export function overlayApi(): OverlayApi | null {
   if (cached !== undefined) return cached;
-  const c = (window as unknown as { Capacitor?: CapacitorGlobal }).Capacitor;
-  cached = c?.isNativePlatform?.() && c.getPlatform?.() === 'android' && c.registerPlugin ? (c.registerPlugin('Overlay') as OverlayApi) : null;
+  try {
+    cached = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android' ? registerPlugin<OverlayApi>('Overlay') : null;
+  } catch { cached = null; }
   return cached;
 }
