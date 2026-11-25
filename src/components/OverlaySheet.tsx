@@ -13,6 +13,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [yp, setYp] = useState(false);
   const [reader, setReader] = useState(true);
   const [amount, setAmount] = useState('');
+  const [dbg, setDbg] = useState('');
 
   const refresh = useCallback(async () => {
     if (!api) return;
@@ -25,6 +26,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       const y = await api.getYandex();
       setYp(y.enabled);
       setAmount(y.amount);
+      setDbg(`events: ${y.events} · items: ${y.items} · yp_pkg: ${y.ypPkg || '-'} · foreground: ${y.curPkg || '-'} (${y.curName || '-'}) · amount: ${y.amount || '-'} (${y.date || '-'}) · texts: ${y.texts.slice(0, 300)}`);
     } catch { /* ignore */ }
   }, [api]);
 
@@ -124,6 +126,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       {!reader && !yp && (
         <div className="alert">Дар танзимоти «Дастрасӣ» хидмати «Дарахти даромад: маблағи Яндекс Про»-ро фаъол кунед. Агар Android «Танзимоти маҳдудшуда» гӯяд: Танзимот → Барномаҳо → Дарахти даромад → ⋮ → «Иҷозат додани танзимоти маҳдудшуда», баъд боз кӯшиш кунед. Баъд ба ин ҷо баргашта, тугмаро боз пахш кунед.</div>
       )}
+      {yp && <p className="note" data-nocur style={{ wordBreak: 'break-word', fontSize: '.72rem' }}>{dbg}</p>}
       <p className="note">Тугмаро бо дарозии ангушт кашида ба ҷои дигар гузоштан мумкин аст. Барои хомӯш кардан дар ҳамин ҷо ё дар огоҳиномаи барнома «Ғайрифаъол кардан»-ро пахш кунед.</p>
     </Sheet>
   );

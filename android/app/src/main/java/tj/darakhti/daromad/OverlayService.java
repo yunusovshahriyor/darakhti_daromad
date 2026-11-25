@@ -134,12 +134,18 @@ public class OverlayService extends Service {
                 PackageManager pm = getPackageManager();
                 try { name = pm.getApplicationLabel(pm.getApplicationInfo(currentPkg, 0)).toString(); }
                 catch (PackageManager.NameNotFoundException ex) { name = currentPkg; }
+                // «Яндекс Про»: номи бастаи дурустро ёд мегирем (хидмати хондан ба ҳамин барнома маҳдуд мешавад)
+                String low = name.toLowerCase(java.util.Locale.ROOT);
+                if ((low.contains("яндекс про") || low.contains("yandex pro")) && !currentPkg.equals(prefs.getString("yp_pkg", ""))) {
+                    prefs.edit().putString("yp_pkg", currentPkg).apply();
+                }
+                prefs.edit().putString("cur_pkg", currentPkg).putString("cur_name", name).apply();
             }
         } catch (SecurityException ex) {
             name = ""; // иҷозати «Дастрасӣ ба маълумоти истифода» нест
         }
         // «Яндекс Про»: ба ҷои ном маблағи имрӯза (агар хондашуда бошад)
-        if (prefs.getBoolean("yp_on", false) && ScreenReaderService.TARGET_PKG.equals(currentPkg)
+        if (prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG))
             && todayKey().equals(prefs.getString("yp_date", "")) && !prefs.getString("yp_amount", "").isEmpty()) {
             name = "💰 " + prefs.getString("yp_amount", "");
         }

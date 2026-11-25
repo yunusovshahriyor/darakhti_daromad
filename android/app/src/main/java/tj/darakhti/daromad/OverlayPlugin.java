@@ -147,6 +147,13 @@ public class OverlayPlugin extends Plugin {
         r.put("enabled", prefs().getBoolean("yp_on", false));
         r.put("amount", prefs().getString("yp_amount", ""));
         r.put("date", prefs().getString("yp_date", ""));
+        // Ташхис (танҳо барои намоиш дар танзимот)
+        r.put("events", prefs().getInt("dbg_events", 0));
+        r.put("items", prefs().getInt("dbg_items", 0));
+        r.put("texts", prefs().getString("dbg_texts", ""));
+        r.put("ypPkg", prefs().getString("yp_pkg", ""));
+        r.put("curPkg", prefs().getString("cur_pkg", ""));
+        r.put("curName", prefs().getString("cur_name", ""));
         call.resolve(r);
     }
 }
