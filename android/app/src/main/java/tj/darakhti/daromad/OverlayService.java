@@ -144,16 +144,91 @@ public class OverlayService extends Service {
         } catch (SecurityException ex) {
             name = ""; // иҷозати «Дастрасӣ ба маълумоти истифода» нест
         }
-        // «Яндекс Про»: ба ҷои ном маблағи имрӯза (агар хондашуда бошад)
+        // «Яндекс Про»: ба ҷои ном маблағи имрӯза (агар хондашуда бошад) ва дар поён — бо қурби имрӯзаи сомонӣ
+        String second = "";
         if (prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG))
             && todayKey().equals(prefs.getString("yp_date", "")) && !prefs.getString("yp_amount", "").isEmpty()) {
-            name = "💰 " + prefs.getString("yp_amount", "");
+            String amt = prefs.getString("yp_amount", "");
+            name = "💰 " + amt;
+            ensureRate();
+            second = toSomoni(amt);
         }
         String shown = name.isEmpty() ? "+" : name;
-        if (!shown.contentEquals(label.getText())) {
-            label.setText(shown);
+        String full = second.isEmpty() ? shown : shown + "\n" + second;
+        if (!full.equals(lastShown)) {
+            lastShown = full;
+            if (second.isEmpty()) label.setText(shown);
+            else {
+                android.text.SpannableString sp = new android.text.SpannableString(full);
+                sp.setSpan(new android.text.style.RelativeSizeSpan(0.78f), shown.length() + 1, full.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                label.setText(sp);
+            }
             keepOnScreen();
         }
+    }
+
+    // ---------- Қурби рубл → сомонӣ (барои маблағи «Яндекс Про») ----------
+    private String lastShown = "";
+    private boolean fxBusy = false;
+    private long fxTried = 0;
+
+    /** «7 359,48 ₽» → «≈ 937,12 смн» бо қурби имрӯза; агар қурб ҳанӯз нест — холӣ. */
+    private String toSomoni(String amount) {
+        try {
+            double rate = Double.parseDouble(prefs.getString("fx_rate", "0"));
+            if (rate <= 0) return "";
+            double rub = Double.parseDouble(amount.replaceAll("[^0-9,.-]", "").replace(',', '.'));
+            double tjs = rub * rate;
+            String[] p = String.format(java.util.Locale.US, "%.2f", tjs).split("\\.");
+            return "≈ " + p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " смн";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** Қурби имрӯзаи 1 ₽ = X смн: рӯзе як маротиба аз Интернет (ду манбаъ), дар `fx_rate`/`fx_date` нигоҳ дошта мешавад. */
+    private void ensureRate() {
+        String today = todayKey();
+        long now = System.currentTimeMillis();
+        if (today.equals(prefs.getString("fx_date", "")) || fxBusy || now - fxTried < 5 * 60 * 1000L) return;
+        fxBusy = true;
+        fxTried = now;
+        new Thread(() -> {
+            try {
+                double r = fetchRate();
+                if (r > 0) prefs.edit().putString("fx_rate", String.valueOf(r)).putString("fx_date", today).apply();
+            } catch (Exception ignored) {
+                /* дафъаи дигар (баъд аз 5 дақиқа) */
+            } finally {
+                fxBusy = false;
+            }
+        }).start();
+    }
+
+    private String http(String url) throws Exception {
+        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+        c.setConnectTimeout(8000);
+        c.setReadTimeout(8000);
+        try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(c.getInputStream(), "UTF-8"))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) sb.append(line);
+            return sb.toString();
+        } finally {
+            c.disconnect();
+        }
+    }
+
+    private double fetchRate() throws Exception {
+        try {
+            org.json.JSONObject j = new org.json.JSONObject(http("https://open.er-api.com/v6/latest/RUB"));
+            double r = j.getJSONObject("rates").getDouble("TJS");
+            if (r > 0) return r;
+        } catch (Exception ignored) {
+            /* манбаи дуюм */
+        }
+        org.json.JSONObject j = new org.json.JSONObject(http("https://latest.currency-api.pages.dev/v1/currencies/rub.json"));
+        return j.getJSONObject("rub").getDouble("tjs");
     }
 
     /** Ном дарозии тугмаро иваз мекунад: аз экран набарояд (канори чап ё рост). */
