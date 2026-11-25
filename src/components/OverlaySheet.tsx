@@ -83,7 +83,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       <label className="switch-row">
         <span>
           <b>Номи барномаи кушодашуда</b>
-          <small>Дар болои экран номи барномаи ҳозира бо фони шаффоф навишта мешавад. Танҳо ном нишон дода мешавад: мундариҷаи экран хонда ва ба ҷое фиристода намешавад.</small>
+          <small>Ном ба ҷои тугмаи сабзи «+» навишта мешавад (бо фони шаффоф); пахш — кушодани барнома. Танҳо ном нишон дода мешавад: мундариҷаи экран хонда ва ба ҷое фиристода намешавад.</small>
         </span>
         <span className="switch">
           <input type="checkbox" checked={name} onChange={toggleName} disabled={busy} />

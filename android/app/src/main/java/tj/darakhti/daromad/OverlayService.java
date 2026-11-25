@@ -45,7 +45,10 @@ public class OverlayService extends Service {
 
     private WindowManager wm;
     private View bubble;
+    /** Дар реҷаи «номи барнома» — худи тугма матн аст (ном ба ҷои «+»). */
     private TextView label;
+    private boolean appMode = false;
+    private boolean onRight = true;
     private String currentPkg = "";
     private long lastEventTime = 0;
     private WindowManager.LayoutParams lp;
@@ -75,17 +78,25 @@ public class OverlayService extends Service {
         return START_STICKY;
     }
 
-    /** Тугмаи шино ва/ё номи барномаи кушодашуда: мувофиқи танзимот илова ё хориҷ мешавад; агар ҳарду хомӯш бошанд — хидмат қатъ мешавад. */
+    /** Тугмаи шино ва/ё номи барнома: як намуд дар экран. Агар «номи барнома» фаъол бошад, ном ба ҷои тугмаи сабзи «+» менависад. */
     private void syncViews() {
         prefs = getSharedPreferences("overlay", MODE_PRIVATE);
         if (wm == null) wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         boolean bubbleOn = prefs.getBoolean("bubble", false);
         boolean appOn = prefs.getBoolean("appname", false);
         if (!bubbleOn && !appOn) { stopSelf(); return; }
-        if (bubbleOn && bubble == null) addBubble();
-        if (!bubbleOn && bubble != null) { try { wm.removeView(bubble); } catch (Exception ignored) { /* already removed */ } bubble = null; }
-        if (appOn) startLabel();
-        else stopLabel();
+        if (bubble != null && appMode != appOn) removeBubble();
+        if (bubble == null) { addBubble(appOn); keepOnScreen(); }
+        handler.removeCallbacks(poll);
+        if (appOn) handler.post(poll);
+    }
+
+    private void removeBubble() {
+        if (bubble != null && wm != null) {
+            try { wm.removeView(bubble); } catch (Exception ignored) { /* already removed */ }
+        }
+        bubble = null;
+        label = null;
     }
 
     // ---------- Номи барномаи кушодашуда ----------
@@ -97,42 +108,12 @@ public class OverlayService extends Service {
         }
     };
 
-    private void startLabel() {
-        if (label == null) {
-            label = new TextView(this);
-            label.setTextColor(Color.WHITE);
-            label.setTextSize(13);
-            label.setTypeface(Typeface.DEFAULT_BOLD);
-            label.setShadowLayer(6f, 0f, 1f, Color.BLACK);
-            label.setGravity(Gravity.CENTER);
-            label.setPadding(dp(8), 0, dp(8), 0);
-            label.setBackgroundColor(Color.TRANSPARENT); // фони шаффоф
-            int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
-            WindowManager.LayoutParams p = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, type,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT);
-            p.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-            p.y = dp(6);
-            label.setText("");
-            wm.addView(label, p);
-        }
-        handler.removeCallbacks(poll);
-        handler.post(poll);
-    }
-
-    private void stopLabel() {
-        handler.removeCallbacks(poll);
-        if (label != null) {
-            try { wm.removeView(label); } catch (Exception ignored) { /* already removed */ }
-            label = null;
-        }
-    }
-
     /** Аз UsageStats охирин барномаи ба пеш омада (танҳо номи бастаи барнома, на мундариҷаи экран). */
     private void updateLabel() {
         if (label == null) return;
         PowerManager pmgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (pmgr != null && !pmgr.isInteractive()) { label.setText(""); return; }
+        if (pmgr != null && !pmgr.isInteractive()) return;
+        String name = "";
         try {
             UsageStatsManager usm = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
             long now = System.currentTimeMillis();
@@ -143,15 +124,31 @@ public class OverlayService extends Service {
                 if (e.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) currentPkg = e.getPackageName();
                 lastEventTime = Math.max(lastEventTime, e.getTimeStamp() + 1);
             }
-            if (currentPkg.isEmpty()) { label.setText(""); return; }
-            PackageManager pm = getPackageManager();
-            String name;
-            try { name = pm.getApplicationLabel(pm.getApplicationInfo(currentPkg, 0)).toString(); }
-            catch (PackageManager.NameNotFoundException ex) { name = currentPkg; }
-            if (!name.contentEquals(label.getText())) label.setText(name);
+            if (!currentPkg.isEmpty()) {
+                PackageManager pm = getPackageManager();
+                try { name = pm.getApplicationLabel(pm.getApplicationInfo(currentPkg, 0)).toString(); }
+                catch (PackageManager.NameNotFoundException ex) { name = currentPkg; }
+            }
         } catch (SecurityException ex) {
-            label.setText(""); // иҷозати «Дастрасӣ ба маълумоти истифода» нест
+            name = ""; // иҷозати «Дастрасӣ ба маълумоти истифода» нест
         }
+        String shown = name.isEmpty() ? "+" : name;
+        if (!shown.contentEquals(label.getText())) {
+            label.setText(shown);
+            keepOnScreen();
+        }
+    }
+
+    /** Ном дарозии тугмаро иваз мекунад: аз экран набарояд (канори чап ё рост). */
+    private void keepOnScreen() {
+        if (bubble == null) return;
+        bubble.post(() -> {
+            if (bubble == null || lp == null) return;
+            DisplayMetrics dm = getResources().getDisplayMetrics();
+            int w = bubble.getWidth();
+            lp.x = onRight ? dm.widthPixels - w - dp(8) : dp(8);
+            try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { /* view removed */ }
+        });
     }
 
     private void startAsForeground() {
@@ -174,29 +171,50 @@ public class OverlayService extends Service {
         else startForeground(1, n);
     }
 
-    private void addBubble() {
+    private void addBubble(boolean app) {
+        appMode = app;
         final int size = dp(SIZE_DP);
-
-        FrameLayout root = new FrameLayout(this);
-        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] { Color.parseColor("#47D9A0"), Color.parseColor("#2A9D73") });
-        bg.setShape(GradientDrawable.OVAL);
-        root.setBackground(bg);
-        root.setElevation(dp(6));
-        TextView plus = new TextView(this);
-        plus.setText("+");
-        plus.setTextColor(Color.WHITE);
-        plus.setTextSize(30);
-        plus.setTypeface(Typeface.DEFAULT_BOLD);
-        plus.setGravity(Gravity.CENTER);
-        root.addView(plus, new FrameLayout.LayoutParams(size, size, Gravity.CENTER));
-        bubble = root;
+        if (app) {
+            // Ном ба ҷои тугмаи сабз: матни сафед бо соя, фони шаффоф
+            TextView t = new TextView(this);
+            t.setText("+");
+            t.setTextColor(Color.WHITE);
+            t.setTextSize(16);
+            t.setTypeface(Typeface.DEFAULT_BOLD);
+            t.setShadowLayer(8f, 0f, 1f, Color.BLACK);
+            t.setGravity(Gravity.CENTER);
+            t.setSingleLine(true);
+            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            t.setMaxWidth(dp(240));
+            t.setMinWidth(dp(40));
+            t.setMinHeight(dp(40));
+            t.setPadding(dp(10), dp(6), dp(10), dp(6));
+            t.setBackgroundColor(Color.TRANSPARENT);
+            label = t;
+            bubble = t;
+        } else {
+            FrameLayout root = new FrameLayout(this);
+            GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] { Color.parseColor("#47D9A0"), Color.parseColor("#2A9D73") });
+            bg.setShape(GradientDrawable.OVAL);
+            root.setBackground(bg);
+            root.setElevation(dp(6));
+            TextView plus = new TextView(this);
+            plus.setText("+");
+            plus.setTextColor(Color.WHITE);
+            plus.setTextSize(30);
+            plus.setTypeface(Typeface.DEFAULT_BOLD);
+            plus.setGravity(Gravity.CENTER);
+            root.addView(plus, new FrameLayout.LayoutParams(size, size, Gravity.CENTER));
+            bubble = root;
+        }
 
         DisplayMetrics dm = getResources().getDisplayMetrics();
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
-        lp = new WindowManager.LayoutParams(size, size, type,
+        lp = new WindowManager.LayoutParams(app ? WindowManager.LayoutParams.WRAP_CONTENT : size, app ? WindowManager.LayoutParams.WRAP_CONTENT : size, type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
-        lp.x = prefs.getInt("x", dm.widthPixels - size - dp(8));
+        onRight = prefs.getBoolean("right", true);
+        lp.x = onRight ? dm.widthPixels - size - dp(8) : dp(8);
         lp.y = prefs.getInt("y", (int) (dm.heightPixels * 0.55f));
         wm.addView(bubble, lp);
 
@@ -244,11 +262,12 @@ public class OverlayService extends Service {
     /** Тугма ба канори наздиктарини экран мечаспад ва ҷойгиршавӣ нигоҳ дошта мешавад. */
     private void snapToEdge() {
         DisplayMetrics dm = getResources().getDisplayMetrics();
-        int size = dp(SIZE_DP);
-        lp.x = (lp.x + size / 2 < dm.widthPixels / 2) ? dp(8) : dm.widthPixels - size - dp(8);
-        lp.y = Math.max(dp(24), Math.min(lp.y, dm.heightPixels - size - dp(48)));
+        int w = bubble.getWidth() > 0 ? bubble.getWidth() : dp(SIZE_DP);
+        onRight = lp.x + w / 2 >= dm.widthPixels / 2;
+        lp.x = onRight ? dm.widthPixels - w - dp(8) : dp(8);
+        lp.y = Math.max(dp(24), Math.min(lp.y, dm.heightPixels - dp(SIZE_DP) - dp(48)));
         wm.updateViewLayout(bubble, lp);
-        prefs.edit().putInt("x", lp.x).putInt("y", lp.y).apply();
+        prefs.edit().putInt("y", lp.y).putBoolean("right", onRight).apply();
     }
 
     private void open(String route) {
@@ -262,11 +281,7 @@ public class OverlayService extends Service {
     public void onDestroy() {
         running = false;
         handler.removeCallbacksAndMessages(null);
-        if (bubble != null && wm != null) {
-            try { wm.removeView(bubble); } catch (Exception ignored) { /* already removed */ }
-        }
-        bubble = null;
-        stopLabel();
+        removeBubble();
         super.onDestroy();
     }
 }
