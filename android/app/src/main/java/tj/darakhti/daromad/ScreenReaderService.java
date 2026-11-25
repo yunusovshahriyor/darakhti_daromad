@@ -253,7 +253,7 @@ public class ScreenReaderService extends AccessibilityService {
             .putString("yp_last", fmtRub(gross) + " → +" + fmtRub(net)).apply();
     }
 
-    private static final Pattern YA_TIME = Pattern.compile("^\\s*(?:(\\d+)\\s*ч)?\\s*(?:(\\d+)\\s*м)?\\s*$");
+    private static final Pattern YA_TIME = Pattern.compile("^\\s*(?:(\\d+)\\s*(?:ч|час\\p{L}*))?\\s*(?:(\\d+)\\s*(?:м|мин\\p{L}*))?\\s*$");
 
     /** «1ч 21м» → миллисония; агар шакл дигар бошад — -1. */
     private static long yaTime(String t) {
