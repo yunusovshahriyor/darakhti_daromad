@@ -262,11 +262,30 @@ public class ScreenReaderService extends AccessibilityService {
                 : pass != null && it.r.bottom <= pass.r.top + 10 ? pass.r.top - it.r.bottom : Integer.MAX_VALUE;
             if (d < 140 && d < bestD) { bestD = d; price = it; }
         }
+        // Агар Яндекс сатрро як гурӯҳ кунад («Оплата картой, Стоимость поездки…, 1 266 ₽»), нарх аз худи ҳамон матн гирифта мешавад
+        String mergedTxt = null;
+        Rect mergedR = null;
+        if (price == null) {
+            for (Item it : items) {
+                if (it.text.length() > 120 || it.r.top < 0 || it.r.bottom > dm.heightPixels || it.r.width() < dm.widthPixels / 2) continue;
+                if (!(has(it, "стоимость поездки") || has(it, "оплата"))) continue;
+                Matcher m = RUB.matcher(it.text);
+                String last = null;
+                while (m.find()) last = m.group();
+                if (last != null) {
+                    mergedTxt = last;
+                    int h = Math.max(24, (int) (it.r.height() * 0.45));
+                    int cy = it.r.centerY();
+                    mergedR = new Rect(it.r.right - (int) (0.03 * dm.widthPixels) - h * 4, cy - h / 2, it.r.right - (int) (0.03 * dm.widthPixels), cy + h / 2);
+                    break;
+                }
+            }
+        }
         prefs.edit().putString("dbg_price", "rate=" + rate + " ref=" + (ref != null) + " pass=" + (pass != null) + " cands=" + cands
-            + " price=" + (price != null ? price.text : "-")).apply();
+            + " price=" + (price != null ? price.text : mergedTxt != null ? "merged:" + mergedTxt : "-")).apply();
         if (rate <= 0) price = null;
-        if (price == null) { hidePrice(); return; }
-        double tjs = num(price.text) * rate;
+        if (rate <= 0 || (price == null && mergedTxt == null)) { hidePrice(); return; }
+        double tjs = num(price != null ? price.text : mergedTxt) * rate;
         String[] p = String.format(java.util.Locale.US, "%.2f", tjs).split("\\.");
         String txt = "≈ " + p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " смн";
         if (wm == null) wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
@@ -293,7 +312,7 @@ public class ScreenReaderService extends AccessibilityService {
             handler.postDelayed(watchdog, 1500);
         }
         final android.widget.TextView tv = priceView;
-        final Rect r = price.r;
+        final Rect r = price != null ? price.r : mergedR;
         // Андозаи ҳарф аз баландии матни нарх (ҳамон шрифт)
         tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, Math.max(20f, r.height() * 0.82f));
         tv.setText(txt);
