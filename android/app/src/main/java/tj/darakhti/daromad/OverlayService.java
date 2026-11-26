@@ -114,7 +114,7 @@ public class OverlayService extends Service {
         }
     };
 
-    /** Аз UsageStats охирин барномаи ба пеш омада (танҳо номи бастаи барнома, на мундариҷаи экран). */
+    /** Аз UsageStats охирин барномаи ба пеш омада (танҳо номи бастаи барнома, на мундариҷаи экран); дар худи экран танҳо дар «Яндекс Про» чизе менависем. */
     private void updateLabel() {
         if (label == null) return;
         PowerManager pmgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -144,26 +144,32 @@ public class OverlayService extends Service {
         } catch (SecurityException ex) {
             name = ""; // иҷозати «Дастрасӣ ба маълумоти истифода» нест
         }
-        // «Яндекс Про»: ба ҷои ном маблағи имрӯза (агар хондашуда бошад) ва дар поён — бо қурби имрӯзаи сомонӣ
-        String second = "";
-        if (prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG))
-            && todayKey().equals(prefs.getString("yp_date", "")) && !prefs.getString("yp_amount", "").isEmpty()) {
-            String amt = prefs.getString("yp_amount", "");
-            name = "💰 " + amt;
+        // Танҳо дар «Яндекс Про»: маблағи имрӯза, дар поён — сомонӣ бо қурби имрӯза ва вақти кор. Дар барномаҳои дигар чизе нест.
+        boolean inYp = prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG));
+        String first = "", second = "", work = "";
+        if (inYp) {
             ensureRate();
-            second = toSomoni(amt);
+            if (todayKey().equals(prefs.getString("yp_date", "")) && !prefs.getString("yp_amount", "").isEmpty()) {
+                String amt = prefs.getString("yp_amount", "");
+                first = "💰 " + amt;
+                second = toSomoni(amt);
+            }
+            work = workLine();
         }
-        String shown = name.isEmpty() ? "+" : name;
-        // Вақти кор (аз «дар линия»): зери маблағ ва сомонӣ
-        String work = (prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG))) ? workLine() : "";
-        String full = second.isEmpty() ? shown : shown + "\n" + second;
+        if (first.isEmpty() && !second.isEmpty()) { first = second; second = ""; }
+        if (first.isEmpty() && !work.isEmpty()) { first = work; work = ""; }
+        boolean bubbleOn = prefs.getBoolean("bubble", false);
+        if (first.isEmpty()) first = bubbleOn ? "+" : "";
+        String full = first;
+        if (!second.isEmpty()) full += "\n" + second;
         if (!work.isEmpty()) full += "\n" + work;
         if (!full.equals(lastShown)) {
             lastShown = full;
-            if (second.isEmpty() && work.isEmpty()) label.setText(shown);
+            label.setVisibility(full.isEmpty() ? View.INVISIBLE : View.VISIBLE);
+            if (full.equals(first)) label.setText(first);
             else {
                 android.text.SpannableString sp = new android.text.SpannableString(full);
-                sp.setSpan(new android.text.style.RelativeSizeSpan(0.78f), shown.length() + 1, full.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sp.setSpan(new android.text.style.RelativeSizeSpan(0.78f), first.length() + 1, full.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 label.setText(sp);
             }
             keepOnScreen();
@@ -289,7 +295,7 @@ public class OverlayService extends Service {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
         b.setSmallIcon(android.R.drawable.ic_input_add)
             .setContentTitle("Дарахти даромад")
-            .setContentText("Тугмаи сабти зуд / номи барнома фаъол аст")
+            .setContentText("Тугмаи сабти зуд / Яндекс Про фаъол аст")
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(new Notification.Action.Builder(Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel), "Ғайрифаъол кардан", stop).build());

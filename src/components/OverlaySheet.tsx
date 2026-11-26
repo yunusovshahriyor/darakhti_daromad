@@ -8,7 +8,6 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [on, setOn] = useState(false);
   const [allowed, setAllowed] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [name, setName] = useState(false);
   const [usage, setUsage] = useState(true);
   const [yp, setYp] = useState(false);
   const [reader, setReader] = useState(true);
@@ -27,7 +26,6 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     try {
       setAllowed((await api.canDraw()).value);
       setOn((await api.isRunning()).value);
-      setName((await api.isAppName()).value);
       setUsage((await api.hasUsageAccess()).value);
       setReader((await api.hasScreenReader()).value);
       const y = await api.getYandex();
@@ -60,18 +58,6 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     setBusy(false);
   };
 
-  const toggleName = async () => {
-    if (!api || busy) return;
-    setBusy(true);
-    try {
-      if (name) { await api.setAppName({ enabled: false }); setName(false); }
-      else if (!(await api.canDraw()).value) { setAllowed(false); await api.requestPermission(); }
-      else if (!(await api.hasUsageAccess()).value) { setUsage(false); await api.requestUsageAccess(); }
-      else { await api.setAppName({ enabled: true }); setName(true); }
-    } catch { /* ignore */ }
-    setBusy(false);
-  };
-
   const saveLimits = (l: string, r: string) => { void api?.setWorkLimits({ limit: l || '12', rest: r || '6' }); };
   const saveFees = (ya: string, park: string) => { void api?.setYandexFees({ yandex: ya || '0', park: park || '0' }); };
 
@@ -79,9 +65,11 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     if (!api || busy) return;
     setBusy(true);
     try {
-      if (yp) { await api.setYandex({ enabled: false }); setYp(false); }
+      if (yp) { await api.setYandex({ enabled: false }); await api.setAppName({ enabled: false }); setYp(false); }
+      else if (!(await api.canDraw()).value) { setAllowed(false); await api.requestPermission(); }
+      else if (!(await api.hasUsageAccess()).value) { setUsage(false); await api.requestUsageAccess(); }
       else if (!(await api.hasScreenReader()).value) { setReader(false); await api.requestScreenReader(); }
-      else { await api.setYandex({ enabled: true }); setYp(true); }
+      else { await api.setAppName({ enabled: true }); await api.setYandex({ enabled: true }); setYp(true); }
     } catch { /* ignore */ }
     setBusy(false);
   };
@@ -90,7 +78,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
     const c = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
     return (
       <Sheet title="Тугмаи шино болои барномаҳо" onClose={onClose}>
-        <p className="note">Ин функсия (тугмаи шино ва номи барномаи кушодашуда) танҳо дар APK-и Android кор мекунад. Шумо ҳоло барномаро дар браузер ё ҳамчун PWA кушодаед.</p>
+        <p className="note">Ин функсия (тугмаи шино ва маблағи Яндекс Про) танҳо дар APK-и Android кор мекунад. Шумо ҳоло барномаро дар браузер ё ҳамчун PWA кушодаед.</p>
         <a className="btn" href="https://github.com/yunusovshahriyor/darakhti_daromad/releases/download/android-latest/darakhti-daromad.apk">Боргирии APK</a>
         <p className="note">Агар APK-ро насб кардаед ва ин матнро мебинед, сатри поёнро ба ман фиристед:</p>
         <p className="note">{`Capacitor: ${c ? 'yes' : 'no'} · platform: ${c?.getPlatform?.() ?? '-'} · native: ${String(c?.isNativePlatform?.() ?? false)}`}</p>
@@ -116,24 +104,11 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       )}
       <label className="switch-row">
         <span>
-          <b>Номи барномаи кушодашуда</b>
-          <small>Ном ба ҷои тугмаи сабзи «+» навишта мешавад (бо фони шаффоф); пахш — кушодани барнома. Танҳо ном нишон дода мешавад: мундариҷаи экран хонда ва ба ҷое фиристода намешавад.</small>
-        </span>
-        <span className="switch">
-          <input type="checkbox" checked={name} onChange={toggleName} disabled={busy} />
-          <i />
-        </span>
-      </label>
-      {!usage && !name && (
-        <div className="alert">Иҷозати «Дастрасӣ ба маълумоти истифода» лозим аст: танзимоти система кушода мешавад. Ин барномаро ёфта, иҷозат диҳед, баргардед ва боз «Номи барномаи кушодашуда»-ро фаъол кунед.</div>
-      )}
-      <label className="switch-row">
-        <span>
           <b>Маблағи имрӯзаи «Яндекс Про»</b>
-          <small>Дар «Яндекс Про» ба ҷои ном маблағи имрӯза (аз саҳифаи «Деньги») навишта мешавад. Танҳо экрани Яндекс Про хонда мешавад, маблағ танҳо дар ин телефон нигоҳ дошта мешавад. Аввал «Номи барномаи кушодашуда»-ро фаъол кунед.{amount ? ` Охирин: ${amount}` : ''}</small>
+          <small>Дар «Яндекс Про» маблағи имрӯза (аз саҳифаи «Деньги»), бо сомонӣ ва вақти кор навишта мешавад; дар тафсилоти фармоиш зери нарх — сомонӣ. Танҳо экрани Яндекс Про хонда мешавад, маблағ танҳо дар ин телефон нигоҳ дошта мешавад.{amount ? ` Охирин: ${amount}` : ''}</small>
         </span>
         <span className="switch">
-          <input type="checkbox" checked={yp} onChange={toggleYp} disabled={busy || !name} />
+          <input type="checkbox" checked={yp} onChange={toggleYp} disabled={busy} />
           <i />
         </span>
       </label>

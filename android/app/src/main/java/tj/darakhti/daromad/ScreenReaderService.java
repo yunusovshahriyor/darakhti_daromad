@@ -73,7 +73,8 @@ public class ScreenReaderService extends AccessibilityService {
     private static class Item {
         final String text;
         final Rect r;
-        Item(String text, Rect r) { this.text = text; this.r = r; }
+        final boolean vis;
+        Item(String text, Rect r, boolean vis) { this.text = text; this.r = r; this.vis = vis; }
     }
 
     private String target() {
@@ -134,7 +135,7 @@ public class ScreenReaderService extends AccessibilityService {
         if (t != null && t.length() > 0) {
             Rect r = new Rect();
             n.getBoundsInScreen(r);
-            out.add(new Item(t.toString().replace('\n', ' ').trim(), r));
+            out.add(new Item(t.toString().replace('\n', ' ').trim(), r, n.isVisibleToUser()));
         }
         for (int i = 0; i < n.getChildCount(); i++) collect(n.getChild(i), out, depth + 1);
     }
@@ -142,7 +143,7 @@ public class ScreenReaderService extends AccessibilityService {
     private void read() {
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) { prefs.edit().putString("dbg_texts", "(root=null)").apply(); return; }
-        if (root.getPackageName() == null || !target().contentEquals(root.getPackageName())) return;
+        if (root.getPackageName() == null || !target().contentEquals(root.getPackageName())) { hidePrice(); return; }
         List<Item> items = new ArrayList<>();
         collect(root, items, 0);
 
@@ -163,6 +164,7 @@ public class ScreenReaderService extends AccessibilityService {
         // «Заказ завершён»: маблағи фармоиш (минус комиссия) худкор ба маблағи имрӯза илова мешавад, бе гузаштан ба «Деньги»
         int doneIdx = -1;
         for (int i = 0; i < items.size(); i++) if (has(items.get(i), "заказ заверш")) { doneIdx = i; break; }
+        if (doneIdx >= 0) hidePrice(); else updatePrice(items);
         if (doneIdx >= 0) {
             if (!completedShown) {
                 double gross = orderAmount(items, doneIdx);
@@ -209,6 +211,82 @@ public class ScreenReaderService extends AccessibilityService {
         amt = amt.replaceAll("[\\s\\u00a0\\u202f]+", " ").trim();
         if (!amt.endsWith("₽") && !amt.endsWith("Р")) amt += " ₽";
         prefs.edit().putString("yp_amount", amt).putString("yp_date", OverlayService.todayKey()).apply();
+    }
+
+
+    // ---------- Сомонӣ болои нархи фармоиш (тафсилоти фармоиш) ----------
+    private android.view.WindowManager wm;
+    private android.widget.TextView priceView;
+    private android.view.WindowManager.LayoutParams priceLp;
+    private final Runnable watchdog = new Runnable() {
+        @Override
+        public void run() {
+            if (priceView == null) return;
+            // Агар аз Яндекс Про баромада бошем — нишон намедиҳем
+            String cur = prefs.getString("cur_pkg", target());
+            if (!cur.equals(target())) { hidePrice(); return; }
+            handler.postDelayed(this, 1500);
+        }
+    };
+
+    private void hidePrice() {
+        handler.removeCallbacks(watchdog);
+        if (priceView != null && wm != null) {
+            try { wm.removeView(priceView); } catch (Exception ignored) { /* already removed */ }
+        }
+        priceView = null;
+    }
+
+    /** «Оплата картой / Стоимость поездки … 427 ₽»: болои нарх «≈ 47,50 смн» бо ҳамон андоза ва ранг. Танҳо ҳангоми кушода будани тафсилот. */
+    private void updatePrice(List<Item> items) {
+        if (!prefs.getBoolean("yp_on", false)) { hidePrice(); return; }
+        double rate = num(prefs.getString("fx_rate", "0"));
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        Item price = null;
+        if (rate > 0) {
+            for (Item ref : items) {
+                if (!ref.vis || !(has(ref, "стоимость поездки") || has(ref, "оплата картой") || has(ref, "оплата наличными") || has(ref, "безналичн"))) continue;
+                for (Item it : items) {
+                    if (!it.vis || it.text.length() > 14 || !RUB.matcher(it.text).matches()) continue;
+                    if (it.r.left < dm.widthPixels / 2 || it.r.top < 0 || it.r.bottom > dm.heightPixels) continue;
+                    if (Math.abs(it.r.centerY() - ref.r.centerY()) < 100) { price = it; break; }
+                }
+                if (price != null) break;
+            }
+        }
+        if (price == null) { hidePrice(); return; }
+        double tjs = num(price.text) * rate;
+        String[] p = String.format(java.util.Locale.US, "%.2f", tjs).split("\\.");
+        String txt = "≈ " + p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " смн";
+        if (wm == null) wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
+        if (priceView == null) {
+            android.widget.TextView t = new android.widget.TextView(this);
+            t.setTextColor(android.graphics.Color.WHITE);
+            t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            t.setIncludeFontPadding(false);
+            t.setGravity(android.view.Gravity.END | android.view.Gravity.BOTTOM);
+            t.setSingleLine(true);
+            priceView = t;
+            priceLp = new android.view.WindowManager.LayoutParams(android.view.WindowManager.LayoutParams.WRAP_CONTENT, android.view.WindowManager.LayoutParams.WRAP_CONTENT,
+                android.view.WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                    | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                android.graphics.PixelFormat.TRANSLUCENT);
+            priceLp.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+            try { wm.addView(t, priceLp); } catch (Exception ex) { priceView = null; return; }
+            handler.removeCallbacks(watchdog);
+            handler.postDelayed(watchdog, 1500);
+        }
+        final android.widget.TextView tv = priceView;
+        final Rect r = price.r;
+        // Андозаи ҳарф аз баландии матни нарх (ҳамон шрифт)
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, Math.max(20f, r.height() * 0.82f));
+        tv.setText(txt);
+        tv.measure(android.view.View.MeasureSpec.UNSPECIFIED, android.view.View.MeasureSpec.UNSPECIFIED);
+        int w = tv.getMeasuredWidth(), h = tv.getMeasuredHeight();
+        priceLp.x = Math.max(0, r.right - w);
+        priceLp.y = Math.max(0, r.top - h - 4);
+        try { wm.updateViewLayout(tv, priceLp); } catch (Exception ignored) { /* removed */ }
     }
 
     private static double num(String t) {
@@ -371,6 +449,7 @@ public class ScreenReaderService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        hidePrice();
         handler.removeCallbacksAndMessages(null);
         if (prefs != null) prefs.unregisterOnSharedPreferenceChangeListener(listener);
         super.onDestroy();
