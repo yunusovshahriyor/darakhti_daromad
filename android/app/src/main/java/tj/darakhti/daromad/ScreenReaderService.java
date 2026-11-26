@@ -164,7 +164,10 @@ public class ScreenReaderService extends AccessibilityService {
         // «Заказ завершён»: маблағи фармоиш (минус комиссия) худкор ба маблағи имрӯза илова мешавад, бе гузаштан ба «Деньги»
         int doneIdx = -1;
         for (int i = 0; i < items.size(); i++) if (has(items.get(i), "заказ заверш")) { doneIdx = i; break; }
-        if (doneIdx >= 0) hidePrice(); else updatePrice(items);
+        if (doneIdx >= 0) hidePrice();
+        else {
+            try { updatePrice(items); } catch (Exception ex) { prefs.edit().putString("dbg_price", "err: " + ex).apply(); hidePrice(); }
+        }
         if (doneIdx >= 0) {
             if (!completedShown) {
                 double gross = orderAmount(items, doneIdx);
@@ -262,6 +265,7 @@ public class ScreenReaderService extends AccessibilityService {
         prefs.edit().putString("dbg_price", "rate=" + rate + " ref=" + (ref != null) + " pass=" + (pass != null) + " cands=" + cands
             + " price=" + (price != null ? price.text : "-")).apply();
         if (rate <= 0) price = null;
+        if (price == null) { hidePrice(); return; }
         double tjs = num(price.text) * rate;
         String[] p = String.format(java.util.Locale.US, "%.2f", tjs).split("\\.");
         String txt = "≈ " + p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " смн";
