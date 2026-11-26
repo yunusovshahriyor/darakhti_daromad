@@ -21,7 +21,7 @@ export interface OverlayApi {
   /** Вақти кор: лимит ва истироҳат (соат); ҳолат аз диалогҳо ва ранги тугмаи ⏻. */
   setWorkLimits(o: { limit: string; rest: string }): Promise<void>;
   resetWork(): Promise<void>;
-  getYandex(): Promise<{ wkYaLeft: string; wkSync: number; wkState: string; wkWorked: number; wkSince: number; wkLimit: string; wkRest: string; power: string; feeYa: string; feePark: string; last: string; enabled: boolean; amount: string; date: string; events: number; items: number; texts: string; ypPkg: string; curPkg: string; curName: string }>;
+  getYandex(): Promise<{ wkYaLeft: string; wkSync: number; wkState: string; wkWorked: number; wkSince: number; wkLimit: string; wkRest: string; power: string; feeYa: string; feePark: string; last: string; enabled: boolean; amount: string; date: string; events: number; items: number; texts: string; ypPkg: string; curPkg: string; curName: string; price: string }>;
 }
 
 let cached: OverlayApi | null | undefined;

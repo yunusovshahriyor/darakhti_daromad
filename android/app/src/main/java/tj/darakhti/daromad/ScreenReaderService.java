@@ -243,18 +243,25 @@ public class ScreenReaderService extends AccessibilityService {
         double rate = num(prefs.getString("fx_rate", "0"));
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         Item price = null;
-        if (rate > 0) {
-            for (Item ref : items) {
-                if (!ref.vis || !(has(ref, "стоимость поездки") || has(ref, "оплата картой") || has(ref, "оплата наличными") || has(ref, "безналичн"))) continue;
-                for (Item it : items) {
-                    if (!it.vis || it.text.length() > 14 || !RUB.matcher(it.text).matches()) continue;
-                    if (it.r.left < dm.widthPixels / 2 || it.r.top < 0 || it.r.bottom > dm.heightPixels) continue;
-                    if (Math.abs(it.r.centerY() - ref.r.centerY()) < 100) { price = it; break; }
-                }
-                if (price != null) break;
-            }
+        Item ref = null;
+        for (Item it : items) {
+            if (has(it, "стоимость поездки") || has(it, "оплата картой") || has(it, "оплата наличными") || has(it, "безналичн")) { ref = it; break; }
         }
-        if (price == null) { hidePrice(); return; }
+        Item pass = null;
+        for (Item it : items) if (it.text.equalsIgnoreCase("Пассажир")) { pass = it; break; }
+        int cands = 0;
+        int bestD = Integer.MAX_VALUE;
+        for (Item it : items) {
+            if (it.text.length() > 14 || !RUB.matcher(it.text).matches()) continue;
+            if (it.r.left < dm.widthPixels / 2 || it.r.top < 0 || it.r.bottom > dm.heightPixels) continue;
+            cands++;
+            int d = ref != null ? Math.abs(it.r.centerY() - ref.r.centerY())
+                : pass != null && it.r.bottom <= pass.r.top + 10 ? pass.r.top - it.r.bottom : Integer.MAX_VALUE;
+            if (d < 140 && d < bestD) { bestD = d; price = it; }
+        }
+        prefs.edit().putString("dbg_price", "rate=" + rate + " ref=" + (ref != null) + " pass=" + (pass != null) + " cands=" + cands
+            + " price=" + (price != null ? price.text : "-")).apply();
+        if (rate <= 0) price = null;
         double tjs = num(price.text) * rate;
         String[] p = String.format(java.util.Locale.US, "%.2f", tjs).split("\\.");
         String txt = "≈ " + p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " смн";
@@ -273,7 +280,11 @@ public class ScreenReaderService extends AccessibilityService {
                     | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 android.graphics.PixelFormat.TRANSLUCENT);
             priceLp.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
-            try { wm.addView(t, priceLp); } catch (Exception ex) { priceView = null; return; }
+            try { wm.addView(t, priceLp); } catch (Exception ex) {
+                priceView = null;
+                prefs.edit().putString("dbg_price", "addView: " + ex).apply();
+                return;
+            }
             handler.removeCallbacks(watchdog);
             handler.postDelayed(watchdog, 1500);
         }

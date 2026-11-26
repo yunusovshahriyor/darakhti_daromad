@@ -189,6 +189,7 @@ public class OverlayPlugin extends Plugin {
         r.put("ypPkg", prefs().getString("yp_pkg", ""));
         r.put("curPkg", prefs().getString("cur_pkg", ""));
         r.put("curName", prefs().getString("cur_name", ""));
+        r.put("price", prefs().getString("dbg_price", ""));
         call.resolve(r);
     }
 }

@@ -35,7 +35,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       setLimit(y.wkLimit); setRest(y.wkRest);
       setSyncTxt(y.wkYaLeft ? `Охирин мувофиқшавӣ бо Яндекс: монд ${y.wkYaLeft} (${new Date(y.wkSync).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})` : '');
       setWk(y.wkState === 'on' ? 'дар линия' : y.wkState === 'off' ? 'не дар линия' : 'ҳанӯз номаълум (як маротиба тугмаи ⏻-ро пахш кунед)');
-      setDbg(`events: ${y.events} · items: ${y.items} · yp_pkg: ${y.ypPkg || '-'} · foreground: ${y.curPkg || '-'} (${y.curName || '-'}) · amount: ${y.amount || '-'} (${y.date || '-'}) · texts: ${y.texts.slice(0, 300)}`);
+      setDbg(`events: ${y.events} · items: ${y.items} · yp_pkg: ${y.ypPkg || '-'} · foreground: ${y.curPkg || '-'} (${y.curName || '-'}) · price: ${y.price || '-'} · amount: ${y.amount || '-'} (${y.date || '-'}) · texts: ${y.texts.slice(0, 300)}`);
     } catch { /* ignore */ }
   }, [api]);
 
