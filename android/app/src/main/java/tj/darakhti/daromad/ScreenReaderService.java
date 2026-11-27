@@ -349,7 +349,8 @@ public class ScreenReaderService extends AccessibilityService {
 
     // ---------- Блоки идораи вақти кор дар «Профиль» (дастӣ: «Кор» / «Истироҳат») ----------
     private android.widget.LinearLayout card;
-    private android.widget.TextView cardTitle, cardMain, btnWork, btnRest;
+    private android.widget.TextView cardTitle, cardMain;
+    private IconBtn btnWork, btnRest;
     private android.view.WindowManager.LayoutParams cardLp;
     private final Rect cardRect = new Rect();
     private final Runnable cardTick = new Runnable() {
@@ -366,9 +367,10 @@ public class ScreenReaderService extends AccessibilityService {
         return Math.round(v * getResources().getDisplayMetrics().density);
     }
 
-    private static String hm(long ms) {
-        long m = Math.max(0, ms) / 60000;
-        return (m / 60) + ":" + String.format(java.util.Locale.US, "%02d", m % 60);
+    /** Вақт бо сония: 2:08:14. */
+    private static String hms(long ms) {
+        long t = Math.max(0, ms) / 1000;
+        return (t / 3600) + ":" + String.format(java.util.Locale.US, "%02d:%02d", (t / 60) % 60, t % 60);
     }
 
     private void hideCard() {
@@ -379,25 +381,41 @@ public class ScreenReaderService extends AccessibilityService {
         card = null;
     }
 
-    private android.widget.TextView pill(String text) {
-        android.widget.TextView t = new android.widget.TextView(this);
-        t.setText(text);
-        t.setTextSize(14);
-        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        t.setGravity(android.view.Gravity.CENTER);
-        t.setSingleLine(true);
-        return t;
+    /** Тугмаи мудаввар бо нишона: play (кор) ё pause (истироҳат). */
+    private class IconBtn extends android.view.View {
+        private final boolean play;
+        private boolean active;
+        private int activeBg;
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+        IconBtn(boolean play) { super(ScreenReaderService.this); this.play = play; }
+
+        void set(boolean active, int activeBg) { this.active = active; this.activeBg = activeBg; invalidate(); }
+
+        @Override
+        protected void onDraw(android.graphics.Canvas c) {
+            float w = getWidth(), h = getHeight(), r = Math.min(w, h) / 2f;
+            paint.setStyle(android.graphics.Paint.Style.FILL);
+            paint.setColor(active ? activeBg : 0x33FFFFFF);
+            c.drawCircle(w / 2, h / 2, r, paint);
+            paint.setColor(active ? 0xFF111111 : 0xFFFFFFFF);
+            float u = r * 0.42f;
+            if (play) {
+                android.graphics.Path path = new android.graphics.Path();
+                path.moveTo(w / 2 - u * 0.7f, h / 2 - u);
+                path.lineTo(w / 2 + u * 1.05f, h / 2);
+                path.lineTo(w / 2 - u * 0.7f, h / 2 + u);
+                path.close();
+                c.drawPath(path, paint);
+            } else {
+                float bw = u * 0.55f;
+                c.drawRoundRect(new android.graphics.RectF(w / 2 - u * 0.95f, h / 2 - u, w / 2 - u * 0.95f + bw, h / 2 + u), bw / 3, bw / 3, paint);
+                c.drawRoundRect(new android.graphics.RectF(w / 2 + u * 0.95f - bw, h / 2 - u, w / 2 + u * 0.95f, h / 2 + u), bw / 3, bw / 3, paint);
+            }
+        }
     }
 
-    private void setPill(android.widget.TextView t, boolean active, int activeBg) {
-        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
-        g.setCornerRadius(dp(22));
-        g.setColor(active ? activeBg : 0x33FFFFFF);
-        t.setBackground(g);
-        t.setTextColor(active ? android.graphics.Color.BLACK : android.graphics.Color.WHITE);
-    }
-
-    /** Матнҳои блок аз ҳолати дастӣ: `wk_state` on/off, `wk_worked`, `wk_since`. */
+    /** Матнҳои блок аз ҳолати дастӣ: `wk_state` on/off, `wk_worked`, `wk_since`. Вақт бо сония ҳар сония навсозӣ мешавад. */
     private void refreshCard() {
         if (card == null) return;
         long now = System.currentTimeMillis();
@@ -411,20 +429,20 @@ public class ScreenReaderService extends AccessibilityService {
         if (st.equals("on")) {
             long cur = worked + (now - since);
             long left = limit - cur;
-            title = "Вақти кор · дар линия";
-            main = left > 0 ? "⏱ " + hm(cur) + " · монд " + hm(left) : "⏱ " + hm(cur) + " · лимит!";
+            title = left > 0 ? "● Дар линия · монд " + hms(left) : "● Дар линия · лимит!";
+            main = hms(cur);
         } else if (st.equals("off")) {
             long off = now - since;
-            title = "Истироҳат";
-            main = worked <= 0 || off >= rest ? "✓ Омода ба кор (0:00 / " + hm(limit) + ")" : "😴 " + hm(off) + " / " + hm(rest) + " · кор " + hm(worked);
+            if (worked <= 0 || off >= rest) { title = "○ Омода ба кор"; main = "0:00:00"; }
+            else { title = "○ Истироҳат · то " + hms(rest - off); main = hms(off); }
         } else {
-            title = "Вақти кор";
-            main = "0:00 · «Кор»-ро пахш кунед";
+            title = "○ Вақти кор";
+            main = "0:00:00";
         }
         cardTitle.setText(title);
         cardMain.setText(main);
-        setPill(btnWork, st.equals("on"), 0xFFFFD600);
-        setPill(btnRest, st.equals("off"), 0xFF9FC1FF);
+        btnWork.set(st.equals("on"), 0xFFFFD600);
+        btnRest.set(st.equals("off"), 0xFF9FC1FF);
     }
 
     private void press(boolean work) {
@@ -436,7 +454,7 @@ public class ScreenReaderService extends AccessibilityService {
         android.widget.LinearLayout root = new android.widget.LinearLayout(this);
         root.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         root.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        root.setPadding(dp(14), dp(6), dp(10), dp(6));
+        root.setPadding(dp(16), dp(6), dp(12), dp(6));
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable(
             android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT, new int[] { 0xFF14161F, 0xFF3B4FA8 });
         bg.setCornerRadius(dp(24));
@@ -444,25 +462,27 @@ public class ScreenReaderService extends AccessibilityService {
         android.widget.LinearLayout left = new android.widget.LinearLayout(this);
         left.setOrientation(android.widget.LinearLayout.VERTICAL);
         cardTitle = new android.widget.TextView(this);
-        cardTitle.setTextSize(11);
-        cardTitle.setTextColor(0xB3FFFFFF);
+        cardTitle.setTextSize(12);
+        cardTitle.setTextColor(0xCCFFFFFF);
         cardTitle.setSingleLine(true);
         cardMain = new android.widget.TextView(this);
-        cardMain.setTextSize(14);
+        cardMain.setTextSize(26);
         cardMain.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         cardMain.setTextColor(android.graphics.Color.WHITE);
-        cardMain.setMaxLines(2);
+        cardMain.setSingleLine(true);
+        cardMain.setIncludeFontPadding(false);
+        try { cardMain.setFontFeatureSettings("tnum"); } catch (Exception ignored) { /* skip */ }
         left.addView(cardTitle);
         left.addView(cardMain);
         root.addView(left, new android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        btnWork = pill("Кор");
-        btnRest = pill("Истироҳат");
+        btnWork = new IconBtn(true);
+        btnRest = new IconBtn(false);
         btnWork.setOnClickListener(v -> press(true));
         btnRest.setOnClickListener(v -> press(false));
-        android.widget.LinearLayout.LayoutParams lw = new android.widget.LinearLayout.LayoutParams(dp(62), dp(40));
-        android.widget.LinearLayout.LayoutParams lr = new android.widget.LinearLayout.LayoutParams(dp(92), dp(40));
-        lw.leftMargin = dp(6);
-        lr.leftMargin = dp(6);
+        android.widget.LinearLayout.LayoutParams lw = new android.widget.LinearLayout.LayoutParams(dp(46), dp(46));
+        android.widget.LinearLayout.LayoutParams lr = new android.widget.LinearLayout.LayoutParams(dp(46), dp(46));
+        lw.leftMargin = dp(8);
+        lr.leftMargin = dp(8);
         root.addView(btnWork, lw);
         root.addView(btnRest, lr);
         return root;
