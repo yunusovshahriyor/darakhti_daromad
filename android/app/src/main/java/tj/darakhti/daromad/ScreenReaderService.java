@@ -294,13 +294,14 @@ public class ScreenReaderService extends AccessibilityService {
         }
         final android.widget.TextView tv = priceView;
         final Rect r = price != null ? price.r : mergedR;
-        // Андозаи ҳарф аз баландии матни нарх (ҳамон шрифт)
-        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, Math.max(20f, r.height() * 0.82f));
+        // Андозаи ҳарфи собит ва хурд (аз баландии қуттии нарх не: он баъзан баланд аст) ва ҷойгиршавӣ аз маркази қуттӣ
+        float size = 0.034f * dm.widthPixels;
+        tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, size);
         tv.setText(txt);
         tv.measure(android.view.View.MeasureSpec.UNSPECIFIED, android.view.View.MeasureSpec.UNSPECIFIED);
         int w = tv.getMeasuredWidth(), h = tv.getMeasuredHeight();
         priceLp.x = Math.max(0, r.right - w);
-        priceLp.y = Math.max(0, r.top - h - 4);
+        priceLp.y = Math.max(0, r.centerY() - (int) (size * 0.62f) - h - 2);
         try { wm.updateViewLayout(tv, priceLp); } catch (Exception ignored) { /* removed */ }
     }
 
