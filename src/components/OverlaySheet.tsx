@@ -19,7 +19,6 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
   const [limit, setLimit] = useState('12');
   const [rest, setRest] = useState('6');
   const [wk, setWk] = useState('');
-  const [syncTxt, setSyncTxt] = useState('');
 
   const refresh = useCallback(async () => {
     if (!api) return;
@@ -33,8 +32,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       setAmount(y.amount);
       setFeeYa(y.feeYa); setFeePark(y.feePark); setLast(y.last);
       setLimit(y.wkLimit); setRest(y.wkRest);
-      setSyncTxt(y.wkYaLeft ? `Охирин мувофиқшавӣ бо Яндекс: монд ${y.wkYaLeft} (${new Date(y.wkSync).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})` : '');
-      setWk(y.wkState === 'on' ? 'дар линия' : y.wkState === 'off' ? 'не дар линия' : 'ҳанӯз номаълум (як маротиба тугмаи ⏻-ро пахш кунед)');
+      setWk(y.wkState === 'on' ? 'дар линия' : y.wkState === 'off' ? 'не дар линия' : 'ҳанӯз оғоз нашудааст («Кор»-ро дар «Профиль» пахш кунед)');
       setDbg(`events: ${y.events} · items: ${y.items} · yp_pkg: ${y.ypPkg || '-'} · foreground: ${y.curPkg || '-'} (${y.curName || '-'}) · price: ${y.price || '-'} · amount: ${y.amount || '-'} (${y.date || '-'}) · texts: ${y.texts.slice(0, 300)}`);
     } catch { /* ignore */ }
   }, [api]);
@@ -105,7 +103,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
       <label className="switch-row">
         <span>
           <b>Маблағи имрӯзаи «Яндекс Про»</b>
-          <small>Дар «Яндекс Про» маблағи имрӯза (аз саҳифаи «Деньги»), бо сомонӣ ва вақти кор навишта мешавад; дар тафсилоти фармоиш зери нарх — сомонӣ. Танҳо экрани Яндекс Про хонда мешавад, маблағ танҳо дар ин телефон нигоҳ дошта мешавад.{amount ? ` Охирин: ${amount}` : ''}</small>
+          <small>Дар «Яндекс Про» маблағи имрӯза (аз саҳифаи «Деньги») бо сомонӣ навишта мешавад; дар «Профиль» блоки вақти кор; дар тафсилоти фармоиш зери нарх — сомонӣ. Танҳо экрани Яндекс Про хонда мешавад, маблағ танҳо дар ин телефон нигоҳ дошта мешавад.{amount ? ` Охирин: ${amount}` : ''}</small>
         </span>
         <span className="switch">
           <input type="checkbox" checked={yp} onChange={toggleYp} disabled={busy} />
@@ -124,7 +122,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
             <label className="field" style={{ flex: 1 }}><span>Парк (%)</span>
               <input value={feePark} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setFeePark(v); saveFees(feeYa, v); }} /></label>
           </div>
-          <p className="note">Вақти кор: аз «дар линия» то «Уйти с линии» ҳисоб мешавад (аз диалогҳои Яндекс Про ва аз ранги тугмаи ⏻ муайян мешавад). Лимит ва истироҳатро (соат) танзим кунед:</p>
+          <p className="note">Вақти кор дастӣ идора мешавад: дар «Профиль»-и Яндекс Про ба ҷои баннери «Режимы дохода…» блоки вақт пайдо мешавад бо тугмаҳои «Кор» ва «Истироҳат». Лимит ва истироҳатро (соат) танзим кунед:</p>
           <div className="rec-chips">
             <label className="field" style={{ flex: 1 }}><span>Лимити кор (соат)</span>
               <input value={limit} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setLimit(v); saveLimits(v, rest); }} /></label>
@@ -132,8 +130,7 @@ export default function OverlaySheet({ onClose }: { onClose: () => void }) {
               <input value={rest} inputMode="decimal" onChange={e => { const v = e.target.value.replace(/[^\d.,]/g, ''); setRest(v); saveLimits(limit, v); }} /></label>
           </div>
           <p className="note">{`Ҳолат: ${wk || '—'}`}</p>
-          {syncTxt && <p className="note">{syncTxt}</p>}
-          <button type="button" className="btn secondary" onClick={() => { void api?.resetWork(); setWk('ҳанӯз номаълум (як маротиба тугмаи ⏻-ро пахш кунед)'); }}>Ҳисобкунакро аз нав оғоз кардан</button>
+          <button type="button" className="btn secondary" onClick={() => { void api?.resetWork(); setWk('ҳанӯз оғоз нашудааст («Кор»-ро дар «Профиль» пахш кунед)'); }}>Ҳисобкунакро аз нав оғоз кардан</button>
           {last && <p className="note" data-nocur>{`Охирин фармоиш: ${last}`}</p>}
         </>
       )}

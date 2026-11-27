@@ -42,11 +42,7 @@ public class ScreenReaderService extends AccessibilityService {
     private long lastOrderAt = 0;
     private double lastOrderGross = -1;
 
-    // ---------- Вақти кор: «дар линия» / «не дар линия» ----------
-    private long lastShot = 0;
-    private int pixelStreak = 0;
-    private int pixelLast = 0;
-
+    // ---------- Вақти кор: дастӣ («Кор» / «Истироҳат») ----------
     private static boolean has(Item it, String w) {
         return it.text.toLowerCase(java.util.Locale.ROOT).contains(w);
     }
@@ -110,15 +106,6 @@ public class ScreenReaderService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent e) {
         if (prefs == null || e == null || e.getPackageName() == null || !target().contentEquals(e.getPackageName())) return;
         if (!prefs.getBoolean("yp_on", false)) return;
-        // Пахши тугмаи «Уйти с линии» / «Выйти на линию»: ҳолат фавран иваз мешавад
-        if (e.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED) {
-            StringBuilder t = new StringBuilder();
-            if (e.getText() != null) for (CharSequence c : e.getText()) t.append(c).append(' ');
-            if (e.getContentDescription() != null) t.append(e.getContentDescription());
-            String tl = t.toString().toLowerCase(java.util.Locale.ROOT);
-            if (tl.contains("уйти с линии")) setOnline(false);
-            else if (tl.contains("выйти на линию")) setOnline(true);
-        }
         prefs.edit().putInt("dbg_events", prefs.getInt("dbg_events", 0) + 1).apply();
         // Кам-кам хондан: бештар аз як маротиба дар 0,7 сония не, аммо ҳолати охирин ҳатман хонда мешавад
         long wait = Math.max(0, 700 - (SystemClock.uptimeMillis() - last));
@@ -143,7 +130,7 @@ public class ScreenReaderService extends AccessibilityService {
     private void read() {
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) { prefs.edit().putString("dbg_texts", "(root=null)").apply(); return; }
-        if (root.getPackageName() == null || !target().contentEquals(root.getPackageName())) { hidePrice(); return; }
+        if (root.getPackageName() == null || !target().contentEquals(root.getPackageName())) { hidePrice(); hideCard(); return; }
         List<Item> items = new ArrayList<>();
         collect(root, items, 0);
 
@@ -152,14 +139,8 @@ public class ScreenReaderService extends AccessibilityService {
         for (int i = 0; i < items.size() && sb.length() < 400; i++) sb.append(items.get(i).text).append(" | ");
         prefs.edit().putInt("dbg_items", items.size()).putString("dbg_texts", sb.toString()).apply();
 
-        // Диалогҳои Яндекс Про: ҳолати воқеиро нишон медиҳанд (баъд аз пахши ⏻)
-        for (Item it : items) {
-            if (has(it, "перестать получать заказы")) { setOnline(true); break; }
-            if (has(it, "готовы получать заказы")) { setOnline(false); break; }
-        }
-        for (Item it : items) if (has(it, "офлайн")) { setOnline(false); break; } // панели поёнӣ «Офлайн / Выйти на линию»
-        syncRemaining(items);
-        shot();
+        // Блоки идораи вақт дар «Профиль» (ба ҷои баннери «Режимы дохода…»)
+        try { updateCard(items); } catch (Exception ex) { prefs.edit().putString("dbg_price", "card err: " + ex).apply(); hideCard(); }
 
         // «Заказ завершён»: маблағи фармоиш (минус комиссия) худкор ба маблағи имрӯза илова мешавад, бе гузаштан ба «Деньги»
         int doneIdx = -1;
@@ -365,125 +346,172 @@ public class ScreenReaderService extends AccessibilityService {
             .putString("yp_last", fmtRub(gross) + " → +" + fmtRub(net)).apply();
     }
 
-    private static final Pattern YA_TIME = Pattern.compile("^\\s*(?:(\\d+)\\s*(?:ч|час\\p{L}*))?\\s*(?:(\\d+)\\s*(?:м|мин\\p{L}*))?\\s*$");
+    // ---------- Блоки идораи вақти кор дар «Профиль» (дастӣ: «Кор» / «Истироҳат») ----------
+    private android.widget.LinearLayout card;
+    private android.widget.TextView cardTitle, cardMain, btnWork, btnRest;
+    private android.view.WindowManager.LayoutParams cardLp;
+    private final Rect cardRect = new Rect();
+    private final Runnable cardTick = new Runnable() {
+        @Override
+        public void run() {
+            if (card == null) return;
+            if (!prefs.getString("cur_pkg", target()).equals(target())) { hideCard(); return; }
+            refreshCard();
+            handler.postDelayed(this, 1000);
+        }
+    };
 
-    /** «1ч 21м» → миллисония; агар шакл дигар бошад — -1. */
-    private static long yaTime(String t) {
-        Matcher m = YA_TIME.matcher(t.replace('\u00a0', ' ').replace('\u202f', ' ').toLowerCase(java.util.Locale.ROOT));
-        if (!m.matches() || (m.group(1) == null && m.group(2) == null)) return -1;
-        long h = m.group(1) == null ? 0 : Long.parseLong(m.group(1));
-        long mi = m.group(2) == null ? 0 : Long.parseLong(m.group(2));
-        return (h * 60 + mi) * 60000L;
+    private int dp(float v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 
-    /**
-     * «Пора отдохнуть» / «Осталось времени 1ч 21м»: вақти боқимондаи худи Яндекс. Ҳисоби мо ба он мувофиқ мешавад
-     * (кори ҷамъшуда = лимит − боқимонда), агар фарқ кунад.
-     */
-    private void syncRemaining(List<Item> items) {
-        int idx = -1;
-        boolean rest = false;
-        for (int i = 0; i < items.size(); i++) {
-            if (has(items.get(i), "осталось времени")) idx = i;
-            if (has(items.get(i), "отдохнуть")) rest = true;
+    private static String hm(long ms) {
+        long m = Math.max(0, ms) / 60000;
+        return (m / 60) + ":" + String.format(java.util.Locale.US, "%02d", m % 60);
+    }
+
+    private void hideCard() {
+        handler.removeCallbacks(cardTick);
+        if (card != null && wm != null) {
+            try { wm.removeView(card); } catch (Exception ignored) { /* already removed */ }
         }
-        if (idx < 0 || !rest) return; // танҳо саҳифаи «Пора отдохнуть»
-        Item base = items.get(idx);
-        long rem = -1;
-        String txt = "";
-        for (Item it : items) {
-            if (it == base) continue;
-            long t = yaTime(it.text);
-            if (t >= 0 && Math.abs(it.r.centerY() - base.r.centerY()) < 90 && it.r.left > base.r.left) { rem = t; txt = it.text; break; }
-        }
-        if (rem < 0) {
-            for (int i = idx + 1; i <= Math.min(items.size() - 1, idx + 3); i++) {
-                long t = yaTime(items.get(i).text);
-                if (t >= 0) { rem = t; txt = items.get(i).text; break; }
-            }
-        }
-        if (rem < 0) return;
+        card = null;
+    }
+
+    private android.widget.TextView pill(String text) {
+        android.widget.TextView t = new android.widget.TextView(this);
+        t.setText(text);
+        t.setTextSize(14);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setSingleLine(true);
+        return t;
+    }
+
+    private void setPill(android.widget.TextView t, boolean active, int activeBg) {
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setCornerRadius(dp(22));
+        g.setColor(active ? activeBg : 0x33FFFFFF);
+        t.setBackground(g);
+        t.setTextColor(active ? android.graphics.Color.BLACK : android.graphics.Color.WHITE);
+    }
+
+    /** Матнҳои блок аз ҳолати дастӣ: `wk_state` on/off, `wk_worked`, `wk_since`. */
+    private void refreshCard() {
+        if (card == null) return;
         long now = System.currentTimeMillis();
+        String st = prefs.getString("wk_state", "");
         long limit = (long) (num(prefs.getString("wk_limit_h", "12")) * 3600_000L);
+        long rest = (long) (num(prefs.getString("wk_rest_h", "6")) * 3600_000L);
         if (limit <= 0) limit = 12 * 3600_000L;
-        long worked = Math.max(0, limit - rem);
-        SharedPreferences.Editor e = prefs.edit().putLong("wk_worked", worked).putString("wk_ya_left", txt).putLong("wk_sync", now);
-        if ("on".equals(prefs.getString("wk_state", ""))) e.putLong("wk_since", now); // ҳисоб аз ҳоло ба ҳисоби Яндекс идома мекунад
-        e.apply();
+        long worked = prefs.getLong("wk_worked", 0);
+        long since = prefs.getLong("wk_since", now);
+        String title, main;
+        if (st.equals("on")) {
+            long cur = worked + (now - since);
+            long left = limit - cur;
+            title = "Вақти кор · дар линия";
+            main = left > 0 ? "⏱ " + hm(cur) + " · монд " + hm(left) : "⏱ " + hm(cur) + " · лимит!";
+        } else if (st.equals("off")) {
+            long off = now - since;
+            title = "Истироҳат";
+            main = worked <= 0 || off >= rest ? "✓ Омода ба кор (0:00 / " + hm(limit) + ")" : "😴 " + hm(off) + " / " + hm(rest) + " · кор " + hm(worked);
+        } else {
+            title = "Вақти кор";
+            main = "0:00 · «Кор»-ро пахш кунед";
+        }
+        cardTitle.setText(title);
+        cardMain.setText(main);
+        setPill(btnWork, st.equals("on"), 0xFFFFD600);
+        setPill(btnRest, st.equals("off"), 0xFF9FC1FF);
     }
 
-    /** Тугмаи ⏻ (боло чап): зард — дар линия, хокистарӣ — не. Скриншот ҳар 4 сония, танҳо Android 11+. */
-    private void shot() {
-        if (Build.VERSION.SDK_INT < 30) return;
-        long now = SystemClock.uptimeMillis();
-        if (now - lastShot < 4000) return;
-        lastShot = now;
-        try {
-            takeScreenshot(Display.DEFAULT_DISPLAY, getMainExecutor(), new TakeScreenshotCallback() {
-                @Override
-                public void onSuccess(ScreenshotResult r) {
-                    try {
-                        Bitmap hw = Bitmap.wrapHardwareBuffer(r.getHardwareBuffer(), r.getColorSpace());
-                        if (hw != null) {
-                            Bitmap b = hw.copy(Bitmap.Config.ARGB_8888, false);
-                            if (b != null) classifyPower(b);
-                        }
-                        r.getHardwareBuffer().close();
-                    } catch (Exception ignored) { /* skip */ }
-                }
-
-                @Override
-                public void onFailure(int errorCode) { prefs.edit().putInt("dbg_shot_err", errorCode).apply(); }
-            });
-        } catch (Exception ignored) { /* skip */ }
+    private void press(boolean work) {
+        setOnline(work);
+        refreshCard();
     }
 
-    /** 8 нуқта дар гирдгарди тугмаи ⏻: агар ≥6 нуқта зард (дар линия) ё хокистарӣ (не) бошанд, ва ду маротиба пай дар пай — ҳолат иваз мешавад. */
-    private void classifyPower(Bitmap b) {
-        int w = b.getWidth(), h = b.getHeight();
-        // Тугма ҷойи собит надорад: бо баннери «Пора отдохнуть» поёнтар меравад. Ду ҷойи эҳтимолӣ + ҳалқаи сиёҳи гирду атроф тасдиқ мекунад.
-        double[] ys = { 0.075, 0.1125 };
-        int cls = 0;
-        String dbg = "";
-        for (double fy : ys) {
-            int cx = (int) (0.097 * w), cy = (int) (fy * h);
-            int dark = 0, yellow = 0, grey = 0;
-            for (int i = 0; i < 8; i++) {
-                double a = i * Math.PI / 4;
-                if (ringDark(b, cx, cy, a, w)) dark++;
-                int x = cx + (int) Math.round(0.05 * w * Math.cos(a)), y = cy + (int) Math.round(0.05 * w * Math.sin(a));
-                if (x < 0 || y < 0 || x >= w || y >= h) continue;
-                int p = b.getPixel(x, y);
-                int r = (p >> 16) & 255, g = (p >> 8) & 255, bl = p & 255;
-                if (r > 200 && g > 160 && bl < 120) yellow++;
-                else if (r > 150 && Math.abs(r - g) < 25 && Math.abs(g - bl) < 30) grey++;
+    private android.widget.LinearLayout buildCard() {
+        android.widget.LinearLayout root = new android.widget.LinearLayout(this);
+        root.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        root.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        root.setPadding(dp(14), dp(6), dp(10), dp(6));
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT, new int[] { 0xFF14161F, 0xFF3B4FA8 });
+        bg.setCornerRadius(dp(24));
+        root.setBackground(bg);
+        android.widget.LinearLayout left = new android.widget.LinearLayout(this);
+        left.setOrientation(android.widget.LinearLayout.VERTICAL);
+        cardTitle = new android.widget.TextView(this);
+        cardTitle.setTextSize(11);
+        cardTitle.setTextColor(0xB3FFFFFF);
+        cardTitle.setSingleLine(true);
+        cardMain = new android.widget.TextView(this);
+        cardMain.setTextSize(14);
+        cardMain.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        cardMain.setTextColor(android.graphics.Color.WHITE);
+        cardMain.setMaxLines(2);
+        left.addView(cardTitle);
+        left.addView(cardMain);
+        root.addView(left, new android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        btnWork = pill("Кор");
+        btnRest = pill("Истироҳат");
+        btnWork.setOnClickListener(v -> press(true));
+        btnRest.setOnClickListener(v -> press(false));
+        android.widget.LinearLayout.LayoutParams lw = new android.widget.LinearLayout.LayoutParams(dp(62), dp(40));
+        android.widget.LinearLayout.LayoutParams lr = new android.widget.LinearLayout.LayoutParams(dp(92), dp(40));
+        lw.leftMargin = dp(6);
+        lr.leftMargin = dp(6);
+        root.addView(btnWork, lw);
+        root.addView(btnRest, lr);
+        return root;
+    }
+
+    /** Баннери «Режимы дохода и опции для заказов» дар «Профиль» бо блоки вақти кор иваз мешавад (ҳамон ҷой ва андоза). */
+    private void updateCard(List<Item> items) {
+        if (!prefs.getBoolean("yp_on", false)) { hideCard(); return; }
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        Rect u = null;
+        for (Item it : items) {
+            if (!it.vis || !(has(it, "режимы дохода") || has(it, "теперь на главном"))) continue;
+            if (u == null) u = new Rect(it.r); else u.union(it.r);
+        }
+        if (u == null) { hideCard(); return; }
+        int padV = u.height() >= dm.heightPixels * 0.06 ? 0 : (int) (0.02 * dm.heightPixels);
+        int left = (int) (0.043 * dm.widthPixels), right = (int) (0.957 * dm.widthPixels);
+        int top = u.top - padV, bottom = u.bottom + padV;
+        if (bottom - top < dp(60)) { int c = (top + bottom) / 2; top = c - dp(30); bottom = c + dp(30); }
+        if (top < 0 || bottom > dm.heightPixels) { hideCard(); return; }
+        if (wm == null) wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
+        if (card == null) {
+            card = buildCard();
+            cardLp = new android.view.WindowManager.LayoutParams(right - left, bottom - top,
+                android.view.WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                    | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                android.graphics.PixelFormat.TRANSLUCENT);
+            cardLp.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+            cardLp.x = left; cardLp.y = top;
+            try { wm.addView(card, cardLp); } catch (Exception ex) {
+                card = null;
+                prefs.edit().putString("dbg_price", "card addView: " + ex).apply();
+                return;
             }
-            dbg += "y=" + fy + ":dark" + dark + "/yel" + yellow + "/gry" + grey + " ";
-            if (dark < 6) continue; // тугма ин ҷо нест
-            if (yellow >= 6) { cls = 1; break; }
-            if (grey >= 6) { cls = 2; break; }
+            cardRect.set(left, top, right, bottom);
+            refreshCard();
+            handler.removeCallbacks(cardTick);
+            handler.postDelayed(cardTick, 1000);
+        } else if (cardRect.left != left || cardRect.top != top || cardRect.right != right || cardRect.bottom != bottom) {
+            cardRect.set(left, top, right, bottom);
+            cardLp.x = left; cardLp.y = top; cardLp.width = right - left; cardLp.height = bottom - top;
+            try { wm.updateViewLayout(card, cardLp); } catch (Exception ignored) { /* removed */ }
         }
-        prefs.edit().putString("dbg_power", dbg).apply();
-        if (cls == 0) { pixelStreak = 0; return; }
-        pixelStreak = cls == pixelLast ? pixelStreak + 1 : 1;
-        pixelLast = cls;
-        if (pixelStreak >= 2) setOnline(cls == 1);
-    }
-
-    /** Ҳалқаи сиёҳи берунии тугмаи ⏻ дар кунҷи `a`. */
-    private static boolean ringDark(Bitmap b, int cx, int cy, double a, int w) {
-        for (double rr : new double[] { 0.068, 0.072, 0.076 }) {
-            int x = cx + (int) Math.round(rr * w * Math.cos(a)), y = cy + (int) Math.round(rr * w * Math.sin(a));
-            if (x < 0 || y < 0 || x >= b.getWidth() || y >= b.getHeight()) continue;
-            int p = b.getPixel(x, y);
-            if (((p >> 16) & 255) < 70 && ((p >> 8) & 255) < 70 && (p & 255) < 70) return true;
-        }
-        return false;
     }
 
     @Override
     public void onDestroy() {
         hidePrice();
+        hideCard();
         handler.removeCallbacksAndMessages(null);
         if (prefs != null) prefs.unregisterOnSharedPreferenceChangeListener(listener);
         super.onDestroy();

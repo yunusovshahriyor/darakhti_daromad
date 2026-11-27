@@ -144,9 +144,9 @@ public class OverlayService extends Service {
         } catch (SecurityException ex) {
             name = ""; // иҷозати «Дастрасӣ ба маълумоти истифода» нест
         }
-        // Танҳо дар «Яндекс Про»: маблағи имрӯза, дар поён — сомонӣ бо қурби имрӯза ва вақти кор. Дар барномаҳои дигар чизе нест.
+        // Танҳо дар «Яндекс Про»: маблағи имрӯза, дар поён — сомонӣ бо қурби имрӯза ва . Дар барномаҳои дигар чизе нест.
         boolean inYp = prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG));
-        String first = "", second = "", work = "";
+        String first = "", second = "";
         if (inYp) {
             ensureRate();
             if (todayKey().equals(prefs.getString("yp_date", "")) && !prefs.getString("yp_amount", "").isEmpty()) {
@@ -154,15 +154,12 @@ public class OverlayService extends Service {
                 first = "💰 " + amt;
                 second = toSomoni(amt);
             }
-            work = workLine();
         }
         if (first.isEmpty() && !second.isEmpty()) { first = second; second = ""; }
-        if (first.isEmpty() && !work.isEmpty()) { first = work; work = ""; }
         boolean bubbleOn = prefs.getBoolean("bubble", false);
         if (first.isEmpty()) first = bubbleOn ? "+" : "";
         String full = first;
         if (!second.isEmpty()) full += "\n" + second;
-        if (!work.isEmpty()) full += "\n" + work;
         if (!full.equals(lastShown)) {
             lastShown = full;
             label.setVisibility(full.isEmpty() ? View.INVISIBLE : View.VISIBLE);
@@ -174,38 +171,6 @@ public class OverlayService extends Service {
             }
             keepOnScreen();
         }
-    }
-
-    private static String hm(long ms) {
-        long m = Math.max(0, ms) / 60000;
-        return (m / 60) + ":" + String.format(java.util.Locale.US, "%02d", m % 60);
-    }
-
-    private static double numOf(String s, double def) {
-        try { return Double.parseDouble(s.replace(',', '.')); } catch (Exception e) { return def; }
-    }
-
-    /**
-     * Вақти кор ва боқимонда (ё истироҳат). `wk_state`: on | off | холӣ (ҳанӯз номаълум).
-     * Дар линия: «⏱ 5:32 · монд 6:28»; не дар линия: «😴 истироҳат 2:10 / 6:00» (то ҳисоб аз нав оғоз шавад).
-     */
-    private String workLine() {
-        String st = prefs.getString("wk_state", "");
-        if (st.isEmpty()) return "";
-        long now = System.currentTimeMillis();
-        long limit = (long) (numOf(prefs.getString("wk_limit_h", "12"), 12) * 3600_000L);
-        long rest = (long) (numOf(prefs.getString("wk_rest_h", "6"), 6) * 3600_000L);
-        long worked = prefs.getLong("wk_worked", 0);
-        long since = prefs.getLong("wk_since", now);
-        if (st.equals("on")) {
-            long cur = worked + (now - since);
-            long left = limit - cur;
-            boolean sync = now - prefs.getLong("wk_sync", 0) < 20 * 60_000L; // ба вақти Яндекс мувофиқ шудааст
-            return left > 0 ? "⏱ " + hm(cur) + " · монд " + hm(left) + (sync ? " ✓" : "") : "⏱ " + hm(cur) + " · лимит!";
-        }
-        long off = now - since;
-        if (worked <= 0 || off >= rest) return "⏸ не дар линия";
-        return "😴 истироҳат " + hm(off) + " / " + hm(rest);
     }
 
     // ---------- Қурби рубл → сомонӣ (барои маблағи «Яндекс Про») ----------
