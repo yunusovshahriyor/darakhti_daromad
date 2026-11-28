@@ -51,9 +51,9 @@ public class OverlayService extends Service {
 
     private WindowManager wm;
     private View bubble;
-    /** Дар реҷаи «номи барнома» — худи тугма матн аст (ном ба ҷои «+»). */
+    /** Блоки маблағи «Яндекс Про» (ҷои собит, бе кашидан): маблағ, сомонӣ, шумораи заказҳо. */
     private TextView label;
-    private boolean appMode = false;
+    private WindowManager.LayoutParams labelLp;
     private boolean onRight = true;
     private String currentPkg = "";
     private long lastEventTime = 0;
@@ -84,15 +84,17 @@ public class OverlayService extends Service {
         return START_STICKY;
     }
 
-    /** Тугмаи шино ва/ё номи барнома: як намуд дар экран. Агар «номи барнома» фаъол бошад, ном ба ҷои тугмаи сабзи «+» менависад. */
+    /** Тугмаи шино («+») ва/ё блоки маблағи Яндекс Про: ду намуди ҷудогона. */
     private void syncViews() {
         prefs = getSharedPreferences("overlay", MODE_PRIVATE);
         if (wm == null) wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         boolean bubbleOn = prefs.getBoolean("bubble", false);
         boolean appOn = prefs.getBoolean("appname", false);
         if (!bubbleOn && !appOn) { stopSelf(); return; }
-        if (bubble != null && appMode != appOn) removeBubble();
-        if (bubble == null) { addBubble(appOn); keepOnScreen(); }
+        if (bubbleOn && bubble == null) addBubble();
+        if (!bubbleOn) removeBubble();
+        if (appOn && label == null) addLabel();
+        if (!appOn) removeLabel();
         handler.removeCallbacks(poll);
         if (appOn) handler.post(poll);
     }
@@ -102,7 +104,42 @@ public class OverlayService extends Service {
             try { wm.removeView(bubble); } catch (Exception ignored) { /* already removed */ }
         }
         bubble = null;
+    }
+
+    private void removeLabel() {
+        if (label != null && wm != null) {
+            try { wm.removeView(label); } catch (Exception ignored) { /* already removed */ }
+        }
         label = null;
+        lastShown = "";
+    }
+
+    /** Блоки маблағ: ҷои собит дар боло рост, фони нимшаффофи махсус, пахш намешавад (ба зери он мегузарад). */
+    private void addLabel() {
+        TextView t = new TextView(this);
+        t.setTextColor(Color.WHITE);
+        t.setTextSize(18);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setGravity(Gravity.END);
+        t.setMaxLines(3);
+        t.setIncludeFontPadding(false);
+        t.setLineSpacing(0f, 1.1f);
+        t.setPadding(dp(12), dp(8), dp(12), dp(8));
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] { 0xB3141A2E, 0x8C2A3A66 });
+        bg.setCornerRadius(dp(16));
+        bg.setStroke(dp(1), 0x33FFFFFF);
+        t.setBackground(bg);
+        t.setVisibility(View.GONE);
+        label = t;
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
+        labelLp = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT, type,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT);
+        labelLp.gravity = Gravity.TOP | Gravity.END;
+        labelLp.x = (int) (0.03f * dm.widthPixels);
+        labelLp.y = (int) (0.095f * dm.heightPixels);
+        try { wm.addView(t, labelLp); } catch (Exception ex) { label = null; }
     }
 
     // ---------- Номи барномаи кушодашуда ----------
@@ -144,33 +181,36 @@ public class OverlayService extends Service {
         } catch (SecurityException ex) {
             name = ""; // иҷозати «Дастрасӣ ба маълумоти истифода» нест
         }
-        // Танҳо дар «Яндекс Про»: маблағи имрӯза, дар поён — сомонӣ бо қурби имрӯза ва . Дар барномаҳои дигар чизе нест.
-        boolean inYp = prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG));
-        String first = "", second = "";
-        if (inYp) {
-            ensureRate();
-            if (todayKey().equals(prefs.getString("yp_date", "")) && !prefs.getString("yp_amount", "").isEmpty()) {
-                String amt = prefs.getString("yp_amount", "");
-                first = "💰 " + amt;
-                second = toSomoni(amt);
-            }
+        // Танҳо дар саҳифаи асосии «Яндекс Про»: маблағи имрӯза, сомонӣ бо қурби имрӯза ва шумораи заказҳо
+        boolean inYp = prefs.getBoolean("yp_on", false) && currentPkg.equals(prefs.getString("yp_pkg", ScreenReaderService.TARGET_PKG))
+            && prefs.getBoolean("yp_main", true);
+        if (!inYp) {
+            if (label.getVisibility() != View.GONE) label.setVisibility(View.GONE);
+            lastShown = "";
+            return;
         }
-        if (first.isEmpty() && !second.isEmpty()) { first = second; second = ""; }
-        boolean bubbleOn = prefs.getBoolean("bubble", false);
-        if (first.isEmpty()) first = bubbleOn ? "+" : "";
-        String full = first;
-        if (!second.isEmpty()) full += "\n" + second;
+        ensureRate();
+        boolean today = todayKey().equals(prefs.getString("yp_date", ""));
+        String amt = today && !prefs.getString("yp_amount", "").isEmpty() ? prefs.getString("yp_amount", "") : "0 ₽"; // рӯзи нав — аз сифр
+        String tjs = toSomoni(amt);
+        int orders = todayKey().equals(prefs.getString("yp_orders_date", "")) ? prefs.getInt("yp_orders", 0) : 0;
+        String full = amt + (tjs.isEmpty() ? "" : "\n" + tjs) + "\nЗаказҳо: " + orders;
         if (!full.equals(lastShown)) {
             lastShown = full;
-            label.setVisibility(full.isEmpty() ? View.INVISIBLE : View.VISIBLE);
-            if (full.equals(first)) label.setText(first);
-            else {
-                android.text.SpannableString sp = new android.text.SpannableString(full);
-                sp.setSpan(new android.text.style.RelativeSizeSpan(0.78f), first.length() + 1, full.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                label.setText(sp);
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(amt);
+            int n = sb.length();
+            if (!tjs.isEmpty()) {
+                sb.append('\n').append(tjs);
+                sb.setSpan(new android.text.style.RelativeSizeSpan(0.82f), n + 1, sb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                sb.setSpan(new android.text.style.ForegroundColorSpan(0xFFC9D6FF), n + 1, sb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
-            keepOnScreen();
+            int m = sb.length();
+            sb.append("\nЗаказҳо: ").append(String.valueOf(orders));
+            sb.setSpan(new android.text.style.RelativeSizeSpan(0.68f), m + 1, sb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new android.text.style.ForegroundColorSpan(0xCCFFFFFF), m + 1, sb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            label.setText(sb);
         }
+        if (label.getVisibility() != View.VISIBLE) label.setVisibility(View.VISIBLE);
     }
 
     // ---------- Қурби рубл → сомонӣ (барои маблағи «Яндекс Про») ----------
@@ -186,7 +226,7 @@ public class OverlayService extends Service {
             double rub = Double.parseDouble(amount.replaceAll("[^0-9,.-]", "").replace(',', '.'));
             double tjs = rub * rate;
             String[] p = String.format(java.util.Locale.US, "%.2f", tjs).split("\\.");
-            return "≈ " + p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " смн";
+            return p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " с";
         } catch (Exception e) {
             return "";
         }
@@ -237,18 +277,6 @@ public class OverlayService extends Service {
         return j.getJSONObject("rub").getDouble("tjs");
     }
 
-    /** Ном дарозии тугмаро иваз мекунад: аз экран набарояд (канори чап ё рост). */
-    private void keepOnScreen() {
-        if (bubble == null) return;
-        bubble.post(() -> {
-            if (bubble == null || lp == null) return;
-            DisplayMetrics dm = getResources().getDisplayMetrics();
-            int w = bubble.getWidth();
-            lp.x = onRight ? dm.widthPixels - w - dp(8) : dp(8);
-            try { wm.updateViewLayout(bubble, lp); } catch (Exception ignored) { /* view removed */ }
-        });
-    }
-
     private void startAsForeground() {
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
@@ -269,46 +297,25 @@ public class OverlayService extends Service {
         else startForeground(1, n);
     }
 
-    private void addBubble(boolean app) {
-        appMode = app;
+    private void addBubble() {
         final int size = dp(SIZE_DP);
-        if (app) {
-            // Ном ба ҷои тугмаи сабз: матни сафед бо соя, фони шаффоф
-            TextView t = new TextView(this);
-            t.setText("+");
-            t.setTextColor(Color.WHITE);
-            t.setTextSize(16);
-            t.setTypeface(Typeface.DEFAULT_BOLD);
-            t.setShadowLayer(8f, 0f, 1f, Color.BLACK);
-            t.setGravity(Gravity.CENTER);
-            t.setMaxLines(3);
-            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            t.setMaxWidth(dp(240));
-            t.setMinWidth(dp(40));
-            t.setMinHeight(dp(40));
-            t.setPadding(dp(10), dp(6), dp(10), dp(6));
-            t.setBackgroundColor(Color.TRANSPARENT);
-            label = t;
-            bubble = t;
-        } else {
-            FrameLayout root = new FrameLayout(this);
-            GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] { Color.parseColor("#47D9A0"), Color.parseColor("#2A9D73") });
-            bg.setShape(GradientDrawable.OVAL);
-            root.setBackground(bg);
-            root.setElevation(dp(6));
-            TextView plus = new TextView(this);
-            plus.setText("+");
-            plus.setTextColor(Color.WHITE);
-            plus.setTextSize(30);
-            plus.setTypeface(Typeface.DEFAULT_BOLD);
-            plus.setGravity(Gravity.CENTER);
-            root.addView(plus, new FrameLayout.LayoutParams(size, size, Gravity.CENTER));
-            bubble = root;
-        }
+        FrameLayout root = new FrameLayout(this);
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] { Color.parseColor("#47D9A0"), Color.parseColor("#2A9D73") });
+        bg.setShape(GradientDrawable.OVAL);
+        root.setBackground(bg);
+        root.setElevation(dp(6));
+        TextView plus = new TextView(this);
+        plus.setText("+");
+        plus.setTextColor(Color.WHITE);
+        plus.setTextSize(30);
+        plus.setTypeface(Typeface.DEFAULT_BOLD);
+        plus.setGravity(Gravity.CENTER);
+        root.addView(plus, new FrameLayout.LayoutParams(size, size, Gravity.CENTER));
+        bubble = root;
 
         DisplayMetrics dm = getResources().getDisplayMetrics();
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
-        lp = new WindowManager.LayoutParams(app ? WindowManager.LayoutParams.WRAP_CONTENT : size, app ? WindowManager.LayoutParams.WRAP_CONTENT : size, type,
+        lp = new WindowManager.LayoutParams(size, size, type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
         onRight = prefs.getBoolean("right", true);
@@ -380,6 +387,7 @@ public class OverlayService extends Service {
         running = false;
         handler.removeCallbacksAndMessages(null);
         removeBubble();
+        removeLabel();
         super.onDestroy();
     }
 }

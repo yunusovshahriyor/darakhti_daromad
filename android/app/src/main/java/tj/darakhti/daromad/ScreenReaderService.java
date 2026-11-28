@@ -70,7 +70,8 @@ public class ScreenReaderService extends AccessibilityService {
         final String text;
         final Rect r;
         final boolean vis;
-        Item(String text, Rect r, boolean vis) { this.text = text; this.r = r; this.vis = vis; }
+        final boolean sel;
+        Item(String text, Rect r, boolean vis, boolean sel) { this.text = text; this.r = r; this.vis = vis; this.sel = sel; }
     }
 
     private String target() {
@@ -122,7 +123,7 @@ public class ScreenReaderService extends AccessibilityService {
         if (t != null && t.length() > 0) {
             Rect r = new Rect();
             n.getBoundsInScreen(r);
-            out.add(new Item(t.toString().replace('\n', ' ').trim(), r, n.isVisibleToUser()));
+            out.add(new Item(t.toString().replace('\n', ' ').trim(), r, n.isVisibleToUser(), n.isSelected() || n.isChecked()));
         }
         for (int i = 0; i < n.getChildCount(); i++) collect(n.getChild(i), out, depth + 1);
     }
@@ -139,6 +140,7 @@ public class ScreenReaderService extends AccessibilityService {
         for (int i = 0; i < items.size() && sb.length() < 400; i++) sb.append(items.get(i).text).append(" | ");
         prefs.edit().putInt("dbg_items", items.size()).putString("dbg_texts", sb.toString()).apply();
 
+        detectPage(items);
         // Блоки идораи вақт дар «Профиль» (ба ҷои баннери «Режимы дохода…»)
         try { updateCard(items); } catch (Exception ex) { prefs.edit().putString("dbg_price", "card err: " + ex).apply(); hideCard(); }
 
@@ -197,6 +199,30 @@ public class ScreenReaderService extends AccessibilityService {
         prefs.edit().putString("yp_amount", amt).putString("yp_date", OverlayService.todayKey()).apply();
     }
 
+
+
+    /**
+     * Саҳифаи асосӣ (харита / фармоиш) ё саҳифаи дигар (Деньги, Профиль, Чаты, Предзаказы): блоки маблағ танҳо дар асосӣ намоён аст.
+     * Аввал тугмаи интихобшудаи навбари поён (Заказы/Предзаказы/Деньги/Чаты/Профиль), вагарна аз мундариҷаи саҳифа.
+     */
+    private void detectPage(List<Item> items) {
+        String[] tabs = { "заказы", "предзаказы", "деньги", "чаты", "профиль" };
+        String selected = null;
+        for (Item it : items) {
+            String t = it.text.toLowerCase(java.util.Locale.ROOT);
+            for (String tab : tabs) if (t.equals(tab) && it.sel) selected = tab;
+        }
+        boolean main;
+        if (selected != null) main = selected.equals("заказы");
+        else {
+            boolean other = false;
+            for (Item it : items) {
+                if (has(it, "история заказов") || has(it, "средний доход") || has(it, "мой транспорт") || has(it, "тарифы и опции") || it.text.equalsIgnoreCase("Водитель такси")) { other = true; break; }
+            }
+            main = !other;
+        }
+        if (prefs.getBoolean("yp_main", true) != main) prefs.edit().putBoolean("yp_main", main).apply();
+    }
 
     // ---------- Сомонӣ болои нархи фармоиш (тафсилоти фармоиш) ----------
     private android.view.WindowManager wm;
@@ -266,9 +292,11 @@ public class ScreenReaderService extends AccessibilityService {
             + " price=" + (price != null ? price.text : mergedTxt != null ? "merged:" + mergedTxt : "-")).apply();
         if (rate <= 0) price = null;
         if (rate <= 0 || (price == null && mergedTxt == null)) { hidePrice(); return; }
-        double tjs = num(price != null ? price.text : mergedTxt) * rate;
-        String[] p = String.format(java.util.Locale.US, "%.2f", tjs).split("\\.");
-        String txt = "≈ " + p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " смн";
+        // Нархи умумӣ ва соф (пас аз комиссияи Яндекс ва парк) бо сомонӣ: «88,37с = 70,43с»
+        double gross = num(price != null ? price.text : mergedTxt) * rate;
+        double fee = num(prefs.getString("yp_fee_ya", "18.3")) + num(prefs.getString("yp_fee_park", "2"));
+        if (fee < 0 || fee > 100) fee = 20.3;
+        String txt = fmtTjs(gross) + "с = " + fmtTjs(gross * (1 - fee / 100.0)) + "с";
         if (wm == null) wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
         if (priceView == null) {
             android.widget.TextView t = new android.widget.TextView(this);
@@ -327,6 +355,11 @@ public class ScreenReaderService extends AccessibilityService {
         return -1;
     }
 
+    private static String fmtTjs(double v) {
+        String[] p = String.format(java.util.Locale.US, "%.2f", v).split("\\.");
+        return p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1];
+    }
+
     private static String fmtRub(double v) {
         String[] p = String.format(java.util.Locale.US, "%.2f", v).split("\\.");
         return p[0].replaceAll("\\B(?=(\\d{3})+(?!\\d))", "\u00a0") + "," + p[1] + " ₽";
@@ -342,6 +375,9 @@ public class ScreenReaderService extends AccessibilityService {
         if (fee < 0 || fee > 100) fee = 20.3;
         double net = gross * (1 - fee / 100.0);
         String today = OverlayService.todayKey();
+        // Шумораи заказҳои имрӯза (+1 пас аз ҳар «Заказ завершён»)
+        int orders = today.equals(prefs.getString("yp_orders_date", "")) ? prefs.getInt("yp_orders", 0) : 0;
+        prefs.edit().putInt("yp_orders", orders + 1).putString("yp_orders_date", today).apply();
         double base = today.equals(prefs.getString("yp_date", "")) ? Math.max(0, num(prefs.getString("yp_amount", "0"))) : 0;
         prefs.edit().putString("yp_amount", fmtRub(base + net)).putString("yp_date", today)
             .putString("yp_last", fmtRub(gross) + " → +" + fmtRub(net)).apply();
