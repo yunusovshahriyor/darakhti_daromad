@@ -497,10 +497,25 @@ public class ScreenReaderService extends AccessibilityService {
             if (!it.vis || !(has(it, "режимы дохода") || has(it, "теперь на главном"))) continue;
             if (u == null) u = new Rect(it.r); else u.union(it.r);
         }
-        if (u == null) { hideCard(); return; }
-        int padV = u.height() >= dm.heightPixels * 0.06 ? 0 : (int) (0.02 * dm.heightPixels);
         int left = (int) (0.043 * dm.widthPixels), right = (int) (0.957 * dm.widthPixels);
-        int top = u.top - padV, bottom = u.bottom + padV;
+        int top, bottom;
+        if (u != null) {
+            int padV = u.height() >= dm.heightPixels * 0.06 ? 0 : (int) (0.02 * dm.heightPixels);
+            top = u.top - padV; bottom = u.bottom + padV;
+        } else {
+            // Баннери Яндекс нест: блок дар зери ном (болои «Водитель такси») меистад. Ном — матни наздиктарин болои ин сатр.
+            Item drv = null;
+            for (Item it : items) if (it.vis && it.text.equalsIgnoreCase("Водитель такси")) { drv = it; break; }
+            if (drv == null) { hideCard(); return; }
+            Item name = null;
+            for (Item it : items) {
+                if (!it.vis || it == drv || it.r.bottom > drv.r.top || it.r.top < 0 || it.text.length() < 2) continue;
+                if (name == null || it.r.bottom > name.r.bottom) name = it;
+            }
+            if (name == null) { hideCard(); return; }
+            top = name.r.bottom + (int) (0.012 * dm.heightPixels);
+            bottom = top + (int) (0.0765 * dm.heightPixels);
+        }
         if (bottom - top < dp(60)) { int c = (top + bottom) / 2; top = c - dp(30); bottom = c + dp(30); }
         if (top < 0 || bottom > dm.heightPixels) { hideCard(); return; }
         if (wm == null) wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
