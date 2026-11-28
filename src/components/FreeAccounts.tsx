@@ -59,9 +59,14 @@ function FreeAccountSheet({ state, setState, id, onClose, onToast }: Props & {
 
   const archive = () => {
     if (!id) return;
-    if (isMain) { setError('Ин ҳисоби асосӣ аст. Аввал ҳисоби асосии дигарро интихоб кунед'); return; }
     if (Math.abs(bal) > 0.005) { setError(`Дар ҳисоб ${fmt(bal)} сомонӣ ҳаст: аввал онро ба ҳисоби дигар гузаронед`); return; }
-    setState(s => ({ ...s, accounts: s.accounts.map(a => (a.id === id ? { ...a, archived: true, share: undefined, shareFrom: undefined } : a.shareFrom === id ? { ...a, shareFrom: undefined } : a)) }));
+    // Агар ҳисоби асосӣ нест шавад, ҳисоби асосӣ худкор ба аввалин ҳисоби боқимонда мегузарад (ё холӣ мемонад)
+    setState(s => {
+      const accounts = s.accounts.map(a => (a.id === id ? { ...a, archived: true, share: undefined, shareFrom: undefined } : a.shareFrom === id ? { ...a, shareFrom: undefined } : a));
+      const next = accounts.find(a => !a.archived && !SYSTEM_IDS.includes(a.id));
+      const mainId = s.mainAccount === id || mainAccountOf(s) === id ? next?.id : s.mainAccount;
+      return { ...s, accounts: accounts.map(a => (a.id === mainId ? { ...a, share: undefined, shareFrom: undefined } : a)), mainAccount: mainId };
+    });
     onToast('Ҳисоб нест шуд');
     onClose();
   };
@@ -115,8 +120,9 @@ export default function FreeAccounts({ state, setState, onToast }: Props & { onT
   };
   return (
     <>
-      <p className="note">Ҳисобҳои худро созед ва барои ҳар кадом фоизи муайянро аз ҳар даромад ҷудо кунед. Боқимонда ба ҳисоби асосӣ (⭐) меравад.</p>
+      <p className="note">Ҳисобҳои худро созед ва барои ҳар кадом фоизи муайянро аз ҳар даромад ҷудо кунед. Боқимонда ба ҳисоби асосӣ (⭐) меравад. Ҳар як ҳисобро нест кардан мумкин аст (агар дар он маблағ набошад).</p>
       <h3 className="group-title"><span>Ҳисобҳо</span></h3>
+      {list.length === 0 && <p className="note">Ҳоло ҳисоб нест. Аввалин ҳисоби худро созед (масалан «Нақд» ё «Корт»): бе ҳисоб даромад ва хароҷотро сабт кардан намешавад.</p>}
       <div className="cells">
         {list.map(a => (
           <button key={a.id} className="cell tap link" onClick={() => setEditId(a.id)}>

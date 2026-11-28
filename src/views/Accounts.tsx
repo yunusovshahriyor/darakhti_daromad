@@ -2,7 +2,7 @@ import { CSSProperties, useEffect, useState } from 'react';
 import { ChevronIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import {
   ACCOUNTS, ACCOUNT_TREE, CARD_COLORS, balancesOf, fmt, groupNote, groupSum,
-  fundDreams, hasDebt, hiddenAccounts, hasShares, mainAccountOf, remaining, shareRule, sharesOf,
+  fundDreams, hasDebt, hiddenAccounts, hasShares, hasUserAccounts, mainAccountOf, remaining, shareRule, sharesOf,
 } from '../model';
 import type { AccountGroup } from '../model';
 import type { AccountId } from '../types';
@@ -117,6 +117,9 @@ export default function Accounts({ state, hidden, onToggleHidden, onOpenAccount 
         <div className="bh-total"><Count value={total} hidden={hidden} /> <small>смн</small></div>
       </section>
 
+      {state.mode === 'free' && !hasUserAccounts(state) && (
+        <p className="note">Ҳоло ҳисоб нест. Дар «Танзимот → Ҳисобҳо» аввалин ҳисоби худро созед.</p>
+      )}
       <div className="groups">{ACCOUNT_TREE.map(g => group(g))}</div>
     </>
   );

@@ -1,5 +1,6 @@
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 import AddSheet from './components/AddSheet';
+import Sheet from './components/Sheet';
 import VoiceOverlay from './components/VoiceOverlay';
 import { voiceSupported } from './voice';
 import type { VoiceResult } from './voiceParse';
@@ -19,7 +20,7 @@ import {
 } from './components/Icons';
 import { setRootBackHandler, useHistoryLayer } from './components/useHistoryLayer';
 import { overlayApi } from './native';
-import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, needsSimple, newFreeAccounts, syncCatalog, toFreeMode, toSimple, today, uid } from './model';
+import { ACCOUNTS, ACCOUNT_ORDER, ALL_IDS, balancesOf, hasDebt, hasUserAccounts, needsSimple, newFreeAccounts, syncCatalog, toFreeMode, toSimple, today, uid } from './model';
 import { emptyState, loadState, saveState, stateObjHasData } from './storage';
 import { noDepositThisWeek, runAutoSaves } from './dreams';
 import { nextInstallment } from './loanPlan';
@@ -553,7 +554,16 @@ export default function App() {
       {voiceOpen && (
         <VoiceOverlay onClose={() => setVoiceOpen(false)} onResult={r => { setVoiceOpen(false); setVoiceFill(r); setAdding(true); }} />
       )}
-      {adding && (
+      {adding && !hasUserAccounts(state) && (
+        <Sheet title="Аввал ҳисоб созед" onClose={() => { setAdding(false); setPrefill(null); setVoiceFill(null); setAddKind(undefined); }}>
+          <p className="note">Ҳоло ягон ҳисоб нест. Барои сабти даромад ва хароҷот аввал ҳадди аққал як ҳисоб (масалан «Нақд» ё «Корт») созед.</p>
+          <button className="btn" type="button" onClick={() => {
+            setAdding(false); setPrefill(null); setVoiceFill(null); setAddKind(undefined);
+            setAcct(null); setSub('settings'); setSetPageName('accounts');
+          }}>Сохтани ҳисоб</button>
+        </Sheet>
+      )}
+      {adding && hasUserAccounts(state) && (
         <AddSheet {...props} prefill={prefill ?? undefined} voice={voiceFill ?? undefined}
           initialKind={addKind}
           onClose={() => { setAdding(false); setPrefill(null); setVoiceFill(null); setAddKind(undefined); }} onDone={setToast} />

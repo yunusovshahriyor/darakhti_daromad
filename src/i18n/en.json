@@ -1091,5 +1091,11 @@
 "Ҳисобкунакро аз нав оғоз кардан": "Reset the counter",
 "Вақти кор дастӣ идора мешавад: дар «Профиль»-и Яндекс Про ба ҷои баннери «Режимы дохода…» блоки вақт пайдо мешавад бо тугмаҳои «Кор» ва «Истироҳат». Лимит ва истироҳатро (соат) танзим кунед:": "Work time is controlled manually: in Yandex Pro «Profile» a time block with «Work» and «Rest» buttons replaces the «Режимы дохода…» banner. Set the limit and rest (hours):",
 "ҳанӯз оғоз нашудааст («Кор»-ро дар «Профиль» пахш кунед)": "not started yet (press «Work» in «Profile»)",
-"Дар «Яндекс Про» маблағи имрӯза (аз саҳифаи «Деньги») бо сомонӣ навишта мешавад; дар «Профиль» блоки вақти кор; дар тафсилоти фармоиш зери нарх — сомонӣ. Танҳо экрани Яндекс Про хонда мешавад, маблағ танҳо дар ин телефон нигоҳ дошта мешавад.": "In Yandex Pro today's amount (from «Money») is shown with the somoni value; in «Profile» there is a work-time block. Only the Yandex Pro screen is read; the amount stays on this phone only."
+"Дар «Яндекс Про» маблағи имрӯза (аз саҳифаи «Деньги») бо сомонӣ навишта мешавад; дар «Профиль» блоки вақти кор; дар тафсилоти фармоиш зери нарх — сомонӣ. Танҳо экрани Яндекс Про хонда мешавад, маблағ танҳо дар ин телефон нигоҳ дошта мешавад.": "In Yandex Pro today's amount (from «Money») is shown with the somoni value; in «Profile» there is a work-time block. Only the Yandex Pro screen is read; the amount stays on this phone only.",
+"Аввал ҳисоб созед": "Create an account first",
+"Ҳоло ягон ҳисоб нест. Барои сабти даромад ва хароҷот аввал ҳадди аққал як ҳисоб (масалан «Нақд» ё «Корт») созед.": "There are no accounts yet. To record income and expenses, first create at least one account (for example, Cash or Card).",
+"Сохтани ҳисоб": "Create account",
+"Ҳоло ҳисоб нест. Дар «Танзимот → Ҳисобҳо» аввалин ҳисоби худро созед.": "No accounts yet. Create your first account in Settings → Accounts.",
+"Ҳисобҳои худро созед ва барои ҳар кадом фоизи муайянро аз ҳар даромад ҷудо кунед. Боқимонда ба ҳисоби асосӣ (⭐) меравад. Ҳар як ҳисобро нест кардан мумкин аст (агар дар он маблағ набошад).": "Create your accounts and set a percentage of each income for each. The rest goes to the main account (⭐). Any account can be deleted (if it holds no money).",
+"Ҳоло ҳисоб нест. Аввалин ҳисоби худро созед (масалан «Нақд» ё «Корт»): бе ҳисоб даромад ва хароҷотро сабт кардан намешавад.": "No accounts yet. Create your first account (for example Cash or Card): income and expenses cannot be recorded without one."
 }
